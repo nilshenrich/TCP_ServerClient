@@ -1,5 +1,5 @@
 template <class SocketType, class SocketDeleter>
-int NetworkClient<SocketType, SocketDeleter>::start(
+int Client<SocketType, SocketDeleter>::start(
     const std::string &serverIp,
     const int serverPort,
     const char *const pathToCaCert,
@@ -26,7 +26,7 @@ int NetworkClient<SocketType, SocketDeleter>::start(
         cerr << typeid(this).name() << "::" << __func__ << ": The port " << serverPort << " couldn't be used" << endl;
 #endif // DEVELOP
 
-        return NETWORKCLIENT_ERROR_START_WRONG_PORT;
+        return CLIENT_ERROR_START_WRONG_PORT;
     }
 
     // Initialize the client
@@ -45,7 +45,7 @@ int NetworkClient<SocketType, SocketDeleter>::start(
 #endif // DEVELOP
 
         stop();
-        return NETWORKCLIENT_ERROR_START_CREATE_SOCKET;
+        return CLIENT_ERROR_START_CREATE_SOCKET;
     }
 
     // Set the socket options
@@ -58,7 +58,7 @@ int NetworkClient<SocketType, SocketDeleter>::start(
 #endif // DEVELOP
 
         stop();
-        return NETWORKCLIENT_ERROR_START_SET_SOCKET_OPT;
+        return CLIENT_ERROR_START_SET_SOCKET_OPT;
     }
 
     // Initialize the socket address
@@ -78,7 +78,7 @@ int NetworkClient<SocketType, SocketDeleter>::start(
 #endif // DEVELOP
 
         stop();
-        return NETWORKCLIENT_ERROR_START_CONNECT;
+        return CLIENT_ERROR_START_CONNECT;
     }
 
     // Initialize the TCP connection to the server
@@ -87,14 +87,14 @@ int NetworkClient<SocketType, SocketDeleter>::start(
     if (!clientSocket.get())
     {
         stop();
-        return NETWORKCLIENT_ERROR_START_CONNECT_INIT;
+        return CLIENT_ERROR_START_CONNECT_INIT;
     }
 
     // Receive incoming data from the server infinitely in the background while the client is running
     // If background task already exists, return with error
     if (recHandler.joinable())
-        throw NetworkClient_error("Error while starting background receive task. Background task already exists");
-    recHandler = thread{&NetworkClient::receive, this};
+        throw Client_error("Error while starting background receive task. Background task already exists");
+    recHandler = thread{&Client::receive, this};
 
     // Client is now running
     running = true;
@@ -103,11 +103,11 @@ int NetworkClient<SocketType, SocketDeleter>::start(
     cout << typeid(this).name() << "::" << __func__ << ": Client started" << endl;
 #endif // DEVELOP
 
-    return NETWORKCLIENT_START_OK;
+    return CLIENT_START_OK;
 }
 
 template <class SocketType, class SocketDeleter>
-void NetworkClient<SocketType, SocketDeleter>::stop()
+void Client<SocketType, SocketDeleter>::stop()
 {
     using namespace std;
 
@@ -137,7 +137,7 @@ void NetworkClient<SocketType, SocketDeleter>::stop()
 }
 
 template <class SocketType, class SocketDeleter>
-bool NetworkClient<SocketType, SocketDeleter>::sendMsg(const std::string &msg)
+bool Client<SocketType, SocketDeleter>::sendMsg(const std::string &msg)
 {
     using namespace std;
 
@@ -176,13 +176,13 @@ bool NetworkClient<SocketType, SocketDeleter>::sendMsg(const std::string &msg)
 }
 
 template <class SocketType, class SocketDeleter>
-void NetworkClient<SocketType, SocketDeleter>::setWorkOnMessage(std::function<void(const std::string)> worker)
+void Client<SocketType, SocketDeleter>::setWorkOnMessage(std::function<void(const std::string)> worker)
 {
     workOnMessage = worker;
 }
 
 template <class SocketType, class SocketDeleter>
-void NetworkClient<SocketType, SocketDeleter>::receive()
+void Client<SocketType, SocketDeleter>::receive()
 {
     using namespace std;
 
@@ -252,7 +252,7 @@ void NetworkClient<SocketType, SocketDeleter>::receive()
                 thread work_t{[this](RunningFlag *workRunning_p, string buffer)
                               {
                                   // Mark thread as running
-                                  NetworkClient_running_manager running_mgr{*workRunning_p};
+                                  Client_running_manager running_mgr{*workRunning_p};
 
                                   // Run code to handle the incoming message
                                   if (workOnMessage)
@@ -292,7 +292,7 @@ void NetworkClient<SocketType, SocketDeleter>::receive()
 }
 
 template <class SocketType, class SocketDeleter>
-bool NetworkClient<SocketType, SocketDeleter>::isRunning() const
+bool Client<SocketType, SocketDeleter>::isRunning() const
 {
     return running;
 }

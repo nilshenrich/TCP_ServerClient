@@ -14,8 +14,8 @@ void Fragmentation_TcpServer_Test_Send::SetUp()
     ASSERT_NE(port, -1) << "No free port found";
 
     // Start TCP server and connect client
-    ASSERT_EQ(tcpServer.start(port), NETWORKLISTENER_START_OK) << "Unable to start TCP server on port " << port;
-    ASSERT_EQ(tcpClient.start("localhost", port), NETWORKCLIENT_START_OK) << "Unable to connect TCP client to localhost on port " << port;
+    ASSERT_EQ(tcpServer.start(port), SERVER_START_OK) << "Unable to start TCP server on port " << port;
+    ASSERT_EQ(tcpClient.start("localhost", port), CLIENT_START_OK) << "Unable to connect TCP client to localhost on port " << port;
 
     // Get client ID
     vector<int> clientIds{tcpServer.getClientIds()};

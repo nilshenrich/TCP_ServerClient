@@ -22,7 +22,7 @@ namespace TestApi
          * @brief Start TCP server
          *
          * @param port TCP port to listen on
-         * @return int NETWORKLISTENER_START_OK if successful, other if failed
+         * @return int SERVER_START_OK if successful, other if failed
          */
         int start(const int port);
 
@@ -95,7 +95,7 @@ namespace TestApi
          * @brief Start TCP server
          *
          * @param port TCP port to listen on
-         * @return int NETWORKLISTENER_START_OK if successful, other if failed
+         * @return int SERVER_START_OK if successful, other if failed
          */
         int start(const int port);
 

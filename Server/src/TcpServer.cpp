@@ -3,8 +3,8 @@
 using namespace tcp;
 using namespace std;
 
-TcpServer::TcpServer() : NetworkListener{} {}
-TcpServer::TcpServer(char delimiter, size_t messageMaxLen) : NetworkListener{delimiter, messageMaxLen} {}
+TcpServer::TcpServer() : Server{} {}
+TcpServer::TcpServer(char delimiter, size_t messageMaxLen) : Server{delimiter, messageMaxLen} {}
 
 TcpServer::~TcpServer()
 {
@@ -15,7 +15,7 @@ int TcpServer::init(const char *const,
                     const char *const,
                     const char *const)
 {
-    return NETWORKLISTENER_START_OK;
+    return SERVER_START_OK;
 }
 
 int *TcpServer::connectionInit(const int clientId)

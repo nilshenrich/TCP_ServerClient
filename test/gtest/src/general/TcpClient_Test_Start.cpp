@@ -12,7 +12,7 @@ void General_TcpClient_Test_Start::SetUp()
     // Get free TCP port
     port = HelperFunctions::getFreePort();
     ASSERT_NE(port, -1) << "No free port found";
-    ASSERT_EQ(tcpServer.start(port), NETWORKLISTENER_START_OK);
+    ASSERT_EQ(tcpServer.start(port), SERVER_START_OK);
     return;
 }
 
@@ -31,45 +31,45 @@ void General_TcpClient_Test_Start::TearDown()
 // ====================================================================================================================
 // Desc:       Check if the TCP client starts properly
 // Steps:      Start TCP client with correct parameters
-// Exp Result: NETWORKCLIENT_START_OK
+// Exp Result: CLIENT_START_OK
 // ====================================================================================================================
 TEST_F(General_TcpClient_Test_Start, PosTest)
 {
-    EXPECT_EQ(tcpClient.start("localhost", port), NETWORKCLIENT_START_OK);
+    EXPECT_EQ(tcpClient.start("localhost", port), CLIENT_START_OK);
     EXPECT_EQ(tcpServer.getClientIds().size(), 1);
 }
 
 // ====================================================================================================================
 // Desc:       Check if client doesn't accept negative port number
 // Steps:      Try to start TCP client with -1
-// Exp Result: NETWORKCLIENT_ERROR_START_WRONG_PORT
+// Exp Result: CLIENT_ERROR_START_WRONG_PORT
 // ====================================================================================================================
 TEST_F(General_TcpClient_Test_Start, NegTest_WrongPort_Negative)
 {
-    EXPECT_EQ(tcpClient.start("localhost", -1), NETWORKCLIENT_ERROR_START_WRONG_PORT);
+    EXPECT_EQ(tcpClient.start("localhost", -1), CLIENT_ERROR_START_WRONG_PORT);
     EXPECT_EQ(tcpServer.getClientIds().size(), 0);
 }
 
 // ====================================================================================================================
 // Desc:       Check if client doesn't accept too big port number
 // Steps:      Try to start TCP client with 65536
-// Exp Result: NETWORKCLIENT_ERROR_START_WRONG_PORT
+// Exp Result: CLIENT_ERROR_START_WRONG_PORT
 // ====================================================================================================================
 TEST_F(General_TcpClient_Test_Start, NegTest_WrongPort_TooBig)
 {
-    EXPECT_EQ(tcpClient.start("localhost", 65536), NETWORKCLIENT_ERROR_START_WRONG_PORT);
+    EXPECT_EQ(tcpClient.start("localhost", 65536), CLIENT_ERROR_START_WRONG_PORT);
     EXPECT_EQ(tcpServer.getClientIds().size(), 0);
 }
 
 // ====================================================================================================================
 // Desc:       Check if client stops properly when server is not running
 // Steps:      Try to start TCP client after stopping server
-// Exp Result: NETWORKCLIENT_ERROR_START_CONNECT
+// Exp Result: CLIENT_ERROR_START_CONNECT
 // ====================================================================================================================
 TEST_F(General_TcpClient_Test_Start, NegTest_ServerNotRunning)
 {
     tcpServer.stop();
-    EXPECT_EQ(tcpClient.start("localhost", port), NETWORKCLIENT_ERROR_START_CONNECT);
+    EXPECT_EQ(tcpClient.start("localhost", port), CLIENT_ERROR_START_CONNECT);
     EXPECT_EQ(tcpServer.getClientIds().size(), 0);
 }
 
@@ -80,7 +80,7 @@ TEST_F(General_TcpClient_Test_Start, NegTest_ServerNotRunning)
 // ====================================================================================================================
 TEST_F(General_TcpClient_Test_Start, NegTest_AlreadyRunning)
 {
-    ASSERT_EQ(tcpClient.start("localhost", port), NETWORKCLIENT_START_OK);
+    ASSERT_EQ(tcpClient.start("localhost", port), CLIENT_START_OK);
     EXPECT_EQ(tcpClient.start("localhost", port), -1);
     EXPECT_EQ(tcpServer.getClientIds().size(), 1);
 }

@@ -3,8 +3,8 @@
 using namespace std;
 using namespace tcp;
 
-TlsClient::TlsClient(std::ostream &os) : NetworkClient(os) {}
-TlsClient::TlsClient(char delimiter, size_t messageMaxLen) : NetworkClient(delimiter, messageMaxLen) {}
+TlsClient::TlsClient(std::ostream &os) : Client(os) {}
+TlsClient::TlsClient(char delimiter, size_t messageMaxLen) : Client(delimiter, messageMaxLen) {}
 
 TlsClient::~TlsClient()
 {
@@ -27,7 +27,7 @@ int TlsClient::init(const char *const pathToCaCert,
 #endif // DEVELOP
 
         stop();
-        return NETWORKCLIENT_ERROR_START_SET_CONTEXT;
+        return CLIENT_ERROR_START_SET_CONTEXT;
     }
 
     // Check if CA certificate file exists
@@ -38,7 +38,7 @@ int TlsClient::init(const char *const pathToCaCert,
 #endif // DEVELOP
 
         stop();
-        return NETWORKCLIENT_ERROR_START_WRONG_CA_PATH;
+        return CLIENT_ERROR_START_WRONG_CA_PATH;
     }
 
     // Check if certificate file exists
@@ -49,7 +49,7 @@ int TlsClient::init(const char *const pathToCaCert,
 #endif // DEVELOP
 
         stop();
-        return NETWORKCLIENT_ERROR_START_WRONG_CERT_PATH;
+        return CLIENT_ERROR_START_WRONG_CERT_PATH;
     }
 
     // Check if private key file exists
@@ -60,7 +60,7 @@ int TlsClient::init(const char *const pathToCaCert,
 #endif // DEVELOP
 
         stop();
-        return NETWORKCLIENT_ERROR_START_WRONG_KEY_PATH;
+        return CLIENT_ERROR_START_WRONG_KEY_PATH;
     }
 
     // Load the CA certificate the client should trust (Stop client and return with error if failed)
@@ -71,7 +71,7 @@ int TlsClient::init(const char *const pathToCaCert,
 #endif // DEVELOP
 
         stop();
-        return NETWORKCLIENT_ERROR_START_WRONG_CA;
+        return CLIENT_ERROR_START_WRONG_CA;
     }
 
     // Load the client certificate (Stop client and return with error if failed)
@@ -82,7 +82,7 @@ int TlsClient::init(const char *const pathToCaCert,
 #endif // DEVELOP
 
         stop();
-        return NETWORKCLIENT_ERROR_START_WRONG_CERT;
+        return CLIENT_ERROR_START_WRONG_CERT;
     }
 
     // Load the client private key (Stop client and return with error if failed)
@@ -93,7 +93,7 @@ int TlsClient::init(const char *const pathToCaCert,
 #endif // DEVELOP
 
         stop();
-        return NETWORKCLIENT_ERROR_START_WRONG_KEY;
+        return CLIENT_ERROR_START_WRONG_KEY;
     }
 
     // Set TLS mode: SSL_MODE_AUTO_RETRY
@@ -105,7 +105,7 @@ int TlsClient::init(const char *const pathToCaCert,
     // Server certificate must be issued directly by a trusted CA
     SSL_CTX_set_verify_depth(clientContext.get(), 1);
 
-    return NETWORKCLIENT_START_OK;
+    return CLIENT_START_OK;
 }
 
 SSL *TlsClient::connectionInit()

@@ -4,14 +4,14 @@
 #include <limits>
 #include <openssl/ssl.h>
 
-#include "NetworkClient.h"
+#include "Client.h"
 
 namespace tcp
 {
     /**
      * @brief Deleter for TLS object
      */
-    struct NetworkClient_SSL_Deleter
+    struct Client_SSL_Deleter
     {
         void operator()(SSL *ssl)
         {
@@ -23,7 +23,7 @@ namespace tcp
     /**
      * @brief Class for encrypted TLS client
      */
-    class TlsClient : public NetworkClient<SSL, NetworkClient_SSL_Deleter>
+    class TlsClient : public Client<SSL, Client_SSL_Deleter>
     {
     public:
         /**

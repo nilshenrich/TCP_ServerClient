@@ -15,12 +15,12 @@
 #include <limits>
 #include <openssl/ssl.h>
 
-#include "NetworkListener.h"
+#include "Server.h"
 
 namespace tcp
 {
    // Deleter for SSL objects
-   struct NetworkListener_SSL_Deleter
+   struct Server_SSL_Deleter
    {
       void operator()(SSL *ssl)
       {
@@ -29,7 +29,7 @@ namespace tcp
       }
    };
 
-   class TlsServer : public NetworkListener<SSL, NetworkListener_SSL_Deleter>
+   class TlsServer : public Server<SSL, Server_SSL_Deleter>
    {
    public:
       /**

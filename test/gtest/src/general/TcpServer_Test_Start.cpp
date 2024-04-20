@@ -29,31 +29,31 @@ void General_TcpServer_Test_Start::TearDown()
 // ====================================================================================================================
 // Desc:       Check if the TCP server starts properly
 // Steps:      Start TCP server with correct parameters
-// Exp Result: NETWORKLISTENER_START_OK
+// Exp Result: SERVER_START_OK
 // ====================================================================================================================
 TEST_F(General_TcpServer_Test_Start, PosTest)
 {
-    EXPECT_EQ(tcpServer.start(port), NETWORKLISTENER_START_OK);
+    EXPECT_EQ(tcpServer.start(port), SERVER_START_OK);
 }
 
 // ====================================================================================================================
 // Desc:       Check if server doesn't accept negative port number
 // Steps:      Try to start TCP server with -1
-// Exp Result: NETWORKLISTENER_ERROR_START_WRONG_PORT
+// Exp Result: SERVER_ERROR_START_WRONG_PORT
 // ====================================================================================================================
 TEST_F(General_TcpServer_Test_Start, NegTest_WrongPort_Negative)
 {
-    EXPECT_EQ(tcpServer.start(-1), NETWORKLISTENER_ERROR_START_WRONG_PORT);
+    EXPECT_EQ(tcpServer.start(-1), SERVER_ERROR_START_WRONG_PORT);
 }
 
 // ====================================================================================================================
 // Desc:       Check if server doesn't accept too big port number
 // Steps:      Try to start TCP server with 65536
-// Exp Result: NETWORKLISTENER_ERROR_START_WRONG_PORT
+// Exp Result: SERVER_ERROR_START_WRONG_PORT
 // ====================================================================================================================
 TEST_F(General_TcpServer_Test_Start, NegTest_WrongPort_TooBig)
 {
-    EXPECT_EQ(tcpServer.start(65536), NETWORKLISTENER_ERROR_START_WRONG_PORT);
+    EXPECT_EQ(tcpServer.start(65536), SERVER_ERROR_START_WRONG_PORT);
 }
 
 // ====================================================================================================================
@@ -63,7 +63,7 @@ TEST_F(General_TcpServer_Test_Start, NegTest_WrongPort_TooBig)
 // ====================================================================================================================
 TEST_F(General_TcpServer_Test_Start, NegTest_AlreadyRunning_NoConnections)
 {
-    ASSERT_EQ(tcpServer.start(port), NETWORKLISTENER_START_OK);
+    ASSERT_EQ(tcpServer.start(port), SERVER_START_OK);
     EXPECT_EQ(tcpServer.start(HelperFunctions::getFreePort()), -1);
 }
 
@@ -74,20 +74,20 @@ TEST_F(General_TcpServer_Test_Start, NegTest_AlreadyRunning_NoConnections)
 // ====================================================================================================================
 TEST_F(General_TcpServer_Test_Start, NegTest_AlreadyRunning_OneConnection)
 {
-    ASSERT_EQ(tcpServer.start(port), NETWORKLISTENER_START_OK);
+    ASSERT_EQ(tcpServer.start(port), SERVER_START_OK);
     TestApi::TcpClientApi_fragmentation tcpClient{};
-    ASSERT_EQ(tcpClient.start("localhost", port), NETWORKCLIENT_START_OK);
+    ASSERT_EQ(tcpClient.start("localhost", port), CLIENT_START_OK);
     EXPECT_EQ(tcpServer.start(HelperFunctions::getFreePort()), -1);
 }
 
 // ====================================================================================================================
 // Desc:       Check if server doesn't start if port is already in use
 // Steps:      Start TCP server and try starting another instance with same port
-// Exp Result: NETWORKLISTENER_ERROR_START_BIND_PORT
+// Exp Result: SERVER_ERROR_START_BIND_PORT
 // ====================================================================================================================
 TEST_F(General_TcpServer_Test_Start, NegTest_PortInUse)
 {
-    ASSERT_EQ(tcpServer.start(port), NETWORKLISTENER_START_OK);
+    ASSERT_EQ(tcpServer.start(port), SERVER_START_OK);
     TestApi::TcpServerApi_fragmentation tcpServer2{};
-    EXPECT_EQ(tcpServer2.start(port), NETWORKLISTENER_ERROR_START_BIND_PORT);
+    EXPECT_EQ(tcpServer2.start(port), SERVER_ERROR_START_BIND_PORT);
 }

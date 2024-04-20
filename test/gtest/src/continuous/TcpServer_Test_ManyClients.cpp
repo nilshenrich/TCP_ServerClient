@@ -14,13 +14,13 @@ void Continuous_TcpServer_Test_ManyClients::SetUp()
     ASSERT_NE(port, -1) << "No free port found";
 
     // Start TCP server
-    ASSERT_EQ(tcpServer.start(port), NETWORKLISTENER_START_OK) << "Unable to start TCP server on port " << port;
+    ASSERT_EQ(tcpServer.start(port), SERVER_START_OK) << "Unable to start TCP server on port " << port;
 
     // Create and connect all TCP clients
     for (int i{0}; i < TestConstants::MANYCLIENTS_NUMBER; i += 1)
     {
         unique_ptr<TestApi::TcpClientApi_continuous> tcpClientNew{new TestApi::TcpClientApi_continuous()};
-        ASSERT_EQ(tcpClientNew->start("localhost", port), NETWORKCLIENT_START_OK);
+        ASSERT_EQ(tcpClientNew->start("localhost", port), CLIENT_START_OK);
 
         // Find out ID of newly connected client (The one, that is not added to clients collection yet)
         vector<int> connectedClients{tcpServer.getClientIds()};

@@ -1,5 +1,5 @@
 /**
- * @file NetworkClient.h
+ * @file Client.h
  * @author Nils Henrich
  * @brief Base framework for all classes that build a network client based on TCP.
  * This class contains no functionality, but serves a base framework for the creation of stable clients based on TCP.
@@ -11,8 +11,8 @@
  *
  */
 
-#ifndef NETWORKCLIENT_H
-#define NETWORKCLIENT_H
+#ifndef CLIENT_H
+#define CLIENT_H
 
 #include <iostream>
 #include <string>
@@ -46,13 +46,13 @@ namespace tcp
     };
 
     /**
-     * @brief Exception class for the NetworkClient class.
+     * @brief Exception class for the Client class.
      */
-    class NetworkClient_error : public std::exception
+    class Client_error : public std::exception
     {
     public:
-        NetworkClient_error(std::string msg = "unexpected client error") : msg{msg} {}
-        virtual ~NetworkClient_error() {}
+        Client_error(std::string msg = "unexpected client error") : msg{msg} {}
+        virtual ~Client_error() {}
 
         const char *what()
         {
@@ -63,11 +63,11 @@ namespace tcp
         const std::string msg;
 
         // Delete default constructor
-        NetworkClient_error() = delete;
+        Client_error() = delete;
 
         // Disallow copy
-        NetworkClient_error(const NetworkClient_error &) = delete;
-        NetworkClient_error &operator=(const NetworkClient_error &) = delete;
+        Client_error(const Client_error &) = delete;
+        Client_error &operator=(const Client_error &) = delete;
     };
 
     /**
@@ -75,11 +75,11 @@ namespace tcp
      *
      */
     using RunningFlag = std::atomic_bool;
-    class NetworkClient_running_manager
+    class Client_running_manager
     {
     public:
-        NetworkClient_running_manager(RunningFlag &flag) : flag{flag} {}
-        virtual ~NetworkClient_running_manager()
+        Client_running_manager(RunningFlag &flag) : flag{flag} {}
+        virtual ~Client_running_manager()
         {
             flag = false;
         }
@@ -88,21 +88,21 @@ namespace tcp
         RunningFlag &flag;
 
         // Delete default constructor
-        NetworkClient_running_manager() = delete;
+        Client_running_manager() = delete;
 
         // Disallow copy
-        NetworkClient_running_manager(const NetworkClient_running_manager &) = delete;
-        NetworkClient_running_manager &operator=(const NetworkClient_running_manager &) = delete;
+        Client_running_manager(const Client_running_manager &) = delete;
+        Client_running_manager &operator=(const Client_running_manager &) = delete;
     };
 
     /**
-     * @brief Template class for the NetworkClient class.
+     * @brief Template class for the Client class.
      *
      * @param SocketType
      * @param SocketDeleter
      */
     template <class SocketType, class SocketDeleter = std::default_delete<SocketType>>
-    class NetworkClient
+    class Client
     {
     public:
         /**
@@ -110,10 +110,10 @@ namespace tcp
          *
          * @param os                                Stream to forward incoming stream to
          */
-        NetworkClient(std::ostream &os) : CONTINUOUS_OUTPUT_STREAM{os},
-                                          DELIMITER_FOR_FRAGMENTATION{0},
-                                          MAXIMUM_MESSAGE_LENGTH_FOR_FRAGMENTATION{0},
-                                          MESSAGE_FRAGMENTATION_ENABLED{false} {}
+        Client(std::ostream &os) : CONTINUOUS_OUTPUT_STREAM{os},
+                                   DELIMITER_FOR_FRAGMENTATION{0},
+                                   MAXIMUM_MESSAGE_LENGTH_FOR_FRAGMENTATION{0},
+                                   MESSAGE_FRAGMENTATION_ENABLED{false} {}
 
         /**
          * @brief Constructor for fragmented messages
@@ -121,16 +121,16 @@ namespace tcp
          * @param delimiter                         Character to split messages on
          * @param messageMaxLen                     Maximum message length
          */
-        NetworkClient(char delimiter, size_t messageMaxLen) : CONTINUOUS_OUTPUT_STREAM{nullstream},
-                                                              DELIMITER_FOR_FRAGMENTATION{delimiter},
-                                                              MAXIMUM_MESSAGE_LENGTH_FOR_FRAGMENTATION{messageMaxLen},
-                                                              MESSAGE_FRAGMENTATION_ENABLED{true} {}
+        Client(char delimiter, size_t messageMaxLen) : CONTINUOUS_OUTPUT_STREAM{nullstream},
+                                                       DELIMITER_FOR_FRAGMENTATION{delimiter},
+                                                       MAXIMUM_MESSAGE_LENGTH_FOR_FRAGMENTATION{messageMaxLen},
+                                                       MESSAGE_FRAGMENTATION_ENABLED{true} {}
 
-        virtual ~NetworkClient() {}
+        virtual ~Client() {}
 
         /**
          * @brief Start the client and connects to the server.
-         * If connection to listener succeeds, this method returns NETWORKCLIENT_START_OK, otherwise it returns an error code.
+         * If connection to listener succeeds, this method returns CLIENT_START_OK, otherwise it returns an error code.
          *
          * @param serverIp
          * @param serverPort
@@ -270,15 +270,15 @@ namespace tcp
         std::ostream nullstream{&nullbuffer};
 
         // Disallow copy
-        NetworkClient() = delete;
-        NetworkClient(const NetworkClient &) = delete;
-        NetworkClient &operator=(const NetworkClient &) = delete;
+        Client() = delete;
+        Client(const Client &) = delete;
+        Client &operator=(const Client &) = delete;
     };
 
     // ============================== Implementation of non-abstract methods. ==============================
     // ====================== Must be in header file because of the template class. =======================
 
-#include "NetworkClient.tpp"
+#include "Client.tpp"
 }
 
-#endif // NETWORKCLIENT_H
+#endif // CLIENT_H

@@ -3,11 +3,11 @@
 
 #include <limits>
 
-#include "NetworkClient.h"
+#include "Client.h"
 
 namespace tcp
 {
-    class TcpClient : public NetworkClient<int>
+    class TcpClient : public Client<int>
     {
     public:
         /**

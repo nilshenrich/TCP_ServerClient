@@ -23,7 +23,7 @@ namespace TestApi
          *
          * @param ip IP address of TCP server
          * @param port TCP port of TCP server
-         * @return int NETWORKCLIENT_CONNECT_OK if successful, other if failed
+         * @return int CLIENT_CONNECT_OK if successful, other if failed
          */
         int start(const std::string &ip, const int port);
 
@@ -74,7 +74,7 @@ namespace TestApi
          *
          * @param ip IP address of TCP server
          * @param port TCP port of TCP server
-         * @return int NETWORKCLIENT_CONNECT_OK if successful, other if failed
+         * @return int CLIENT_CONNECT_OK if successful, other if failed
          */
         int start(const std::string &ip, const int port);
 

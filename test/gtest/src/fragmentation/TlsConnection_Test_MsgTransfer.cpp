@@ -18,8 +18,8 @@ void Fragmentation_TlsConnection_Test_MsgTransfer::SetUp()
         ASSERT_NE(port_serverLong_clientLong, -1) << "No free port found";
 
         // Start TLS server and connect client
-        ASSERT_EQ(tlsServer_selfLong_frgnLong.start(port_serverLong_clientLong), NETWORKLISTENER_START_OK) << "Unable to start TLS server on port " << port_serverLong_clientLong;
-        ASSERT_EQ(tlsClient_selfLong_frgnLong.start("localhost", port_serverLong_clientLong), NETWORKCLIENT_START_OK) << "Unable to connect TLS client to localhost on port " << port_serverLong_clientLong;
+        ASSERT_EQ(tlsServer_selfLong_frgnLong.start(port_serverLong_clientLong), SERVER_START_OK) << "Unable to start TLS server on port " << port_serverLong_clientLong;
+        ASSERT_EQ(tlsClient_selfLong_frgnLong.start("localhost", port_serverLong_clientLong), CLIENT_START_OK) << "Unable to connect TLS client to localhost on port " << port_serverLong_clientLong;
 
         // Get client ID
         vector<int> clientIds{tlsServer_selfLong_frgnLong.getClientIds()};
@@ -35,8 +35,8 @@ void Fragmentation_TlsConnection_Test_MsgTransfer::SetUp()
         ASSERT_NE(port_serverLong_clientShort, -1) << "No free port found";
 
         // Start TLS server and connect client
-        ASSERT_EQ(tlsServer_selfLong_frgnShort.start(port_serverLong_clientShort), NETWORKLISTENER_START_OK) << "Unable to start TLS server on port " << port_serverLong_clientShort;
-        ASSERT_EQ(tlsClient_selfLong_frgnShort.start("localhost", port_serverLong_clientShort), NETWORKCLIENT_START_OK) << "Unable to connect TLS client to localhost on port " << port_serverLong_clientShort;
+        ASSERT_EQ(tlsServer_selfLong_frgnShort.start(port_serverLong_clientShort), SERVER_START_OK) << "Unable to start TLS server on port " << port_serverLong_clientShort;
+        ASSERT_EQ(tlsClient_selfLong_frgnShort.start("localhost", port_serverLong_clientShort), CLIENT_START_OK) << "Unable to connect TLS client to localhost on port " << port_serverLong_clientShort;
 
         // Get client ID
         vector<int> clientIds{tlsServer_selfLong_frgnShort.getClientIds()};
@@ -52,8 +52,8 @@ void Fragmentation_TlsConnection_Test_MsgTransfer::SetUp()
         ASSERT_NE(port_serverShort_clientLong, -1) << "No free port found";
 
         // Start TLS server and connect client
-        ASSERT_EQ(tlsServer_selfShort_frgnLong.start(port_serverShort_clientLong), NETWORKLISTENER_START_OK) << "Unable to start TLS server on port " << port_serverShort_clientLong;
-        ASSERT_EQ(tlsClient_selfShort_frgnLong.start("localhost", port_serverShort_clientLong), NETWORKCLIENT_START_OK) << "Unable to connect TLS client to localhost on port " << port_serverShort_clientLong;
+        ASSERT_EQ(tlsServer_selfShort_frgnLong.start(port_serverShort_clientLong), SERVER_START_OK) << "Unable to start TLS server on port " << port_serverShort_clientLong;
+        ASSERT_EQ(tlsClient_selfShort_frgnLong.start("localhost", port_serverShort_clientLong), CLIENT_START_OK) << "Unable to connect TLS client to localhost on port " << port_serverShort_clientLong;
 
         // Get client ID
         vector<int> clientIds{tlsServer_selfShort_frgnLong.getClientIds()};
@@ -69,8 +69,8 @@ void Fragmentation_TlsConnection_Test_MsgTransfer::SetUp()
         ASSERT_NE(port_serverShort_clientShort, -1) << "No free port found";
 
         // Start TLS server and connect client
-        ASSERT_EQ(tlsServer_selfShort_frgnShort.start(port_serverShort_clientShort), NETWORKLISTENER_START_OK) << "Unable to start TLS server on port " << port_serverShort_clientShort;
-        ASSERT_EQ(tlsClient_selfShort_frgnShort.start("localhost", port_serverShort_clientShort), NETWORKCLIENT_START_OK) << "Unable to connect TLS client to localhost on port " << port_serverShort_clientShort;
+        ASSERT_EQ(tlsServer_selfShort_frgnShort.start(port_serverShort_clientShort), SERVER_START_OK) << "Unable to start TLS server on port " << port_serverShort_clientShort;
+        ASSERT_EQ(tlsClient_selfShort_frgnShort.start("localhost", port_serverShort_clientShort), CLIENT_START_OK) << "Unable to connect TLS client to localhost on port " << port_serverShort_clientShort;
 
         // Get client ID
         vector<int> clientIds{tlsServer_selfShort_frgnShort.getClientIds()};

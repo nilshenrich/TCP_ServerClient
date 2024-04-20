@@ -1,5 +1,5 @@
 template <class SocketType, class SocketDeleter>
-int NetworkListener<SocketType, SocketDeleter>::start(
+int Server<SocketType, SocketDeleter>::start(
     const int port,
     const char *const pathToCaCert,
     const char *const pathToCert,
@@ -24,7 +24,7 @@ int NetworkListener<SocketType, SocketDeleter>::start(
         cerr << typeid(this).name() << "::" << __func__ << ": The port " << port << " couldn't be used" << endl;
 #endif // DEVELOP
 
-        return NETWORKLISTENER_ERROR_START_WRONG_PORT;
+        return SERVER_ERROR_START_WRONG_PORT;
     }
 
     // Initialize the listener and return error if it fails
@@ -44,7 +44,7 @@ int NetworkListener<SocketType, SocketDeleter>::start(
         // Stop the listener
         stop();
 
-        return NETWORKLISTENER_ERROR_START_CREATE_SOCKET;
+        return SERVER_ERROR_START_CREATE_SOCKET;
     }
 
     // Set options on the TCP socket for the listener to accept new connections.
@@ -60,7 +60,7 @@ int NetworkListener<SocketType, SocketDeleter>::start(
         // Stop the listener
         stop();
 
-        return NETWORKLISTENER_ERROR_START_SET_SOCKET_OPT;
+        return SERVER_ERROR_START_SET_SOCKET_OPT;
     }
 
     // Initialize the socket address for the listener.
@@ -80,7 +80,7 @@ int NetworkListener<SocketType, SocketDeleter>::start(
         // Stop the listener
         stop();
 
-        return NETWORKLISTENER_ERROR_START_BIND_PORT;
+        return SERVER_ERROR_START_BIND_PORT;
     }
 
     // Start listening on the TCP socket for the listener to accept new connections.
@@ -93,13 +93,13 @@ int NetworkListener<SocketType, SocketDeleter>::start(
         // Stop the listener
         stop();
 
-        return NETWORKLISTENER_ERROR_START_LISTENER;
+        return SERVER_ERROR_START_LISTENER;
     }
 
     // Start the thread to accept new connections
     if (accHandler.joinable())
-        throw NetworkListener_error("Start listener thread failed: Thread is already running"s);
-    accHandler = thread{&NetworkListener::listenerAccept, this};
+        throw Server_error("Start listener thread failed: Thread is already running"s);
+    accHandler = thread{&Server::listenerAccept, this};
 
     // Listener is now running
     running = true;
@@ -112,7 +112,7 @@ int NetworkListener<SocketType, SocketDeleter>::start(
 }
 
 template <class SocketType, class SocketDeleter>
-void NetworkListener<SocketType, SocketDeleter>::stop()
+void Server<SocketType, SocketDeleter>::stop()
 {
     using namespace std;
 
@@ -141,7 +141,7 @@ void NetworkListener<SocketType, SocketDeleter>::stop()
 }
 
 template <class SocketType, class SocketDeleter>
-bool NetworkListener<SocketType, SocketDeleter>::sendMsg(const int clientId, const std::string &msg)
+bool Server<SocketType, SocketDeleter>::sendMsg(const int clientId, const std::string &msg)
 {
     using namespace std;
 
@@ -181,31 +181,31 @@ bool NetworkListener<SocketType, SocketDeleter>::sendMsg(const int clientId, con
 }
 
 template <class SocketType, class SocketDeleter>
-void NetworkListener<SocketType, SocketDeleter>::setWorkOnMessage(std::function<void(const int, const std::string)> worker)
+void Server<SocketType, SocketDeleter>::setWorkOnMessage(std::function<void(const int, const std::string)> worker)
 {
     workOnMessage = worker;
 }
 
 template <class SocketType, class SocketDeleter>
-void NetworkListener<SocketType, SocketDeleter>::setCreateForwardStream(std::function<std::ostream *(const int)> creator)
+void Server<SocketType, SocketDeleter>::setCreateForwardStream(std::function<std::ostream *(const int)> creator)
 {
     generateNewForwardStream = creator;
 }
 
 template <class SocketType, class SocketDeleter>
-void NetworkListener<SocketType, SocketDeleter>::setWorkOnEstablished(std::function<void(const int)> worker)
+void Server<SocketType, SocketDeleter>::setWorkOnEstablished(std::function<void(const int)> worker)
 {
     workOnEstablished = worker;
 }
 
 template <class SocketType, class SocketDeleter>
-void NetworkListener<SocketType, SocketDeleter>::setWorkOnClosed(std::function<void(const int)> worker)
+void Server<SocketType, SocketDeleter>::setWorkOnClosed(std::function<void(const int)> worker)
 {
     workOnClosed = worker;
 }
 
 template <class SocketType, class SocketDeleter>
-std::vector<int> NetworkListener<SocketType, SocketDeleter>::getAllClientIds() const
+std::vector<int> Server<SocketType, SocketDeleter>::getAllClientIds() const
 {
     using namespace std;
 
@@ -216,7 +216,7 @@ std::vector<int> NetworkListener<SocketType, SocketDeleter>::getAllClientIds() c
 }
 
 template <class SocketType, class SocketDeleter>
-std::string NetworkListener<SocketType, SocketDeleter>::getClientIp(const int clientId) const
+std::string Server<SocketType, SocketDeleter>::getClientIp(const int clientId) const
 {
     using namespace std;
 
@@ -236,7 +236,7 @@ std::string NetworkListener<SocketType, SocketDeleter>::getClientIp(const int cl
 }
 
 template <class SocketType, class SocketDeleter>
-void NetworkListener<SocketType, SocketDeleter>::listenerAccept()
+void Server<SocketType, SocketDeleter>::listenerAccept()
 {
     using namespace std;
 
@@ -271,7 +271,7 @@ void NetworkListener<SocketType, SocketDeleter>::listenerAccept()
 
         // When a new connection is established, the incoming messages of this connection should be read in a new process
         unique_ptr<RunningFlag> recRunning{new RunningFlag{true}};
-        thread rec_t{&NetworkListener::listenerReceive, this, newConnection, recRunning.get()};
+        thread rec_t{&Server::listenerReceive, this, newConnection, recRunning.get()};
 
         // Get all finished receive handlers
         vector<int> toRemove;
@@ -316,12 +316,12 @@ void NetworkListener<SocketType, SocketDeleter>::listenerAccept()
 }
 
 template <class SocketType, class SocketDeleter>
-void NetworkListener<SocketType, SocketDeleter>::listenerReceive(const int clientId, RunningFlag *const recRunning_p)
+void Server<SocketType, SocketDeleter>::listenerReceive(const int clientId, RunningFlag *const recRunning_p)
 {
     using namespace std;
 
     // Mark Thread as running (Add running flag and connect to handler)
-    NetworkListener_running_manager running_mgr{*recRunning_p};
+    Server_running_manager running_mgr{*recRunning_p};
 
     // Get connection from map
     SocketType *connection_p;
@@ -423,7 +423,7 @@ void NetworkListener<SocketType, SocketDeleter>::listenerReceive(const int clien
                 thread work_t{[this, clientId](RunningFlag *const workRunning_p, string buffer)
                               {
                                   // Mark Thread as running
-                                  NetworkListener_running_manager running_mgr{*workRunning_p};
+                                  Server_running_manager running_mgr{*workRunning_p};
 
                                   // Run code to handle the incoming message
                                   if (workOnMessage)
@@ -464,7 +464,7 @@ void NetworkListener<SocketType, SocketDeleter>::listenerReceive(const int clien
 }
 
 template <class SocketType, class SocketDeleter>
-bool NetworkListener<SocketType, SocketDeleter>::isRunning() const
+bool Server<SocketType, SocketDeleter>::isRunning() const
 {
     return running;
 }

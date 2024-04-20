@@ -1,5 +1,5 @@
 /**
- * @file NetworkListener.h
+ * @file Server.h
  * @author Nils Henrich
  * @brief Base framework for all classes that build a network server based on TCP.
  * This class contains no functionality, but serves as a base framework for the creation of stable servers based on TCP.
@@ -11,8 +11,8 @@
  *
  */
 
-#ifndef NETWORKLISTENER_H
-#define NETWORKLISTENER_H
+#ifndef SERVER_H
+#define SERVER_H
 
 #include <iostream>
 #include <string>
@@ -34,13 +34,13 @@
 namespace tcp
 {
     /**
-     * @brief Exception class for the NetworkListener class.
+     * @brief Exception class for the Server class.
      */
-    class NetworkListener_error : public std::exception
+    class Server_error : public std::exception
     {
     public:
-        NetworkListener_error(std::string msg = "unexpected server error") : msg{msg} {}
-        virtual ~NetworkListener_error() {}
+        Server_error(std::string msg = "unexpected server error") : msg{msg} {}
+        virtual ~Server_error() {}
 
         const char *what()
         {
@@ -51,11 +51,11 @@ namespace tcp
         const std::string msg;
 
         // Delete default constructor
-        NetworkListener_error() = delete;
+        Server_error() = delete;
 
         // Disallow copy
-        NetworkListener_error(const NetworkListener_error &) = delete;
-        NetworkListener_error &operator=(const NetworkListener_error &) = delete;
+        Server_error(const Server_error &) = delete;
+        Server_error &operator=(const Server_error &) = delete;
     };
 
     /**
@@ -63,11 +63,11 @@ namespace tcp
      *
      */
     using RunningFlag = std::atomic_bool;
-    class NetworkListener_running_manager
+    class Server_running_manager
     {
     public:
-        NetworkListener_running_manager(RunningFlag &flag) : flag{flag} {}
-        virtual ~NetworkListener_running_manager()
+        Server_running_manager(RunningFlag &flag) : flag{flag} {}
+        virtual ~Server_running_manager()
         {
             flag = false;
         }
@@ -76,30 +76,30 @@ namespace tcp
         RunningFlag &flag;
 
         // Delete default constructor
-        NetworkListener_running_manager() = delete;
+        Server_running_manager() = delete;
 
         // Disallow copy
-        NetworkListener_running_manager(const NetworkListener_running_manager &) = delete;
-        NetworkListener_running_manager &operator=(const NetworkListener_running_manager &) = delete;
+        Server_running_manager(const Server_running_manager &) = delete;
+        Server_running_manager &operator=(const Server_running_manager &) = delete;
     };
 
     /**
-     * @brief Template class for the NetworkListener class.
+     * @brief Template class for the Server class.
      * A usable server class must be derived from this class with specific socket type (int for unencrypted TCP, SSL for TLS).
      *
      * @param SocketType
      * @param SocketDeleter
      */
     template <class SocketType, class SocketDeleter = std::default_delete<SocketType>>
-    class NetworkListener
+    class Server
     {
     public:
         /**
          * @brief Constructor for continuous stream forwarding
          */
-        NetworkListener() : DELIMITER_FOR_FRAGMENTATION{0},
-                            MAXIMUM_MESSAGE_LENGTH_FOR_FRAGMENTATION{0},
-                            MESSAGE_FRAGMENTATION_ENABLED{false} {}
+        Server() : DELIMITER_FOR_FRAGMENTATION{0},
+                   MAXIMUM_MESSAGE_LENGTH_FOR_FRAGMENTATION{0},
+                   MESSAGE_FRAGMENTATION_ENABLED{false} {}
 
         /**
          * @brief Constructor for fragmented messages
@@ -107,25 +107,25 @@ namespace tcp
          * @param delimiter     Character to split messages on
          * @param messageMaxLen Maximum message length
          */
-        NetworkListener(char delimiter, size_t messageMaxLen) : DELIMITER_FOR_FRAGMENTATION{delimiter},
-                                                                MAXIMUM_MESSAGE_LENGTH_FOR_FRAGMENTATION{messageMaxLen},
-                                                                MESSAGE_FRAGMENTATION_ENABLED{true} {}
+        Server(char delimiter, size_t messageMaxLen) : DELIMITER_FOR_FRAGMENTATION{delimiter},
+                                                       MAXIMUM_MESSAGE_LENGTH_FOR_FRAGMENTATION{messageMaxLen},
+                                                       MESSAGE_FRAGMENTATION_ENABLED{true} {}
 
         /**
          * @brief Destructor
          */
-        virtual ~NetworkListener() {}
+        virtual ~Server() {}
 
         /**
          * @brief Starts the listener.
-         * If listener was started successfully (return value NETWORKLISTENER_START_OK), the listener can accept new connections and send and receive data.
+         * If listener was started successfully (return value SERVER_START_OK), the listener can accept new connections and send and receive data.
          * If encryption should be used, the server must be started with the correct path to the CA certificate and the correct path to the certificate and key file.
          *
          * @param port
          * @param pathToCaCert
          * @param pathToCert
          * @param pathToPrivKey
-         * @return int (NETWORKLISTENER_START_OK if successful, see NetworkListenerDefines.h for other return values)
+         * @return int (SERVER_START_OK if successful, see ServerDefines.h for other return values)
          */
         int start(const int port,
                   const char *const pathToCaCert = nullptr,
@@ -311,14 +311,14 @@ namespace tcp
         const bool MESSAGE_FRAGMENTATION_ENABLED;
 
         // Disallow copy
-        NetworkListener(const NetworkListener &) = delete;
-        NetworkListener &operator=(const NetworkListener &) = delete;
+        Server(const Server &) = delete;
+        Server &operator=(const Server &) = delete;
     };
 
     // ============================== Implementation of non-abstract methods. ==============================
     // ====================== Must be in header file because of the template class. =======================
 
-#include "NetworkListener.tpp"
+#include "Server.tpp"
 }
 
-#endif // NETWORKLISTENER_H
+#endif // SERVER_H

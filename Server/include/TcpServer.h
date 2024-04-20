@@ -14,11 +14,11 @@
 
 #include <limits>
 
-#include "NetworkListener.h"
+#include "Server.h"
 
 namespace tcp
 {
-   class TcpServer : public NetworkListener<int>
+   class TcpServer : public Server<int>
    {
    public:
       /**
