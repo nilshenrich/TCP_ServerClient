@@ -3,6 +3,10 @@
 # Get directory of this script
 currentDir=$(dirname $(readlink -f $0))
 
+# Create all keys
+cd $currentDir/..
+./TlsCreateCertFiles.sh
+
 run_gtest_tests() {
     tests=$1
     output=$2
