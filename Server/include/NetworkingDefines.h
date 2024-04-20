@@ -12,7 +12,7 @@
 #ifndef TLSSERVERDEFINES_H_INCLUDED
 #define TLSSERVERDEFINES_H_INCLUDED
 
-namespace networking
+namespace tcp
 {
     enum : int
     {

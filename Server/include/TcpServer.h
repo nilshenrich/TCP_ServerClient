@@ -16,7 +16,7 @@
 
 #include "NetworkListener.h"
 
-namespace networking
+namespace tcp
 {
    class TcpServer : public NetworkListener<int>
    {

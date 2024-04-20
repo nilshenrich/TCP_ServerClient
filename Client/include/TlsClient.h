@@ -6,7 +6,7 @@
 
 #include "NetworkClient.h"
 
-namespace networking
+namespace tcp
 {
     /**
      * @brief Deleter for TLS object

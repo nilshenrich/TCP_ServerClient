@@ -78,7 +78,7 @@ namespace TestApi
         void workOnClosed(const int tlsClientId);
 
         // TLS server
-        networking::TlsServer tlsServer;
+        tcp::TlsServer tlsServer;
 
         // Buffered messages
         std::vector<MessageFromClient> bufferedMsg;
@@ -143,7 +143,7 @@ namespace TestApi
         void workOnClosed(const int tlsClientId);
 
         // TLS server
-        networking::TlsServer tlsServer;
+        tcp::TlsServer tlsServer;
 
         /**
          * @brief Generate an output stream to a string for each client

@@ -12,7 +12,7 @@
 #ifndef NETWORKINGDEFINES_H_INCLUDED
 #define NETWORKINGDEFINES_H_INCLUDED
 
-namespace networking
+namespace tcp
 {
     enum : int
     {

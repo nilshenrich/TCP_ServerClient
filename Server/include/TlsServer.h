@@ -17,7 +17,7 @@
 
 #include "NetworkListener.h"
 
-namespace networking
+namespace tcp
 {
    // Deleter for SSL objects
    struct NetworkListener_SSL_Deleter

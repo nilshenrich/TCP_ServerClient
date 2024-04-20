@@ -31,7 +31,7 @@
 
 #include "NetworkingDefines.h"
 
-namespace networking
+namespace tcp
 {
     /**
      * @brief Exception class for the NetworkListener class.
@@ -39,7 +39,7 @@ namespace networking
     class NetworkListener_error : public std::exception
     {
     public:
-        NetworkListener_error(std::string msg = "unexpected networking error") : msg{msg} {}
+        NetworkListener_error(std::string msg = "unexpected server error") : msg{msg} {}
         virtual ~NetworkListener_error() {}
 
         const char *what()

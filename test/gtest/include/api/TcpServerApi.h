@@ -78,7 +78,7 @@ namespace TestApi
         void workOnClosed(const int tcpClientId);
 
         // TCP server
-        networking::TcpServer tcpServer;
+        tcp::TcpServer tcpServer;
 
         // Buffered messages
         std::vector<MessageFromClient> bufferedMsg;
@@ -143,7 +143,7 @@ namespace TestApi
         void workOnClosed(const int tcpClientId);
 
         // TCP server
-        networking::TcpServer tcpServer;
+        tcp::TcpServer tcpServer;
 
         /**
          * @brief Generate an output stream to a string for each client

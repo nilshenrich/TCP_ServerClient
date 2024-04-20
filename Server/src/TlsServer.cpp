@@ -1,6 +1,6 @@
 #include "TlsServer.h"
 
-using namespace networking;
+using namespace tcp;
 using namespace std;
 
 TlsServer::TlsServer() : NetworkListener{} {}

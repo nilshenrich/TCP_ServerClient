@@ -31,7 +31,7 @@
 
 #include "NetworkingDefines.h"
 
-namespace networking
+namespace tcp
 {
     /**
      * @brief Stream that actually does nothing
@@ -51,7 +51,7 @@ namespace networking
     class NetworkClient_error : public std::exception
     {
     public:
-        NetworkClient_error(std::string msg = "unexpected networking error") : msg{msg} {}
+        NetworkClient_error(std::string msg = "unexpected client error") : msg{msg} {}
         virtual ~NetworkClient_error() {}
 
         const char *what()

@@ -5,7 +5,7 @@
 
 #include "NetworkClient.h"
 
-namespace networking
+namespace tcp
 {
     class TcpClient : public NetworkClient<int>
     {

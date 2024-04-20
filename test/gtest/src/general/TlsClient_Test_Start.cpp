@@ -2,7 +2,7 @@
 
 using namespace std;
 using namespace Test;
-using namespace networking;
+using namespace tcp;
 
 General_TlsClient_Test_Start::General_TlsClient_Test_Start() {}
 General_TlsClient_Test_Start::~General_TlsClient_Test_Start() {}

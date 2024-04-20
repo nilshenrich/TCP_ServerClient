@@ -55,7 +55,7 @@ namespace TestApi
         void workOnMessage(const std::string tlsMsgFromServer);
 
         // TCP client
-        networking::TlsClient tlsClient;
+        tcp::TlsClient tlsClient;
 
         // Buffered messages
         std::vector<std::string> bufferedMsg;
@@ -99,7 +99,7 @@ namespace TestApi
 
     private:
         // TCP client
-        networking::TlsClient tlsClient;
+        tcp::TlsClient tlsClient;
 
         // Buffered messages
         std::ostringstream bufferedMsg_os{std::ios_base::ate};

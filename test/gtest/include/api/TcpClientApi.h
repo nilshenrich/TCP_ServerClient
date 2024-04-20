@@ -56,7 +56,7 @@ namespace TestApi
         void workOnMessage(const std::string tcpMsgFromServer);
 
         // TCP client
-        networking::TcpClient tcpClient;
+        tcp::TcpClient tcpClient;
 
         // Buffered messages
         std::vector<std::string> bufferedMsg;
@@ -100,7 +100,7 @@ namespace TestApi
 
     private:
         // TCP client
-        networking::TcpClient tcpClient;
+        tcp::TcpClient tcpClient;
 
         // Buffered message
         std::ostringstream bufferedMsg_os{std::ios_base::ate};

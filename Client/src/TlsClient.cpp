@@ -1,7 +1,7 @@
 #include "TlsClient.h"
 
 using namespace std;
-using namespace networking;
+using namespace tcp;
 
 TlsClient::TlsClient(std::ostream &os) : NetworkClient(os) {}
 TlsClient::TlsClient(char delimiter, size_t messageMaxLen) : NetworkClient(delimiter, messageMaxLen) {}

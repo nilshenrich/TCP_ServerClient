@@ -2,7 +2,7 @@
 
 using namespace std;
 using namespace Test;
-using namespace networking;
+using namespace tcp;
 
 Continuous_TcpServer_Test_ManyClients::Continuous_TcpServer_Test_ManyClients() {}
 Continuous_TcpServer_Test_ManyClients::~Continuous_TcpServer_Test_ManyClients() {}

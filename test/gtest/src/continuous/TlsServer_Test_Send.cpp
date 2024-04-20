@@ -2,7 +2,7 @@
 
 using namespace std;
 using namespace Test;
-using namespace networking;
+using namespace tcp;
 
 Continuous_TlsServer_Test_Send::Continuous_TlsServer_Test_Send() {}
 Continuous_TlsServer_Test_Send::~Continuous_TlsServer_Test_Send() {}

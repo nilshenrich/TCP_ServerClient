@@ -1,6 +1,6 @@
 #include "TcpServer.h"
 
-using namespace networking;
+using namespace tcp;
 using namespace std;
 
 TcpServer::TcpServer() : NetworkListener{} {}
