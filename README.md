@@ -256,7 +256,7 @@ The following methods are the same for all kinds of servers (TCP or TLS in fragm
 
 1. start():
 
-    The **start**-method is used to start a TCP or TLS listener. When this method returns 0, the listener runs in the background. If the return value is other that 0, please see [NetworkingDefines.h](include/NetworkingDefines.h) for definition of error codes.\
+    The **start**-method is used to start a TCP or TLS listener. When this method returns 0, the listener runs in the background. If the return value is other that 0, please see [Defines.h](include/Defines.h) for definition of error codes.\
     If your class derived from both **TcpServer** and **TlsServer**, the class name must be specified when calling **start()**:
 
     ```cpp
@@ -350,7 +350,7 @@ This function can be linked to client similarly to server via standalone, member
 
 1. start():
 
-    The **start**-method is used to start a TCP or TLS client. When this method returns 0, the client runs in the background. If the return value is other that 0, please see [NetworkingDefines.h](include/NetworkingDefines.h) for definition of error codes.\
+    The **start**-method is used to start a TCP or TLS client. When this method returns 0, the client runs in the background. If the return value is other that 0, please see [Defines.h](include/Defines.h) for definition of error codes.\
     If your class derived from both **TcpClient** and **TlsClient**, the class name must be specified when calling **start()**:
 
     ```cpp

@@ -6,7 +6,7 @@ currentDir=$(dirname $(readlink -f $0))
 run_gtest_tests() {
     tests=$1
     output=$2
-    ./networktester --gtest_filter=$tests --gtest_output=json:$output
+    ./test --gtest_filter=$tests --gtest_output=json:$output
 }
 
 # Test case scopes

@@ -1,5 +1,5 @@
 /**
- * @file NetworkingDefines.h
+ * @file Defines.h
  * @author Nils Henrich
  * @brief Basic definitions for the network listener.
  * @version 1.0
@@ -9,8 +9,8 @@
  *
  */
 
-#ifndef TLSSERVERDEFINES_H_INCLUDED
-#define TLSSERVERDEFINES_H_INCLUDED
+#ifndef SERVERDEFINES_H_INCLUDED
+#define SERVERDEFINES_H_INCLUDED
 
 namespace tcp
 {
@@ -32,4 +32,4 @@ namespace tcp
     };
 }
 
-#endif // TLSSERVERDEFINES_H_INCLUDED
+#endif // SERVERDEFINES_H_INCLUDED

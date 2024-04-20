@@ -29,7 +29,7 @@
 #include <netdb.h>
 #include <sys/socket.h>
 
-#include "NetworkingDefines.h"
+#include "Defines.h"
 
 namespace tcp
 {

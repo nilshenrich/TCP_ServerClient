@@ -1,5 +1,5 @@
 /**
- * @file NetworkingDefines.h
+ * @file Defines.h
  * @author Nils Henrich
  * @brief Basic definitions for the network client
  * @version 1.0
@@ -9,8 +9,8 @@
  *
  */
 
-#ifndef NETWORKINGDEFINES_H_INCLUDED
-#define NETWORKINGDEFINES_H_INCLUDED
+#ifndef CLIENTDEFINES_H_INCLUDED
+#define CLIENTDEFINES_H_INCLUDED
 
 namespace tcp
 {
@@ -32,4 +32,4 @@ namespace tcp
     };
 }
 
-#endif // NETWORKINGDEFINES_H_INCLUDED
+#endif // CLIENTDEFINES_H_INCLUDED

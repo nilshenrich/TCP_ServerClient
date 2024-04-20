@@ -6,32 +6,32 @@
 # Minimum cmake version required is 3.10
 cmake_minimum_required(VERSION 3.10)
 
-# Project name: networktester
-project(networktester)
+# Project name: test
+project(test)
 
 # Include directories
-include_directories(include include/api ../NetworkListener/include ../NetworkClient/include)
+include_directories(include include/api ../../Server/include ../../Client/include)
 
 # Add source files (All files in src folder)
 file(GLOB sourcefiles
     "src/*.cpp"
     "src/*/*.cpp"
-    "../NetworkListener/src/*.cpp"
-    "../NetworkClient/src/*.cpp")
-add_executable(networktester ${sourcefiles})
+    "../../Server/src/*.cpp"
+    "../../Client/src/*.cpp")
+add_executable(test ${sourcefiles})
 
 # Set compiler flags
-target_compile_options(networktester PRIVATE -fexceptions -Wall -g -Og
+target_compile_options(test PRIVATE -fexceptions -Wall -g -Og
     $<$<CONFIG:DEBUG>: -DDEVELOP>)
 
 # Add libraries
-target_link_libraries(networktester
+target_link_libraries(test
     -pthread
     -lgtest
     -lcrypto
     -lssl)
 
 # Use C++17 standard
-set_target_properties(networktester PROPERTIES
+set_target_properties(test PROPERTIES
     CXX_STANDARD 17
     CMAKE_CXX_STANDARD_REQUIRED True)
