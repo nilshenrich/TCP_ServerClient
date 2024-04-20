@@ -76,6 +76,22 @@ For the hardware I'm not giving any limitations. It is usable on low level hardw
     sudo make install
     ```
 
+5. [optional] Fix shared library dependencies
+
+    If you get the following error message when running an application:
+
+    ```console
+    error while loading shared libraries: libds18b20.so.1: cannot open shared object file: No such file or directory
+    ```
+
+    running the following command can solve it:
+
+    ```console
+    sudo /sbin/ldconfig
+    ```
+
+    [see details](https://itsfoss.com/solve-open-shared-object-file-quick-tip/)
+
 ## Usage
 
 To see a basci example that shows you all functionality, please build and run the [example](example) project:
@@ -106,6 +122,17 @@ To see a basci example that shows you all functionality, please build and run th
     ```console
     ./Client
     ```
+
+The following linker flags are mandatory to be set to tell the system what libraries to use:
+
+* **-lTcpServer**   if the TCP server is used
+* **-lTcpClient**   if the TCP client is used
+* **-lTlsServer**   if the TLS server is used
+* **-lTlsClient**   if the TLS client is used
+* **-lcrypto**      if the TLS encryption is used
+* **-lcrypt**       if the TLS encryption is used
+* **-lssl**         if the TLS encryption is used
+* **-pthread**      always needed
 
 ### Message modes
 
@@ -324,8 +351,10 @@ The following examples are done for a TCP client, but they can be used for a TLS
 #### Create instance
 
 ```cpp
+myStream ofstream("MyFile.txt");
+
 TcpClient client; // Constructor with no arguments gives a client in continuous mode forwarding to stdout
-TcpClient client{&fstream("MyFile.txt")}; // Constructor with stream argument gives a client in continuous mode forwarding to a file
+TcpClient client{myStream}; // Constructor with stream argument gives a client in continuous mode forwarding to a file
 TcpClient client{'|'}; // Constructor with delimiter argument gives a client in fragmented mode
 TcpClient client{'|', 4096}; // In fragmented mode, the maximum message length (for sending and receiving) can be set
 ```

@@ -13,8 +13,8 @@
 #include <chrono>
 #include <thread>
 
-#include "TcpClient.h"
-#include "TlsClient.h"
+#include "TcpClient/TcpClient.h"
+#include "TcpClient/TlsClient.h"
 
 // Define worker methods
 void tcp_fragmented_workOnMessage(::std::string msg) { ::std::cout << "Fragmented message received from TCP server: " << msg << ::std::endl; }
@@ -28,15 +28,13 @@ int main()
     {
         // Create client instances
         ::tcp::TcpClient tcpClient_fragmented{'\n'}; // newline as delimiter
-        ::tcp::TcpClient tcpClient_continuous;
+        ::tcp::TcpClient tcpClient_continuous{tcp_continuous_stream};
         ::tcp::TlsClient tlsClient_fragmented{'\n'}; // newline as delimiter
-        ::tcp::TlsClient tlsClient_continuous;
+        ::tcp::TlsClient tlsClient_continuous{tls_continuous_stream};
 
         // Link all worker methods and forwarding streams
         tcpClient_fragmented.setWorkOnMessage(tcp_fragmented_workOnMessage);
-        tcpClient_fragmented.setForwardStream(&tcp_continuous_stream);
         tlsClient_fragmented.setWorkOnMessage(tls_fragmented_workOnMessage);
-        tlsClient_fragmented.setForwardStream(&tls_continuous_stream);
 
         // Get user input
         ::std::cout << "What mode shall be used to send messages?" << ::std::endl
@@ -46,12 +44,6 @@ int main()
         char decision;
         ::std::cin >> decision;
 
-        // stop all clients
-        tcpClient_fragmented.stop();
-        tcpClient_continuous.stop();
-        tlsClient_fragmented.stop();
-        tlsClient_continuous.stop();
-
         // Start clients
         switch (decision)
         {
@@ -59,18 +51,18 @@ int main()
         case 'C':
             tcpClient_continuous.start("localhost", 8082);
             tlsClient_continuous.start("localhost", 8084, "../keys/ca/ca_cert.pem", "../keys/client/client_cert.pem", "../keys/client/client_key.pem");
-            this_thread::sleep_for(50ms); // Wait a short time for connection to be established
-            tcpClient.sendMsg("Hello TCP server! - forwarding mode");
-            tlsClient.sendMsg("Hello TLS server! - forwarding mode");
+            ::std::this_thread::sleep_for(::std::chrono::duration<double, ::std::milli>(50)); // Wait a short time for connection to be established
+            tcpClient_continuous.sendMsg("Hello TCP server! - continuous mode");
+            tlsClient_continuous.sendMsg("Hello TLS server! - continuous mode");
             break;
 
         case 'f':
         case 'F':
             tcpClient_fragmented.start("localhost", 8081);
             tlsClient_fragmented.start("localhost", 8083, "../keys/ca/ca_cert.pem", "../keys/client/client_cert.pem", "../keys/client/client_key.pem");
-            this_thread::sleep_for(50ms); // Wait a short time for connection to be established
-            tcpClient.sendMsg("Hello TCP server! - fragmented mode");
-            tlsClient.sendMsg("Hello TLS server! - fragmented mode");
+            ::std::this_thread::sleep_for(::std::chrono::duration<double, ::std::milli>(50)); // Wait a short time for connection to be established
+            tcpClient_fragmented.sendMsg("Hello TCP server! - fragmented mode");
+            tlsClient_fragmented.sendMsg("Hello TLS server! - fragmented mode");
             break;
 
         default:
