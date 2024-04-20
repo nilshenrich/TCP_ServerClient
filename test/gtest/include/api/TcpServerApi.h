@@ -85,11 +85,11 @@ namespace TestApi
         std::mutex bufferedMsg_m;
     };
 
-    class TcpServerApi_forwarding
+    class TcpServerApi_continuous
     {
     public:
-        TcpServerApi_forwarding();
-        virtual ~TcpServerApi_forwarding();
+        TcpServerApi_continuous();
+        virtual ~TcpServerApi_continuous();
 
         /**
          * @brief Start TCP server
@@ -151,7 +151,7 @@ namespace TestApi
          * @param clientId
          * @return std::ostringstream*
          */
-        std::ostringstream *generateForwardingStream(int clientId);
+        std::ostringstream *generateContinuousStream(int clientId);
 
         // Buffered messages
         std::map<int, std::ostringstream *> bufferedMsg;

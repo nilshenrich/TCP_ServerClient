@@ -1,13 +1,13 @@
-#include "forwarding/TlsClient_Test_Send.h"
+#include "continuous/TlsClient_Test_Send.h"
 
 using namespace std;
 using namespace Test;
 using namespace networking;
 
-Forwarding_TlsClient_Test_Send::Forwarding_TlsClient_Test_Send() {}
-Forwarding_TlsClient_Test_Send::~Forwarding_TlsClient_Test_Send() {}
+Continuous_TlsClient_Test_Send::Continuous_TlsClient_Test_Send() {}
+Continuous_TlsClient_Test_Send::~Continuous_TlsClient_Test_Send() {}
 
-void Forwarding_TlsClient_Test_Send::SetUp()
+void Continuous_TlsClient_Test_Send::SetUp()
 {
     // Get free TLS port
     port = HelperFunctions::getFreePort();
@@ -20,7 +20,7 @@ void Forwarding_TlsClient_Test_Send::SetUp()
     return;
 }
 
-void Forwarding_TlsClient_Test_Send::TearDown()
+void Continuous_TlsClient_Test_Send::TearDown()
 {
     // Stop TLS server and client
     tlsClient.stop();
@@ -37,7 +37,7 @@ void Forwarding_TlsClient_Test_Send::TearDown()
 // Steps:      Try to send message to server that has stopped running immediately before
 // Exp Result: Message is not sent
 // ====================================================================================================================
-TEST_F(Forwarding_TlsClient_Test_Send, NegTest_ServerNotRunning)
+TEST_F(Continuous_TlsClient_Test_Send, NegTest_ServerNotRunning)
 {
     // Stop TLS server
     tlsServer.stop();
@@ -58,7 +58,7 @@ TEST_F(Forwarding_TlsClient_Test_Send, NegTest_ServerNotRunning)
 // Steps:      Try to send message to server while client is not running
 // Exp Result: Message is not sent
 // ====================================================================================================================
-TEST_F(Forwarding_TlsClient_Test_Send, NegTest_ClientNotRunning)
+TEST_F(Continuous_TlsClient_Test_Send, NegTest_ClientNotRunning)
 {
     // Stop TLS client
     tlsClient.stop();

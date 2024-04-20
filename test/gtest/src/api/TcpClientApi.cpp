@@ -9,8 +9,8 @@ TcpClientApi_fragmentation::TcpClientApi_fragmentation(size_t messageMaxLen) : t
     tcpClient.setWorkOnMessage(bind(&TcpClientApi_fragmentation::workOnMessage, this, placeholders::_1));
 }
 TcpClientApi_fragmentation::~TcpClientApi_fragmentation() {}
-TcpClientApi_forwarding::TcpClientApi_forwarding() : tcpClient{bufferedMsg_os} {}
-TcpClientApi_forwarding::~TcpClientApi_forwarding() {}
+TcpClientApi_continuous::TcpClientApi_continuous() : tcpClient{bufferedMsg_os} {}
+TcpClientApi_continuous::~TcpClientApi_continuous() {}
 
 int TcpClientApi_fragmentation::start(const string &ip, const int port)
 {
@@ -43,25 +43,25 @@ void TcpClientApi_fragmentation::workOnMessage(const string tcpMsgFromServer)
     return;
 }
 
-int TcpClientApi_forwarding::start(const string &ip, const int port)
+int TcpClientApi_continuous::start(const string &ip, const int port)
 {
     int start{tcpClient.start(ip, port)};
     this_thread::sleep_for(TestConstants::WAITFOR_CONNECT_TCP);
     return start;
 }
 
-void TcpClientApi_forwarding::stop()
+void TcpClientApi_continuous::stop()
 {
     tcpClient.stop();
     return;
 }
 
-bool TcpClientApi_forwarding::sendMsg(const string &tcpMsg)
+bool TcpClientApi_continuous::sendMsg(const string &tcpMsg)
 {
     return tcpClient.sendMsg(tcpMsg);
 }
 
-string TcpClientApi_forwarding::getBufferedMsg()
+string TcpClientApi_continuous::getBufferedMsg()
 {
     return bufferedMsg_os.str();
 }

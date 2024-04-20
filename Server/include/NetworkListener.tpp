@@ -332,7 +332,7 @@ void NetworkListener<SocketType, SocketDeleter>::listenerReceive(const int clien
         connection_p = activeConnections[clientId].get();
     }
 
-    // Create forwarding stream for this connection
+    // Create continuous stream for this connection
     if (generateNewForwardStream)
         forwardStreams[clientId] = unique_ptr<ostream>{generateNewForwardStream(clientId)};
 
@@ -382,7 +382,7 @@ void NetworkListener<SocketType, SocketDeleter>::listenerReceive(const int clien
             for (auto &it : workHandlers)
                 it.join();
 
-            // Remove forwarding stream
+            // Remove continuous stream
             if (forwardStreams.find(clientId) != forwardStreams.end())
                 forwardStreams.erase(clientId);
 

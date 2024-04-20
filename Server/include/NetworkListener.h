@@ -155,7 +155,7 @@ namespace networking
         void setWorkOnMessage(std::function<void(const int, const std::string)> worker);
 
         /**
-         * @brief Set creator creating a forwarding out stream for each established connection in forwarding mode
+         * @brief Set creator creating a forwarding out stream for each established connection in continuous mode
          *
          * @param creator
          */

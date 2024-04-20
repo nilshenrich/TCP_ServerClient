@@ -1,5 +1,5 @@
-#ifndef FORWARDING_TCP_SERVER_TEST_SEND_H_
-#define FORWARDING_TCP_SERVER_TEST_SEND_H_
+#ifndef CONTINUOUS_TCP_SERVER_TEST_SEND_H_
+#define CONTINUOUS_TCP_SERVER_TEST_SEND_H_
 
 #include <gtest/gtest.h>
 #include <chrono>
@@ -13,19 +13,19 @@
 
 namespace Test
 {
-    class Forwarding_TcpServer_Test_Send : public testing::Test
+    class Continuous_TcpServer_Test_Send : public testing::Test
     {
     public:
-        Forwarding_TcpServer_Test_Send();
-        virtual ~Forwarding_TcpServer_Test_Send();
+        Continuous_TcpServer_Test_Send();
+        virtual ~Continuous_TcpServer_Test_Send();
 
     protected:
         void SetUp() override;
         void TearDown() override;
 
         // TCP server and Client
-        TestApi::TcpServerApi_forwarding tcpServer{};
-        TestApi::TcpClientApi_forwarding tcpClient{};
+        TestApi::TcpServerApi_continuous tcpServer{};
+        TestApi::TcpClientApi_continuous tcpClient{};
 
         // Port to use
         int port;
@@ -35,4 +35,4 @@ namespace Test
     };
 }
 
-#endif // FORWARDING_TCP_SERVER_TEST_SEND_H_
+#endif // CONTINUOUS_TCP_SERVER_TEST_SEND_H_

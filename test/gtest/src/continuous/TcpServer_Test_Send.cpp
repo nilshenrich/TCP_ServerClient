@@ -1,13 +1,13 @@
-#include "forwarding/TcpServer_Test_Send.h"
+#include "continuous/TcpServer_Test_Send.h"
 
 using namespace std;
 using namespace Test;
 using namespace networking;
 
-Forwarding_TcpServer_Test_Send::Forwarding_TcpServer_Test_Send() {}
-Forwarding_TcpServer_Test_Send::~Forwarding_TcpServer_Test_Send() {}
+Continuous_TcpServer_Test_Send::Continuous_TcpServer_Test_Send() {}
+Continuous_TcpServer_Test_Send::~Continuous_TcpServer_Test_Send() {}
 
-void Forwarding_TcpServer_Test_Send::SetUp()
+void Continuous_TcpServer_Test_Send::SetUp()
 {
     // Get free TCP port
     port = HelperFunctions::getFreePort();
@@ -25,7 +25,7 @@ void Forwarding_TcpServer_Test_Send::SetUp()
     return;
 }
 
-void Forwarding_TcpServer_Test_Send::TearDown()
+void Continuous_TcpServer_Test_Send::TearDown()
 {
     // Stop TCP server and client
     tcpClient.stop();
@@ -42,7 +42,7 @@ void Forwarding_TcpServer_Test_Send::TearDown()
 // Steps:      Try to send message to client that is not connected
 // Exp Result: Message is not sent
 // ====================================================================================================================
-TEST_F(Forwarding_TcpServer_Test_Send, NegTest_ClientNotConnected)
+TEST_F(Continuous_TcpServer_Test_Send, NegTest_ClientNotConnected)
 {
     // Send message to client that is not connected
     EXPECT_FALSE(tcpServer.sendMsg(clientId + 1, "Test message"));
@@ -59,7 +59,7 @@ TEST_F(Forwarding_TcpServer_Test_Send, NegTest_ClientNotConnected)
 // Steps:      Try to send message to client that is disconnected immediately before
 // Exp Result: Message is not sent
 // ====================================================================================================================
-TEST_F(Forwarding_TcpServer_Test_Send, NegTest_ClientDisconnectedBefore)
+TEST_F(Continuous_TcpServer_Test_Send, NegTest_ClientDisconnectedBefore)
 {
     // Disconnect client
     tcpClient.stop();
@@ -80,7 +80,7 @@ TEST_F(Forwarding_TcpServer_Test_Send, NegTest_ClientDisconnectedBefore)
 // Steps:      Try to send message to client while server is not running
 // Exp Result: Message is not sent
 // ====================================================================================================================
-TEST_F(Forwarding_TcpServer_Test_Send, NegTest_ServerNotRunning)
+TEST_F(Continuous_TcpServer_Test_Send, NegTest_ServerNotRunning)
 {
     // Stop TCP server
     tcpServer.stop();

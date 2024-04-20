@@ -11,13 +11,13 @@ TlsServerApi_fragmentation::TlsServerApi_fragmentation(size_t messageMaxLen) : t
     tlsServer.setWorkOnClosed(bind(&TlsServerApi_fragmentation::workOnClosed, this, placeholders::_1));
 }
 TlsServerApi_fragmentation::~TlsServerApi_fragmentation() {}
-TlsServerApi_forwarding::TlsServerApi_forwarding() : tlsServer{}
+TlsServerApi_continuous::TlsServerApi_continuous() : tlsServer{}
 {
-    tlsServer.setCreateForwardStream(bind(&TlsServerApi_forwarding::generateForwardingStream, this, placeholders::_1));
-    tlsServer.setWorkOnEstablished(bind(&TlsServerApi_forwarding::workOnEstablished, this, placeholders::_1));
-    tlsServer.setWorkOnClosed(bind(&TlsServerApi_forwarding::workOnClosed, this, placeholders::_1));
+    tlsServer.setCreateForwardStream(bind(&TlsServerApi_continuous::generateContinuousStream, this, placeholders::_1));
+    tlsServer.setWorkOnEstablished(bind(&TlsServerApi_continuous::workOnEstablished, this, placeholders::_1));
+    tlsServer.setWorkOnClosed(bind(&TlsServerApi_continuous::workOnClosed, this, placeholders::_1));
 }
-TlsServerApi_forwarding::~TlsServerApi_forwarding() {}
+TlsServerApi_continuous::~TlsServerApi_continuous() {}
 
 int TlsServerApi_fragmentation::start(const int port, const std::string pathToCaCert, const std::string pathToListenerCert, const std::string pathToListenerKey)
 {
@@ -55,22 +55,22 @@ void TlsServerApi_fragmentation::workOnEstablished(const int) {}
 
 void TlsServerApi_fragmentation::workOnClosed(const int) {}
 
-int TlsServerApi_forwarding::start(const int port, const std::string pathToCaCert, const std::string pathToListenerCert, const std::string pathToListenerKey)
+int TlsServerApi_continuous::start(const int port, const std::string pathToCaCert, const std::string pathToListenerCert, const std::string pathToListenerKey)
 {
     return tlsServer.start(port, pathToCaCert.c_str(), pathToListenerCert.c_str(), pathToListenerKey.c_str());
 }
 
-void TlsServerApi_forwarding::stop()
+void TlsServerApi_continuous::stop()
 {
     tlsServer.stop();
 }
 
-bool TlsServerApi_forwarding::sendMsg(const int tlsClientId, const string &tlsMsg)
+bool TlsServerApi_continuous::sendMsg(const int tlsClientId, const string &tlsMsg)
 {
     return tlsServer.sendMsg(tlsClientId, tlsMsg);
 }
 
-map<int, string> TlsServerApi_forwarding::getBufferedMsg()
+map<int, string> TlsServerApi_continuous::getBufferedMsg()
 {
     map<int, string> messages;
     for (auto &v : bufferedMsg)
@@ -83,16 +83,16 @@ map<int, string> TlsServerApi_forwarding::getBufferedMsg()
     return messages;
 }
 
-vector<int> TlsServerApi_forwarding::getClientIds()
+vector<int> TlsServerApi_continuous::getClientIds()
 {
     return tlsServer.getAllClientIds();
 }
 
-void TlsServerApi_forwarding::workOnEstablished(const int) {}
+void TlsServerApi_continuous::workOnEstablished(const int) {}
 
-void TlsServerApi_forwarding::workOnClosed(const int) {}
+void TlsServerApi_continuous::workOnClosed(const int) {}
 
-ostringstream *TlsServerApi_forwarding::generateForwardingStream(int clientId)
+ostringstream *TlsServerApi_continuous::generateContinuousStream(int clientId)
 {
     bufferedMsg[clientId] = new ostringstream;
     return bufferedMsg[clientId];

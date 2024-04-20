@@ -1,35 +1,35 @@
-#include "forwarding/TlsConnection_Test_MsgTransfer.h"
+#include "continuous/TcpConnection_Test_MsgTransfer.h"
 
 using namespace std;
 using namespace Test;
 using namespace networking;
 
-Forwarding_TlsConnection_Test_MsgTransfer::Forwarding_TlsConnection_Test_MsgTransfer() {}
-Forwarding_TlsConnection_Test_MsgTransfer::~Forwarding_TlsConnection_Test_MsgTransfer() {}
+Continuous_TcpConnection_Test_MsgTransfer::Continuous_TcpConnection_Test_MsgTransfer() {}
+Continuous_TcpConnection_Test_MsgTransfer::~Continuous_TcpConnection_Test_MsgTransfer() {}
 
-void Forwarding_TlsConnection_Test_MsgTransfer::SetUp()
+void Continuous_TcpConnection_Test_MsgTransfer::SetUp()
 {
-    // Get free TLS port
+    // Get free TCP port
     port = HelperFunctions::getFreePort();
     ASSERT_NE(port, -1) << "No free port found";
 
-    // Start TLS server and connect client
-    ASSERT_EQ(tlsServer.start(port), NETWORKLISTENER_START_OK) << "Unable to start TLS server on port " << port;
-    ASSERT_EQ(tlsClient.start("localhost", port), NETWORKCLIENT_START_OK) << "Unable to connect TLS client to localhost on port " << port;
+    // Start TCP server and connect client
+    ASSERT_EQ(tcpServer.start(port), NETWORKLISTENER_START_OK) << "Unable to start TCP server on port " << port;
+    ASSERT_EQ(tcpClient.start("localhost", port), NETWORKCLIENT_START_OK) << "Unable to connect TCP client to localhost on port " << port;
 
     // Get client ID
-    vector<int> clientIds{tlsServer.getClientIds()};
+    vector<int> clientIds{tcpServer.getClientIds()};
     ASSERT_EQ(clientIds.size(), 1);
     clientId = clientIds[0];
 
     return;
 }
 
-void Forwarding_TlsConnection_Test_MsgTransfer::TearDown()
+void Continuous_TcpConnection_Test_MsgTransfer::TearDown()
 {
-    // Stop TLS server and client
-    tlsClient.stop();
-    tlsServer.stop();
+    // Stop TCP server and client
+    tcpClient.stop();
+    tcpServer.stop();
 
     // Check if no pipe error occurred
     EXPECT_FALSE(HelperFunctions::getAndResetPipeError()) << "Pipe error occurred!";
@@ -42,16 +42,16 @@ void Forwarding_TlsConnection_Test_MsgTransfer::TearDown()
 // Steps:      Send normal message from client to server
 // Exp Result: Message received by server
 // ====================================================================================================================
-TEST_F(Forwarding_TlsConnection_Test_MsgTransfer, PosTest_ClientToServer_NormalMsg)
+TEST_F(Continuous_TcpConnection_Test_MsgTransfer, PosTest_ClientToServer_NormalMsg)
 {
     // Send message from client to server
     string msg{"Hello server!"};
-    EXPECT_TRUE(tlsClient.sendMsg(msg));
-    this_thread::sleep_for(TestConstants::WAITFOR_MSG_TLS);
+    EXPECT_TRUE(tcpClient.sendMsg(msg));
+    this_thread::sleep_for(TestConstants::WAITFOR_MSG_TCP);
 
     // Check if message received by server
     map<int, string> messagesExpected{{clientId, msg}};
-    EXPECT_EQ(tlsServer.getBufferedMsg(), messagesExpected);
+    EXPECT_EQ(tcpServer.getBufferedMsg(), messagesExpected);
 }
 
 // ====================================================================================================================
@@ -59,15 +59,15 @@ TEST_F(Forwarding_TlsConnection_Test_MsgTransfer, PosTest_ClientToServer_NormalM
 // Steps:      Send normal message from server to client
 // Exp Result: Message received by client
 // ====================================================================================================================
-TEST_F(Forwarding_TlsConnection_Test_MsgTransfer, PosTest_ServerToClient_NormalMsg)
+TEST_F(Continuous_TcpConnection_Test_MsgTransfer, PosTest_ServerToClient_NormalMsg)
 {
     // Send message from server to client
     string msg{"Hello client!"};
-    EXPECT_TRUE(tlsServer.sendMsg(clientId, msg));
-    this_thread::sleep_for(TestConstants::WAITFOR_MSG_TLS);
+    EXPECT_TRUE(tcpServer.sendMsg(clientId, msg));
+    this_thread::sleep_for(TestConstants::WAITFOR_MSG_TCP);
 
     // Check if message received by client
-    EXPECT_EQ(tlsClient.getBufferedMsg(), msg);
+    EXPECT_EQ(tcpClient.getBufferedMsg(), msg);
 }
 
 // ====================================================================================================================
@@ -75,7 +75,7 @@ TEST_F(Forwarding_TlsConnection_Test_MsgTransfer, PosTest_ServerToClient_NormalM
 // Steps:      Send long message from client to server (1000000)
 // Exp Result: Message received by server
 // ====================================================================================================================
-TEST_F(Forwarding_TlsConnection_Test_MsgTransfer, PosTest_ClientToServer_LongMsg)
+TEST_F(Continuous_TcpConnection_Test_MsgTransfer, PosTest_ClientToServer_LongMsg)
 {
     // Generate message with 1000000 elements of ASCII characters 33 - 126
     string msg;
@@ -83,12 +83,12 @@ TEST_F(Forwarding_TlsConnection_Test_MsgTransfer, PosTest_ClientToServer_LongMsg
         msg += static_cast<char>(i % 94 + 33);
 
     // Send message from client to server
-    EXPECT_TRUE(tlsClient.sendMsg(msg));
-    this_thread::sleep_for(TestConstants::WAITFOR_MSG_LONG_TLS);
+    EXPECT_TRUE(tcpClient.sendMsg(msg));
+    this_thread::sleep_for(TestConstants::WAITFOR_MSG_LONG_TCP);
 
     // Check if message received by server
     map<int, string> messagesExpected{{clientId, msg}};
-    EXPECT_EQ(tlsServer.getBufferedMsg(), messagesExpected);
+    EXPECT_EQ(tcpServer.getBufferedMsg(), messagesExpected);
 }
 
 // ====================================================================================================================
@@ -96,7 +96,7 @@ TEST_F(Forwarding_TlsConnection_Test_MsgTransfer, PosTest_ClientToServer_LongMsg
 // Steps:      Send long message from server to client (1000000)
 // Exp Result: Message received by client
 // ====================================================================================================================
-TEST_F(Forwarding_TlsConnection_Test_MsgTransfer, PosTest_ServerToClient_LongMsg)
+TEST_F(Continuous_TcpConnection_Test_MsgTransfer, PosTest_ServerToClient_LongMsg)
 {
     // Generate message with 1000000 elements of ASCII characters 33 - 126
     string msg;
@@ -104,9 +104,9 @@ TEST_F(Forwarding_TlsConnection_Test_MsgTransfer, PosTest_ServerToClient_LongMsg
         msg += static_cast<char>(i % 94 + 33);
 
     // Send message from server to client
-    EXPECT_TRUE(tlsServer.sendMsg(clientId, msg));
-    this_thread::sleep_for(TestConstants::WAITFOR_MSG_LONG_TLS);
+    EXPECT_TRUE(tcpServer.sendMsg(clientId, msg));
+    this_thread::sleep_for(TestConstants::WAITFOR_MSG_LONG_TCP);
 
     // Check if message received by client
-    EXPECT_EQ(tlsClient.getBufferedMsg(), msg);
+    EXPECT_EQ(tcpClient.getBufferedMsg(), msg);
 }

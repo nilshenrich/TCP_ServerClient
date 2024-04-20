@@ -62,11 +62,11 @@ namespace TestApi
         std::mutex bufferedMsg_m;
     };
 
-    class TlsClientApi_forwarding
+    class TlsClientApi_continuous
     {
     public:
-        TlsClientApi_forwarding();
-        virtual ~TlsClientApi_forwarding();
+        TlsClientApi_continuous();
+        virtual ~TlsClientApi_continuous();
 
         /**
          * @brief Connect to TLS server

@@ -63,11 +63,11 @@ namespace TestApi
         std::mutex bufferedMsg_m;
     };
 
-    class TcpClientApi_forwarding
+    class TcpClientApi_continuous
     {
     public:
-        TcpClientApi_forwarding();
-        virtual ~TcpClientApi_forwarding();
+        TcpClientApi_continuous();
+        virtual ~TcpClientApi_continuous();
 
         /**
          * @brief Connect to TCP server

@@ -1,13 +1,13 @@
-#include "forwarding/TcpClient_Test_Send.h"
+#include "continuous/TcpClient_Test_Send.h"
 
 using namespace std;
 using namespace Test;
 using namespace networking;
 
-Forwarding_TcpClient_Test_Send::Forwarding_TcpClient_Test_Send() {}
-Forwarding_TcpClient_Test_Send::~Forwarding_TcpClient_Test_Send() {}
+Continuous_TcpClient_Test_Send::Continuous_TcpClient_Test_Send() {}
+Continuous_TcpClient_Test_Send::~Continuous_TcpClient_Test_Send() {}
 
-void Forwarding_TcpClient_Test_Send::SetUp()
+void Continuous_TcpClient_Test_Send::SetUp()
 {
     // Get free TCP port
     port = HelperFunctions::getFreePort();
@@ -20,7 +20,7 @@ void Forwarding_TcpClient_Test_Send::SetUp()
     return;
 }
 
-void Forwarding_TcpClient_Test_Send::TearDown()
+void Continuous_TcpClient_Test_Send::TearDown()
 {
     // Stop TCP server and client
     tcpClient.stop();
@@ -37,7 +37,7 @@ void Forwarding_TcpClient_Test_Send::TearDown()
 // Steps:      Try to send message to server that has stopped running immediately before
 // Exp Result: Message is not sent
 // ====================================================================================================================
-TEST_F(Forwarding_TcpClient_Test_Send, NegTest_ServerNotRunning)
+TEST_F(Continuous_TcpClient_Test_Send, NegTest_ServerNotRunning)
 {
     // Stop TCP server
     tcpServer.stop();
@@ -58,7 +58,7 @@ TEST_F(Forwarding_TcpClient_Test_Send, NegTest_ServerNotRunning)
 // Steps:      Try to send message to server while client is not running
 // Exp Result: Message is not sent
 // ====================================================================================================================
-TEST_F(Forwarding_TcpClient_Test_Send, NegTest_ClientNotRunning)
+TEST_F(Continuous_TcpClient_Test_Send, NegTest_ClientNotRunning)
 {
     // Stop TCP client
     tcpClient.stop();

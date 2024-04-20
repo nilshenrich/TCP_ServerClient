@@ -85,11 +85,11 @@ namespace TestApi
         std::mutex bufferedMsg_m;
     };
 
-    class TlsServerApi_forwarding
+    class TlsServerApi_continuous
     {
     public:
-        TlsServerApi_forwarding();
-        virtual ~TlsServerApi_forwarding();
+        TlsServerApi_continuous();
+        virtual ~TlsServerApi_continuous();
 
         /**
          * @brief Start TLS server
@@ -151,7 +151,7 @@ namespace TestApi
          * @param clientId
          * @return std::ostringstream*
          */
-        std::ostringstream *generateForwardingStream(int clientId);
+        std::ostringstream *generateContinuousStream(int clientId);
 
         // Buffered messages
         std::map<int, std::ostringstream *> bufferedMsg;

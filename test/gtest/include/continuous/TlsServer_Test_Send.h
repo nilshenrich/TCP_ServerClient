@@ -1,5 +1,5 @@
-#ifndef FORWARDING_TLS_SERVER_TEST_SEND_H_
-#define FORWARDING_TLS_SERVER_TEST_SEND_H_
+#ifndef CONTINUOUS_TLS_SERVER_TEST_SEND_H_
+#define CONTINUOUS_TLS_SERVER_TEST_SEND_H_
 
 #include <gtest/gtest.h>
 #include <chrono>
@@ -13,19 +13,19 @@
 
 namespace Test
 {
-    class Forwarding_TlsServer_Test_Send : public testing::Test
+    class Continuous_TlsServer_Test_Send : public testing::Test
     {
     public:
-        Forwarding_TlsServer_Test_Send();
-        virtual ~Forwarding_TlsServer_Test_Send();
+        Continuous_TlsServer_Test_Send();
+        virtual ~Continuous_TlsServer_Test_Send();
 
     protected:
         void SetUp() override;
         void TearDown() override;
 
         // TLS server and Client
-        TestApi::TlsServerApi_forwarding tlsServer{};
-        TestApi::TlsClientApi_forwarding tlsClient{};
+        TestApi::TlsServerApi_continuous tlsServer{};
+        TestApi::TlsClientApi_continuous tlsClient{};
 
         // Port to use
         int port;
@@ -35,4 +35,4 @@ namespace Test
     };
 }
 
-#endif // FORWARDING_TLS_SERVER_TEST_SEND_H_
+#endif // CONTINUOUS_TLS_SERVER_TEST_SEND_H_

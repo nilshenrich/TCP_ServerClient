@@ -1,13 +1,13 @@
-#include "forwarding/TlsServer_Test_ManyClients.h"
+#include "continuous/TlsServer_Test_ManyClients.h"
 
 using namespace std;
 using namespace Test;
 using namespace networking;
 
-Forwarding_TlsServer_Test_ManyClients::Forwarding_TlsServer_Test_ManyClients() {}
-Forwarding_TlsServer_Test_ManyClients::~Forwarding_TlsServer_Test_ManyClients() {}
+Continuous_TlsServer_Test_ManyClients::Continuous_TlsServer_Test_ManyClients() {}
+Continuous_TlsServer_Test_ManyClients::~Continuous_TlsServer_Test_ManyClients() {}
 
-void Forwarding_TlsServer_Test_ManyClients::SetUp()
+void Continuous_TlsServer_Test_ManyClients::SetUp()
 {
     // Get free TLS port
     port = HelperFunctions::getFreePort();
@@ -19,7 +19,7 @@ void Forwarding_TlsServer_Test_ManyClients::SetUp()
     // Create and connect all TLS clients
     for (int i{0}; i < TestConstants::MANYCLIENTS_NUMBER; i += 1)
     {
-        unique_ptr<TestApi::TlsClientApi_forwarding> tlsClientNew{new TestApi::TlsClientApi_forwarding()};
+        unique_ptr<TestApi::TlsClientApi_continuous> tlsClientNew{new TestApi::TlsClientApi_continuous()};
         ASSERT_EQ(tlsClientNew->start("localhost", port), NETWORKCLIENT_START_OK);
 
         // Find out ID of newly connected client (The one, that is not added to clients collection yet)
@@ -38,7 +38,7 @@ void Forwarding_TlsServer_Test_ManyClients::SetUp()
     }
 }
 
-void Forwarding_TlsServer_Test_ManyClients::TearDown()
+void Continuous_TlsServer_Test_ManyClients::TearDown()
 {
     // Stop server and all clients
     for (auto &client : tlsClients)
@@ -56,7 +56,7 @@ void Forwarding_TlsServer_Test_ManyClients::TearDown()
 // Steps:      All clients send messages to server in single thread
 // Exp Result: All messages received (Order doesn't matter)
 // ====================================================================================================================
-TEST_F(Forwarding_TlsServer_Test_ManyClients, SendingClientsSingleThread)
+TEST_F(Continuous_TlsServer_Test_ManyClients, SendingClientsSingleThread)
 {
     // Create messages to send
     map<int, string> messages;
@@ -83,7 +83,7 @@ TEST_F(Forwarding_TlsServer_Test_ManyClients, SendingClientsSingleThread)
 // Steps:      Server sends messages to all clients in single thread
 // Exp Result: All messages received
 // ====================================================================================================================
-TEST_F(Forwarding_TlsServer_Test_ManyClients, SendingServerSingleThread)
+TEST_F(Continuous_TlsServer_Test_ManyClients, SendingServerSingleThread)
 {
     map<int, string> messages;
     for (auto &client : tlsClients)
@@ -106,7 +106,7 @@ TEST_F(Forwarding_TlsServer_Test_ManyClients, SendingServerSingleThread)
 // Steps:      All clients send messages to server in multiple threads
 // Exp Result: All messages received (Order doesn't matter)
 // ====================================================================================================================
-TEST_F(Forwarding_TlsServer_Test_ManyClients, SendingClientsMultipleThreads)
+TEST_F(Continuous_TlsServer_Test_ManyClients, SendingClientsMultipleThreads)
 {
     // Create messages to send
     map<int, string> messages;
@@ -137,7 +137,7 @@ TEST_F(Forwarding_TlsServer_Test_ManyClients, SendingClientsMultipleThreads)
 // Steps:      Server sends messages to all clients in multiple threads
 // Exp Result: All messages received
 // ====================================================================================================================
-TEST_F(Forwarding_TlsServer_Test_ManyClients, SendingServerMultipleThreads)
+TEST_F(Continuous_TlsServer_Test_ManyClients, SendingServerMultipleThreads)
 {
     map<int, string> messages;
     for (auto &client : tlsClients)

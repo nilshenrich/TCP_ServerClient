@@ -11,13 +11,13 @@ TcpServerApi_fragmentation::TcpServerApi_fragmentation(size_t messageMaxLen) : t
     tcpServer.setWorkOnClosed(bind(&TcpServerApi_fragmentation::workOnClosed, this, placeholders::_1));
 }
 TcpServerApi_fragmentation::~TcpServerApi_fragmentation() {}
-TcpServerApi_forwarding::TcpServerApi_forwarding() : tcpServer{}
+TcpServerApi_continuous::TcpServerApi_continuous() : tcpServer{}
 {
-    tcpServer.setCreateForwardStream(bind(&TcpServerApi_forwarding::generateForwardingStream, this, placeholders::_1));
-    tcpServer.setWorkOnEstablished(bind(&TcpServerApi_forwarding::workOnEstablished, this, placeholders::_1));
-    tcpServer.setWorkOnClosed(bind(&TcpServerApi_forwarding::workOnClosed, this, placeholders::_1));
+    tcpServer.setCreateForwardStream(bind(&TcpServerApi_continuous::generateContinuousStream, this, placeholders::_1));
+    tcpServer.setWorkOnEstablished(bind(&TcpServerApi_continuous::workOnEstablished, this, placeholders::_1));
+    tcpServer.setWorkOnClosed(bind(&TcpServerApi_continuous::workOnClosed, this, placeholders::_1));
 }
-TcpServerApi_forwarding::~TcpServerApi_forwarding() {}
+TcpServerApi_continuous::~TcpServerApi_continuous() {}
 
 int TcpServerApi_fragmentation::start(const int port)
 {
@@ -55,22 +55,22 @@ void TcpServerApi_fragmentation::workOnEstablished(const int) {}
 
 void TcpServerApi_fragmentation::workOnClosed(const int) {}
 
-int TcpServerApi_forwarding::start(const int port)
+int TcpServerApi_continuous::start(const int port)
 {
     return tcpServer.start(port);
 }
 
-void TcpServerApi_forwarding::stop()
+void TcpServerApi_continuous::stop()
 {
     tcpServer.stop();
 }
 
-bool TcpServerApi_forwarding::sendMsg(const int tcpClientId, const string &tcpMsg)
+bool TcpServerApi_continuous::sendMsg(const int tcpClientId, const string &tcpMsg)
 {
     return tcpServer.sendMsg(tcpClientId, tcpMsg);
 }
 
-map<int, string> TcpServerApi_forwarding::getBufferedMsg()
+map<int, string> TcpServerApi_continuous::getBufferedMsg()
 {
     map<int, string> messages;
     for (auto &v : bufferedMsg)
@@ -83,16 +83,16 @@ map<int, string> TcpServerApi_forwarding::getBufferedMsg()
     return messages;
 }
 
-vector<int> TcpServerApi_forwarding::getClientIds()
+vector<int> TcpServerApi_continuous::getClientIds()
 {
     return tcpServer.getAllClientIds();
 }
 
-void TcpServerApi_forwarding::workOnEstablished(const int) {}
+void TcpServerApi_continuous::workOnEstablished(const int) {}
 
-void TcpServerApi_forwarding::workOnClosed(const int) {}
+void TcpServerApi_continuous::workOnClosed(const int) {}
 
-ostringstream *TcpServerApi_forwarding::generateForwardingStream(int clientId)
+ostringstream *TcpServerApi_continuous::generateContinuousStream(int clientId)
 {
     bufferedMsg[clientId] = new ostringstream;
     return bufferedMsg[clientId];
