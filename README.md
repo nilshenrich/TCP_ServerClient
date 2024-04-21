@@ -3,6 +3,31 @@
 Installable packages for TCP based client-server communication.\
 TLS encryption with two-way authentication is supported.
 
+<details>
+<summary>Table of contents</summary>
+
+- [TCP\_ServerClient](#tcp_serverclient)
+  - [Summary](#summary)
+    - [Limitations](#limitations)
+  - [System requirements](#system-requirements)
+  - [Installation](#installation)
+  - [Usage](#usage)
+    - [Message modes](#message-modes)
+      - [Fragmented](#fragmented)
+      - [Continuous](#continuous)
+    - [Server](#server)
+      - [Create instance](#create-instance)
+      - [Define and link worker methods](#define-and-link-worker-methods)
+      - [Server methods](#server-methods)
+    - [Client](#client)
+      - [Create instance](#create-instance-1)
+      - [Define and link worker methods](#define-and-link-worker-methods-1)
+      - [Client methods](#client-methods)
+  - [Known issues](#known-issues)
+    - [Pipe error if client sends immediately after exiting start](#pipe-error-if-client-sends-immediately-after-exiting-start)
+  
+</details>
+
 ## Summary
 
 This project provides installable C++ libraries for setting up TCP based client-server communications.\
