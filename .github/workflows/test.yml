@@ -1,0 +1,35 @@
+name: test
+
+on:
+    push:
+        branches:
+            - main
+    pull_request:
+        branches:
+            - main
+
+jobs:
+    gtest:
+        name: gtest
+        runs-on: ubuntu-latest
+        steps:
+
+            - name: Install dependencies
+              run: |
+                  sudo apt-get update
+                  sudo apt-get install -y build-essential cmake libssl-dev openssl
+
+            - name: Checkout
+              uses: actions/checkout@v3
+
+            - name: Run tests
+              run: ./RunAllTests.sh
+              working-directory: test/gtest
+
+            - name: Upload test results
+              if: always()
+              uses: actions/upload-artifact@v3
+              with:
+                  name: test-results-gtest
+                  path: test/gtest/results.json
+                  if-no-files-found: error

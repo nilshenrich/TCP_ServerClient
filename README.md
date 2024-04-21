@@ -65,6 +65,8 @@ For the hardware I'm not giving any limitations. It is usable on low level hardw
 
 ## Installation
 
+The following steps can be applied for the entire project if you want to install both, the server and the client part and it can be applied for each part separately.
+
 1. Install necessary third party software
 
     ```console
@@ -155,7 +157,6 @@ The following linker flags are mandatory to be set to tell the system what libra
 * **-lTlsServer**   if the TLS server is used
 * **-lTlsClient**   if the TLS client is used
 * **-lcrypto**      if the TLS encryption is used
-* **-lcrypt**       if the TLS encryption is used
 * **-lssl**         if the TLS encryption is used
 * **-pthread**      always needed
 

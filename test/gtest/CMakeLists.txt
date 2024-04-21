@@ -3,8 +3,8 @@
 # Build entire gtest project
 # All source files from src folder should be compiled
 
-# Minimum cmake version required is 3.10
-cmake_minimum_required(VERSION 3.10)
+# Minimum cmake version required is 3.13
+cmake_minimum_required(VERSION 3.13)
 
 # Project name: test
 project(test)

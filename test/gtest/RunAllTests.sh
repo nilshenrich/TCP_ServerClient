@@ -7,6 +7,21 @@ currentDir=$(dirname $(readlink -f $0))
 cd $currentDir/..
 ./TlsCreateCertFiles.sh
 
+# Build and install googletest
+cd $currentDir/googletest
+mkdir build
+cd build
+cmake ..
+sudo make install
+
+# Build the project
+cd $currentDir
+rm -rf build
+mkdir build
+cd build
+cmake ..
+make -j4
+
 run_gtest_tests() {
     tests=$1
     output=$2
