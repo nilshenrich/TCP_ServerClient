@@ -24,6 +24,22 @@ jobs:
               with:
                   submodules: recursive
 
+            - name: Install GoogleTest
+              run: |
+                  mkdir build
+                  cd build
+                  cmake ..
+                  sudo make install
+              working-directory: test/gtest/googletest
+            
+            - name: Build
+              run: |
+                  mkdir build
+                  cd build
+                  cmake ..
+                  make -j4
+              working-directory: test/gtest
+
             - name: Run tests
               run: ./RunAllTests.sh
               working-directory: test/gtest
