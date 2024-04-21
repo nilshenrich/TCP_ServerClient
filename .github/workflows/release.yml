@@ -33,6 +33,6 @@ jobs:
               with:
                   tag_name: ${{ steps.tag-name.outputs.out }}
                   release_name: ${{ steps.tag-name.outputs.out }}
-                  body: ${{ steps.tag-message.outputs.out }}
+                  body: ${{ env.TAG_MSG }}
                   draft: false
                   prerelease: false
