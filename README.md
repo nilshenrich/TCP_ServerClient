@@ -422,3 +422,30 @@ This function can be linked to client similarly to server via standalone, member
 When a client sends a message to the listener immediately after the NetworkClient::start() method returned, the listener program throws a pipe error.
 
 Waiting for a short time after connecting to server will fix it on client side.
+
+To prevent a program crash on server side, a pipe error can simply be ignored:
+
+```cpp
+// Handle pip error
+void signal_handler(int signum)
+{
+    // Ignore pipe error
+    if (signum == SIGPIPE)
+    {
+        ::std::cout << "SIGPIPE ignored" << ::std::endl; // Pipe error ignored
+        return;
+    }
+
+    // For any other error, exit program
+    exit(signum);
+}
+
+// Register pip error signal to handler
+signal(SIGPIPE, signal_handler);
+
+// Start a server regularly
+TcpServer server;
+server.start(8080);
+
+// Do your stuff here ...
+```
