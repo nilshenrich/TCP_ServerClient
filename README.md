@@ -59,7 +59,7 @@ There are some size limitations for this library:
 ## System requirements
 
 This library is developed on a debian based system, so this manual is specific to it.\
-Nevertheless, it only depends on the C++17 standard and the standard library, so i should be possible to use it on other systems.
+Nevertheless, it only depends on the C++17 standard and the standard library, so it should be possible to use it on other systems.
 
 For the hardware I'm not giving any limitations. It is usable on low level hardware as well as on high performance systems.
 
