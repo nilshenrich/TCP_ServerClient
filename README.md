@@ -147,7 +147,7 @@ To see a basic example that shows you all functionality, please build and run th
 
     Open a second terminal and start the client
     ```console
-    ./Client
+    ./client
     ```
 
 The following linker flags are mandatory to be set to tell the system what libraries to use:
