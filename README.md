@@ -108,7 +108,7 @@ The following steps can be applied for the entire project if you want to install
     If you get the following error message when running an application:
 
     ```console
-    error while loading shared libraries: libds18b20.so.1: cannot open shared object file: No such file or directory
+    error while loading shared libraries: libtcpserver.so.x: cannot open shared object file: No such file or directory
     ```
 
     running the following command can solve it:
