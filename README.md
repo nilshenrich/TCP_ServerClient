@@ -121,7 +121,7 @@ The following steps can be applied for the entire project if you want to install
 
 ## Usage
 
-To see a basci example that shows you all functionality, please build and run the [example](example) project:
+To see a basic example that shows you all functionality, please build and run the [example](example) project:
 
 1. Build both applications
 
