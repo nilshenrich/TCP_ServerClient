@@ -53,8 +53,8 @@ There are some size limitations for this library:
 * Maximum allowed connections a server can handle simultaneously: 4096\
   *This limitation is only applied to a single server instance. It is possible to create an application with multiple servers with a maximum of 4096 connections each.*
 * Maximum allowed message length:\
-  *This number depends on the CPU architecture and available memory the you are using.\
-  For checking, just call the method `max_size()` and a variable of type string. For most modern systems, this value is such high that it can be treated as infinity.*
+  *This number depends on the CPU architecture and available memory you are using.\
+  For checking, just call the method `max_size()` on any variable of type string. For most modern systems, this value is such high that it can be treated as infinity.*
 
 ## System requirements
 
