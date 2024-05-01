@@ -78,11 +78,9 @@ cd $currentDir/..
 if [ "${certType^^}" == "EC" ]; then
     ./TlsCreateCertFiles_ec.sh
     run "ec"
-fi
 elif [ "${certType^^}" == "RSA" ]; then
     ./TlsCreateCertFiles_rsa.sh
     run "rsa"
-fi
 else
     echo "Unknown certificate type: ${certType}"
     exit -1
