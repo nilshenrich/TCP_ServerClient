@@ -69,13 +69,20 @@ run() {
     failed_tests=$(($failed_tests + $failed_tests_this))
 }
 
-# Create all keys using RSA and run all tests
+echo "================================================================================"
+echo "Run all tests using RSA keys"
+echo "================================================================================"
 cd $currentDir/..
 ./TlsCreateCertFiles_rsa.sh
 run "rsa"
 
-# TODO: Create all keys using ECDSA and run all tests
+echo "================================================================================"
+echo "Run all tests using EC keys"
+echo "================================================================================"
+cd $currentDir/..
+./TlsCreateCertFiles_ec.sh
+run "ec"
 
 # Get number of failed test cases and return
-echo "Number of failed tests: $failed_tests"
+echo "Number of failed tests overall: $failed_tests"
 exit $failed_tests
