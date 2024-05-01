@@ -108,7 +108,7 @@ The following steps can be applied for the entire project if you want to install
     If you get the following error message when running an application:
 
     ```console
-    error while loading shared libraries: libtcpserver.so.x: cannot open shared object file: No such file or directory
+    error while loading shared libraries: libTcpServer.so.x: cannot open shared object file: No such file or directory
     ```
 
     running the following command can solve it:
@@ -170,7 +170,7 @@ In the fragmented mode, all messages are text packages with a finite length. Whe
 
 #### Continuous
 
-In the continuous mode, a continuous stream of data is sent and received. To work on incoming data, a outgoing stream must be defined. For a client, that holds just one active connection to a server, a pointer to an outgoing stream must be defined. For a server, that holds multiple connections, a method returning a pointer to an outgoing stream must be defined based on the sending client ID.
+In the continuous mode, a continuous stream of data is sent and received. To work on incoming data, an outgoing stream must be defined. For a client, that holds just one active connection to a server, a pointer to an outgoing stream must be defined. For a server, that holds multiple connections, a method returning a pointer to an outgoing stream must be defined based on the sending client ID.
 
 ### Server
 
@@ -215,7 +215,7 @@ void worker_message(int clientId, string msg)
 }
 
 // Output stream generator
-ofstream *genertor_outStream(int clientId)
+ofstream *generator_outStream(int clientId)
 {
     // Stream must be generated with new
     // This example uses file stream but any other ostream could be used
@@ -227,7 +227,7 @@ ofstream *genertor_outStream(int clientId)
 tcpServer.setWorkOnEstablished(&worker_established)
 tcpServer.setWorkOnClosed(&worker_closed)
 tcpServer.setWorkOnMessage(&worker_message)
-tcpServer.setCreateForwardStream(&genertor_outStream)
+tcpServer.setCreateForwardStream(&generator_outStream)
 ```
 
 A worker method can be linked to the server on several ways:
@@ -309,41 +309,36 @@ The following methods are the same for all kinds of servers (TCP or TLS in fragm
 
 1. start():
 
-    The **start**-method is used to start a TCP or TLS listener. When this method returns 0, the listener runs in the background. If the return value is other that 0, please see [Defines.h](include/Defines.h) for definition of error codes.\
-    If your class derived from both **TcpServer** and **TlsServer**, the class name must be specified when calling **start()**:
+    The **start**-method is used to start a TCP or TLS server. When this method returns 0, the server runs in the background. If the return value is other that 0, please see [Defines.h](Server/include/Defines.h) for definition of error codes.
 
     ```cpp
-    TcpServer::start(8081);
-    TlsServer::start(8082, "ca_cert.pem", "server_cert.pem", "server_key.pem");
+    TcpServer tcpServer;
+    TlsServer tlsServer;
+    tcpServer.start(8081);
+    tlsServer.start(8082, "ca_cert.pem", "server_cert.pem", "server_key.pem");
     ```
 
-1. stop():
+2. stop():
 
-    The **stop**-method stops a running listener.\
-    As for **start()**, if your class derived from both **TcpServer** and **TlsServer**, the class name must be specified when calling **stop()**:
+    The **stop**-method stops a running server.
 
     ```cpp
-    TcpServer::stop();
-    TlsServer::stop();
+    tcpServer.stop();
     ```
 
-1. sendMsg():
+3. sendMsg():
 
-    The **sendMsg**-method sends a message to a connected client (over TCP or TLS). If the return value is **true**, the sending was successful, if it is **false**, not.\
-    As for **start()**, if your class derived from both **TcpServer** and **TlsServer**, the class name must be specified when calling **sendMsg()**:
+    The **sendMsg**-method sends a message to a connected client (over TCP or TLS). If the return value is **true**, the sending was successful, if it is **false**, not.
 
     ```cpp
-    TcpServer::sendMsg(4, "example message over TCP");
-    TlsServer::sendMsg(5, "example message over TLS");
+    tcpServer.sendMsg(4, "example message over TCP");
     ```
 
-    Please make sure to only use **TcpServer::sendMsg()** for TCP connections and **TlsServer::sendMsg()** for TLS connection.
-
-1. getClientIp():
+4. getClientIp():
 
     The **getClientIp**-method returns the IP address of a connected client (TCP or TLS) identified by its TCP ID. If no client with this ID is connected, the string **"Failed Read!"** is returned.
 
-1. TlsServer::getSubjPartFromClientCert():
+5. TlsServer::getSubjPartFromClientCert():
 
     The **getSubjPartFromClientCert**-method only exists for **TlsServer** and returns a given subject part of the client's certificate identified by its TCP ID or its tlsSocket (SSL*). If the tlsSocket parameter is*nullptr*, the client is identified by its TCP ID, otherwise it is identified by the given tlsSocket parameter.
 
@@ -359,16 +354,16 @@ The following methods are the same for all kinds of servers (TCP or TLS in fragm
     For example
 
     ```cpp
-    getSubjPartFromClientCert(4, nullptr, NID_localityName);
+    tlsServer.getSubjPartFromClientCert(4, nullptr, NID_localityName);
     ```
 
     will return "Stuttgart" if this is the client's city name.
 
-1. isRunning():
+6. isRunning():
 
-    The **isRunning**-method returns the running flag of the NetworkListener.\
-    **True** means: *The listener is running*\
-    **False** means: *The listener is not running*
+    The **isRunning**-method returns the running flag of the server.\
+    **True** means: *The server is running*\
+    **False** means: *The server is not running*
 
 ### Client
 
@@ -405,39 +400,34 @@ This function can be linked to client similarly to server via standalone, member
 
 1. start():
 
-    The **start**-method is used to start a TCP or TLS client. When this method returns 0, the client runs in the background. If the return value is other that 0, please see [Defines.h](include/Defines.h) for definition of error codes.\
-    If your class derived from both **TcpClient** and **TlsClient**, the class name must be specified when calling **start()**:
+    The **start**-method is used to start a TCP or TLS client. When this method returns 0, the client runs in the background. If the return value is other that 0, please see [Defines.h](Client/include/Defines.h) for definition of error codes.
 
     ```cpp
-    TcpClient::start("serverHost", 8081);
-    TlsClient::start("serverHost", 8082, "ca_cert.pem", "client_cert.pem", "client_key.pem");
+    TcpClient tcpClient;
+    TlsClient tlsClient;
+    tcpClient.start("serverHost", 8081);
+    tcpClient.start("serverHost", 8082, "ca_cert.pem", "client_cert.pem", "client_key.pem");
     ```
 
-1. stop():
+2. stop():
 
-    The **stop**-method stops a running client.\
-    As for **start()**, if your class derived from both **TcpClient** and **TlsClient**, the class name must be specified when calling **stop()**:
+    The **stop**-method stops a running client.
 
     ```cpp
-    TcpClient::stop();
-    TlsClient::stop();
+    tcpClient.stop();
     ```
 
-1. sendMsg():
+3. sendMsg():
 
-    The **sendMsg**-method sends a message to the server (over TCP or TLS). If the return value is **true**, the sending was successful, if it is **false**, not.\
-    As for **start()**, if your class derived from both **TcpClient** and **TlsClient**, the class name must be specified when calling **sendMsg()**:
+    The **sendMsg**-method sends a message to the server (over TCP or TLS). If the return value is **true**, the sending was successful, if it is **false**, not.
 
     ```cpp
-    TcpClient::sendMsg("example message over TCP");
-    TlsClient::sendMsg("example message over TLS");
+    tcpClient.sendMsg("example message over TCP");
     ```
 
-    Please make sure to only use **TcpClient::sendMsg()** for TCP connections and **TlsClient::sendMsg()** for TLS connection.
+4. isRunning():
 
-1. isRunning():
-
-    The **isRunning**-method returns the running flag of the NetworkClient.\
+    The **isRunning**-method returns the running flag of the client.\
     **True** means: *The client is running*\
     **False** means: *The client is not running*
 
@@ -445,14 +435,14 @@ This function can be linked to client similarly to server via standalone, member
 
 ### [Pipe error if client sends immediately after exiting start](https://github.com/nilshenrich/TCP_ServerClient/issues/1)
 
-When a client sends a message to the listener immediately after the NetworkClient::start() method returned, the listener program throws a pipe error.
+When a client sends a message to the server immediately after the TlsServer::start() method returned, the server program throws a pipe error.
 
 Waiting for a short time after connecting to server will fix it on client side.
 
 To prevent a program crash on server side, a pipe error can simply be ignored:
 
 ```cpp
-// Handle pip error
+// Handle pipe error
 void signal_handler(int signum)
 {
     // Ignore pipe error
@@ -466,7 +456,7 @@ void signal_handler(int signum)
     exit(signum);
 }
 
-// Register pip error signal to handler
+// Register pipe error signal to handler
 signal(SIGPIPE, signal_handler);
 
 // Start a server regularly
