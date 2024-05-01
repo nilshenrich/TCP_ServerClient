@@ -3,6 +3,9 @@
 # Exit if any command fails
 set -e
 
+# First argument: Certiicate type (EC if nothing set)
+certType=${1:-ec}
+
 # Get directory of this script
 currentDir=$(dirname $(readlink -f $0))
 
@@ -65,23 +68,25 @@ run() {
     rm $temp_file_general
 
     # Get failed tests and add to global failed tests
-    failed_tests_this=$(jq '.failures | length' $json_file)
-    failed_tests=$(($failed_tests + $failed_tests_this))
+    failed_tests=$(jq '.failures | length' $json_file)
 }
 
 echo "================================================================================"
-echo "Run all tests using RSA keys"
+echo "Run all tests using ${certType^^} keys"
 echo "================================================================================"
 cd $currentDir/..
-./TlsCreateCertFiles_rsa.sh
-run "rsa"
-
-echo "================================================================================"
-echo "Run all tests using EC keys"
-echo "================================================================================"
-cd $currentDir/..
-./TlsCreateCertFiles_ec.sh
-run "ec"
+if [ "${certType^^}" == "EC" ]; then
+    ./TlsCreateCertFiles_ec.sh
+    run "ec"
+fi
+elif [ "${certType^^}" == "RSA" ]; then
+    ./TlsCreateCertFiles_rsa.sh
+    run "rsa"
+fi
+else
+    echo "Unknown certificate type: ${certType}"
+    exit -1
+fi
 
 # Get number of failed test cases and return
 echo "Number of failed tests overall: $failed_tests"
