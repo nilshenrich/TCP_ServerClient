@@ -458,7 +458,7 @@ void Server<SocketType, SocketDeleter>::listenerReceive(const int clientId, Runn
         {
             // Just forward incoming message to output stream
             if (forwardStreams.find(clientId) != forwardStreams.end())
-                *forwardStreams[clientId].get() << msg;
+                *forwardStreams[clientId].get() << msg << flush;
         }
     }
 }
