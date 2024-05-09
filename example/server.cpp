@@ -11,8 +11,8 @@
 #include <iostream>
 #include <fstream>
 
-#include "TcpServer/TcpServer.h"
-#include "TcpServer/TlsServer.h"
+#include "TcpServer.h"
+#include "TlsServer.h"
 
 // Global server instances
 ::tcp::TcpServer tcpServer_fragmented{'\n'}; // newline as delimiter
@@ -67,7 +67,7 @@ int main()
     tlsServer_continuous.start(8084, "../keys/ca/ca_cert.pem", "../keys/server/server_cert.pem", "../keys/server/server_key.pem");
 
     // Halt program
-    ::std::cout << "Press any key to exit the program..." << ::std::endl;
+    ::std::cout << "Press ENTER to exit the program..." << ::std::endl;
     ::std::cin.get();
 
     return 0;

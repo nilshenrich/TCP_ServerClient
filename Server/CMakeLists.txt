@@ -51,7 +51,7 @@ set_target_properties(TlsServer PROPERTIES
 # Install rule (copy to install directory)
 install(TARGETS TcpServer TlsServer
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/TcpServer)
+    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/TCP_ServerClient )
 
 # Print build type
 message("Build type: ${CMAKE_BUILD_TYPE}")
