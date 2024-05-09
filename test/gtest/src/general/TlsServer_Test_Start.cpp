@@ -99,27 +99,27 @@ TEST_F(General_TlsServer_Test_Start, NegTest_PortInUse)
 // ====================================================================================================================
 TEST_F(General_TlsServer_Test_Start, NegTest_WrongCaPath)
 {
-    EXPECT_EQ(tlsServer.start(port, "fake/path/to/ca.crt", KeyPaths::ListenerCert, KeyPaths::ListenerKey), SERVER_ERROR_START_WRONG_CA_PATH);
+    EXPECT_EQ(tlsServer.start(port, "fake/path/to/ca.crt", KeyPaths::ServerCert, KeyPaths::ServerKey), SERVER_ERROR_START_WRONG_CA_PATH);
 }
 
 // ====================================================================================================================
-// Desc:       Check if server doesn't start if path to listener cert is incorrect
-// Steps:      Try to start TLS server with incorrect path to listener cert
+// Desc:       Check if server doesn't start if path to server cert is incorrect
+// Steps:      Try to start TLS server with incorrect path to server cert
 // Exp Result: SERVER_ERROR_START_WRONG_CERT_PATH
 // ====================================================================================================================
 TEST_F(General_TlsServer_Test_Start, NegTest_WrongCertPath)
 {
-    EXPECT_EQ(tlsServer.start(port, KeyPaths::CaCert, "fake/path/to/listener.crt", KeyPaths::ListenerKey), SERVER_ERROR_START_WRONG_CERT_PATH);
+    EXPECT_EQ(tlsServer.start(port, KeyPaths::CaCert, "fake/path/to/server.crt", KeyPaths::ServerKey), SERVER_ERROR_START_WRONG_CERT_PATH);
 }
 
 // ====================================================================================================================
-// Desc:       Check if server doesn't start if path to listener key is incorrect
-// Steps:      Try to start TLS server with incorrect path to listener key
+// Desc:       Check if server doesn't start if path to server key is incorrect
+// Steps:      Try to start TLS server with incorrect path to server key
 // Exp Result: SERVER_ERROR_START_WRONG_KEY_PATH
 // ====================================================================================================================
 TEST_F(General_TlsServer_Test_Start, NegTest_WrongKeyPath)
 {
-    EXPECT_EQ(tlsServer.start(port, KeyPaths::CaCert, KeyPaths::ListenerCert, "fake/path/to/listener.key"), SERVER_ERROR_START_WRONG_KEY_PATH);
+    EXPECT_EQ(tlsServer.start(port, KeyPaths::CaCert, KeyPaths::ServerCert, "fake/path/to/server.key"), SERVER_ERROR_START_WRONG_KEY_PATH);
 }
 
 // ====================================================================================================================
@@ -129,35 +129,35 @@ TEST_F(General_TlsServer_Test_Start, NegTest_WrongKeyPath)
 // ====================================================================================================================
 TEST_F(General_TlsServer_Test_Start, NegTest_FakeCa)
 {
-    EXPECT_EQ(tlsServer.start(port, FakeKeyPaths::CaCert, KeyPaths::ListenerCert, KeyPaths::ListenerKey), SERVER_ERROR_START_WRONG_CA);
+    EXPECT_EQ(tlsServer.start(port, FakeKeyPaths::CaCert, KeyPaths::ServerCert, KeyPaths::ServerKey), SERVER_ERROR_START_WRONG_CA);
 }
 
 // ====================================================================================================================
-// Desc:       Check if server doesn't start if listener cert is incorrect (wrong format)
-// Steps:      Try to start TLS server with incorrect listener cert
+// Desc:       Check if server doesn't start if server cert is incorrect (wrong format)
+// Steps:      Try to start TLS server with incorrect server cert
 // Exp Result: SERVER_ERROR_START_WRONG_CERT
 // ====================================================================================================================
 TEST_F(General_TlsServer_Test_Start, NegTest_FakeCert)
 {
-    EXPECT_EQ(tlsServer.start(port, KeyPaths::CaCert, FakeKeyPaths::ListenerCert, KeyPaths::ListenerKey), SERVER_ERROR_START_WRONG_CERT);
+    EXPECT_EQ(tlsServer.start(port, KeyPaths::CaCert, FakeKeyPaths::ServerCert, KeyPaths::ServerKey), SERVER_ERROR_START_WRONG_CERT);
 }
 
 // ====================================================================================================================
-// Desc:       Check if server doesn't start if listener key is incorrect (wrong format)
-// Steps:      Try to start TLS server with incorrect listener key
+// Desc:       Check if server doesn't start if server key is incorrect (wrong format)
+// Steps:      Try to start TLS server with incorrect server key
 // Exp Result: SERVER_ERROR_START_WRONG_KEY
 // ====================================================================================================================
 TEST_F(General_TlsServer_Test_Start, NegTest_FakeKey)
 {
-    EXPECT_EQ(tlsServer.start(port, KeyPaths::CaCert, KeyPaths::ListenerCert, FakeKeyPaths::ListenerKey), SERVER_ERROR_START_WRONG_KEY);
+    EXPECT_EQ(tlsServer.start(port, KeyPaths::CaCert, KeyPaths::ServerCert, FakeKeyPaths::ServerKey), SERVER_ERROR_START_WRONG_KEY);
 }
 
 // ====================================================================================================================
-// Desc:       Check if server doesn't start if listener certificate and key don't match
-// Steps:      Try to start TLS server with incorrect listener cert and key
+// Desc:       Check if server doesn't start if server certificate and key don't match
+// Steps:      Try to start TLS server with incorrect server cert and key
 // Exp Result: SERVER_ERROR_START_WRONG_KEY
 // ====================================================================================================================
 TEST_F(General_TlsServer_Test_Start, NegTest_NotMatchingCertAndKey)
 {
-    EXPECT_EQ(tlsServer.start(port, KeyPaths::CaCert, KeyPaths::ListenerCert, SelfSignedKeyPaths::ListenerKey), SERVER_ERROR_START_WRONG_KEY);
+    EXPECT_EQ(tlsServer.start(port, KeyPaths::CaCert, KeyPaths::ServerCert, SelfSignedKeyPaths::ServerKey), SERVER_ERROR_START_WRONG_KEY);
 }

@@ -130,7 +130,7 @@ namespace tcp
 
         /**
          * @brief Start the client and connects to the server.
-         * If connection to listener succeeds, this method returns CLIENT_START_OK, otherwise it returns an error code.
+         * If connection to server succeeds, this method returns CLIENT_START_OK, otherwise it returns an error code.
          *
          * @param serverIp
          * @param serverPort

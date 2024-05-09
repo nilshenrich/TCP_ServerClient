@@ -117,8 +117,8 @@ namespace tcp
         virtual ~Server() {}
 
         /**
-         * @brief Starts the listener.
-         * If listener was started successfully (return value SERVER_START_OK), the listener can accept new connections and send and receive data.
+         * @brief Starts the server.
+         * If server was started successfully (return value SERVER_START_OK), the server can accept new connections and send and receive data.
          * If encryption should be used, the server must be started with the correct path to the CA certificate and the correct path to the certificate and key file.
          *
          * @param port
@@ -133,8 +133,8 @@ namespace tcp
                   const char *const pathToPrivKey = nullptr);
 
         /**
-         * @brief Stops the listener.
-         * When stopping the listener, all active connections are closed.
+         * @brief Stops the server.
+         * When stopping the server, all active connections are closed.
          */
         void stop();
 
@@ -191,7 +191,7 @@ namespace tcp
         std::string getClientIp(const int clientId) const;
 
         /**
-         * @brief Return if listener is running
+         * @brief Return if server is running
          *
          * @return bool (true if running, false if not)
          */
@@ -199,7 +199,7 @@ namespace tcp
 
     protected:
         /**
-         * @brief Initializes the listener just before starting it.
+         * @brief Initializes the server just before starting it.
          * This method is abstract and must be implemented by derived classes.
          *
          * @param pathToCaCert
@@ -261,25 +261,25 @@ namespace tcp
 
     private:
         /**
-         * @brief Accept new connections.
-         * This method runs infinitely in a separate thread while the listener is running.
+         * @brief Listen for new connections requests.
+         * This method runs infinitely in a separate thread while the server is running.
          */
-        void listenerAccept();
+        void listenConnection();
 
         /**
-         * @brief Read incoming data from a specific connected client (Identified by its TCP ID).
+         * @brief Listen for incoming data from a specific connected client (Identified by its TCP ID).
          * This method runs infinitely in a separate thread while the specific client is connected.
          *
          * @param clientId
          */
-        void listenerReceive(const int clientId, RunningFlag *const recRunning_p);
+        void listenMessage(const int clientId, RunningFlag *const recRunning_p);
 
-        // Socket address for the listener
+        // Socket address for the server
         struct sockaddr_in socketAddress
         {
         };
 
-        // TCP socket for the listener to accept new connections
+        // TCP socket for the server to accept new connections
         int tcpSocket{0};
 
         // Thread to accept new connections
@@ -289,7 +289,7 @@ namespace tcp
         std::map<int, std::thread> recHandlers{};
         std::map<int, std::unique_ptr<RunningFlag>> recHandlersRunning{};
 
-        // Flag to indicate if the listener is running
+        // Flag to indicate if the server is running
         RunningFlag running{false};
 
         // Pointer to a function that returns an out stream to forward incoming data to

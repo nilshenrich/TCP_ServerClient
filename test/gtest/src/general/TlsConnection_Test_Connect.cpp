@@ -34,7 +34,7 @@ void General_TlsConnection_Test_Connect::TearDown()
 // ====================================================================================================================
 TEST_F(General_TlsConnection_Test_Connect, PosTest_MainCerts)
 {
-    EXPECT_EQ(tlsServer.start(port, KeyPaths::CaCert, KeyPaths::ListenerCert, KeyPaths::ListenerKey), SERVER_START_OK);
+    EXPECT_EQ(tlsServer.start(port, KeyPaths::CaCert, KeyPaths::ServerCert, KeyPaths::ServerKey), SERVER_START_OK);
     EXPECT_EQ(tlsClient.start("localhost", port, KeyPaths::CaCert, KeyPaths::ClientCert, KeyPaths::ClientKey), CLIENT_START_OK);
     EXPECT_EQ(tlsServer.getClientIds().size(), 1);
 }
@@ -46,7 +46,7 @@ TEST_F(General_TlsConnection_Test_Connect, PosTest_MainCerts)
 // ====================================================================================================================
 TEST_F(General_TlsConnection_Test_Connect, PosTest_SecondCerts)
 {
-    EXPECT_EQ(tlsServer.start(port, SecondKeyPaths::CaCert, SecondKeyPaths::ListenerCert, SecondKeyPaths::ListenerKey), SERVER_START_OK);
+    EXPECT_EQ(tlsServer.start(port, SecondKeyPaths::CaCert, SecondKeyPaths::ServerCert, SecondKeyPaths::ServerKey), SERVER_START_OK);
     EXPECT_EQ(tlsClient.start("localhost", port, SecondKeyPaths::CaCert, SecondKeyPaths::ClientCert, SecondKeyPaths::ClientKey), CLIENT_START_OK);
     EXPECT_EQ(tlsServer.getClientIds().size(), 1);
 }
@@ -58,7 +58,7 @@ TEST_F(General_TlsConnection_Test_Connect, PosTest_SecondCerts)
 // ====================================================================================================================
 TEST_F(General_TlsConnection_Test_Connect, NegTest_ClientWithSelfSignedCert)
 {
-    EXPECT_EQ(tlsServer.start(port, KeyPaths::CaCert, KeyPaths::ListenerCert, KeyPaths::ListenerKey), SERVER_START_OK);
+    EXPECT_EQ(tlsServer.start(port, KeyPaths::CaCert, KeyPaths::ServerCert, KeyPaths::ServerKey), SERVER_START_OK);
     EXPECT_EQ(tlsClient.start("localhost", port, KeyPaths::CaCert, SelfSignedKeyPaths::ClientCert, SelfSignedKeyPaths::ClientKey), CLIENT_START_OK);
     EXPECT_EQ(tlsServer.getClientIds().size(), 0);
 }
@@ -70,7 +70,7 @@ TEST_F(General_TlsConnection_Test_Connect, NegTest_ClientWithSelfSignedCert)
 // ====================================================================================================================
 TEST_F(General_TlsConnection_Test_Connect, NegTest_ClientWithUnknownCa)
 {
-    EXPECT_EQ(tlsServer.start(port, KeyPaths::CaCert, KeyPaths::ListenerCert, KeyPaths::ListenerKey), SERVER_START_OK);
+    EXPECT_EQ(tlsServer.start(port, KeyPaths::CaCert, KeyPaths::ServerCert, KeyPaths::ServerKey), SERVER_START_OK);
     EXPECT_EQ(tlsClient.start("localhost", port, KeyPaths::CaCert, SecondKeyPaths::ClientCert, SecondKeyPaths::ClientKey), CLIENT_START_OK);
     EXPECT_EQ(tlsServer.getClientIds().size(), 0);
 }
@@ -82,7 +82,7 @@ TEST_F(General_TlsConnection_Test_Connect, NegTest_ClientWithUnknownCa)
 // ====================================================================================================================
 TEST_F(General_TlsConnection_Test_Connect, NegTest_ClientWithCertChainDepth2)
 {
-    EXPECT_EQ(tlsServer.start(port, KeyPaths::CaCert, KeyPaths::ListenerCert, KeyPaths::ListenerKey), SERVER_START_OK);
+    EXPECT_EQ(tlsServer.start(port, KeyPaths::CaCert, KeyPaths::ServerCert, KeyPaths::ServerKey), SERVER_START_OK);
     EXPECT_EQ(tlsClient.start("localhost", port, KeyPaths::CaCert, CertChainDepth2KeyPaths::ClientCert, CertChainDepth2KeyPaths::ClientKey), CLIENT_START_OK);
     EXPECT_EQ(tlsServer.getClientIds().size(), 0);
 }
@@ -94,7 +94,7 @@ TEST_F(General_TlsConnection_Test_Connect, NegTest_ClientWithCertChainDepth2)
 // ====================================================================================================================
 TEST_F(General_TlsConnection_Test_Connect, NegTest_ServerWithSelfSignedCert)
 {
-    EXPECT_EQ(tlsServer.start(port, KeyPaths::CaCert, SelfSignedKeyPaths::ListenerCert, SelfSignedKeyPaths::ListenerKey), SERVER_START_OK);
+    EXPECT_EQ(tlsServer.start(port, KeyPaths::CaCert, SelfSignedKeyPaths::ServerCert, SelfSignedKeyPaths::ServerKey), SERVER_START_OK);
     EXPECT_EQ(tlsClient.start("localhost", port, KeyPaths::CaCert, KeyPaths::ClientCert, KeyPaths::ClientKey), CLIENT_ERROR_START_CONNECT_INIT);
     EXPECT_EQ(tlsServer.getClientIds().size(), 0);
 }
@@ -106,7 +106,7 @@ TEST_F(General_TlsConnection_Test_Connect, NegTest_ServerWithSelfSignedCert)
 // ====================================================================================================================
 TEST_F(General_TlsConnection_Test_Connect, NegTest_ServerWithUnknownCa)
 {
-    EXPECT_EQ(tlsServer.start(port, KeyPaths::CaCert, SecondKeyPaths::ListenerCert, SecondKeyPaths::ListenerKey), SERVER_START_OK);
+    EXPECT_EQ(tlsServer.start(port, KeyPaths::CaCert, SecondKeyPaths::ServerCert, SecondKeyPaths::ServerKey), SERVER_START_OK);
     EXPECT_EQ(tlsClient.start("localhost", port, KeyPaths::CaCert, KeyPaths::ClientCert, KeyPaths::ClientKey), CLIENT_ERROR_START_CONNECT_INIT);
     EXPECT_EQ(tlsServer.getClientIds().size(), 0);
 }
@@ -118,7 +118,7 @@ TEST_F(General_TlsConnection_Test_Connect, NegTest_ServerWithUnknownCa)
 // ====================================================================================================================
 TEST_F(General_TlsConnection_Test_Connect, NegTest_ServerWithCertChainDepth2)
 {
-    EXPECT_EQ(tlsServer.start(port, KeyPaths::CaCert, CertChainDepth2KeyPaths::ListenerCert, CertChainDepth2KeyPaths::ListenerKey), SERVER_START_OK);
+    EXPECT_EQ(tlsServer.start(port, KeyPaths::CaCert, CertChainDepth2KeyPaths::ServerCert, CertChainDepth2KeyPaths::ServerKey), SERVER_START_OK);
     EXPECT_EQ(tlsClient.start("localhost", port, KeyPaths::CaCert, KeyPaths::ClientCert, KeyPaths::ClientKey), CLIENT_ERROR_START_CONNECT_INIT);
     EXPECT_EQ(tlsServer.getClientIds().size(), 0);
 }

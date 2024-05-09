@@ -7,11 +7,11 @@ int Server<SocketType, SocketDeleter>::start(
 {
     using namespace std;
 
-    // If the listener is already running, return error
+    // If the server is already running, return error
     if (running)
     {
 #ifdef DEVELOP
-        cerr << typeid(this).name() << "::" << __func__ << ": Listener already running" << endl;
+        cerr << typeid(this).name() << "::" << __func__ << ": Server already running" << endl;
 #endif // DEVELOP
 
         return -1;
@@ -27,12 +27,12 @@ int Server<SocketType, SocketDeleter>::start(
         return SERVER_ERROR_START_WRONG_PORT;
     }
 
-    // Initialize the listener and return error if it fails
+    // Initialize the server and return error if it fails
     int initCode{init(pathToCaCert, pathToCert, pathToPrivKey)};
     if (initCode)
         return initCode;
 
-    // Create the TCP socket for the listener to accept new connections.
+    // Create the TCP socket for the server to accept new connections.
     // Return error if it fails
     tcpSocket = socket(AF_INET, SOCK_STREAM, 0);
     if (-1 == tcpSocket)
@@ -41,13 +41,13 @@ int Server<SocketType, SocketDeleter>::start(
         cerr << typeid(this).name() << "::" << __func__ << ": Error when creating TCP socket to listen on" << endl;
 #endif // DEVELOP
 
-        // Stop the listener
+        // Stop the server
         stop();
 
         return SERVER_ERROR_START_CREATE_SOCKET;
     }
 
-    // Set options on the TCP socket for the listener to accept new connections.
+    // Set options on the TCP socket for the server to accept new connections.
     // (Reuse address)
     // Return error if it fails
     int opt{0};
@@ -57,55 +57,55 @@ int Server<SocketType, SocketDeleter>::start(
         cerr << typeid(this).name() << "::" << __func__ << ": Error when setting TCP socket options" << endl;
 #endif // DEVELOP
 
-        // Stop the listener
+        // Stop the server
         stop();
 
         return SERVER_ERROR_START_SET_SOCKET_OPT;
     }
 
-    // Initialize the socket address for the listener.
+    // Initialize the socket address for the server.
     memset(&socketAddress, 0, sizeof(socketAddress));
     socketAddress.sin_family = AF_INET;
     socketAddress.sin_addr.s_addr = INADDR_ANY;
     socketAddress.sin_port = htons(port);
 
-    // Bind the TCP socket for the listener to accept new connections to the socket address.
+    // Bind the TCP socket for the server to accept new connections to the socket address.
     // Return error if it fails
     if (bind(tcpSocket, (struct sockaddr *)&socketAddress, sizeof(socketAddress)))
     {
 #ifdef DEVELOP
-        cerr << typeid(this).name() << "::" << __func__ << ": Error when binding listener to port " << port << endl;
+        cerr << typeid(this).name() << "::" << __func__ << ": Error when binding server to port " << port << endl;
 #endif // DEVELOP
 
-        // Stop the listener
+        // Stop the server
         stop();
 
         return SERVER_ERROR_START_BIND_PORT;
     }
 
-    // Start listening on the TCP socket for the listener to accept new connections.
+    // Start listening on the TCP socket for the server to accept new connections.
     if (listen(tcpSocket, SOMAXCONN))
     {
 #ifdef DEVELOP
         cerr << typeid(this).name() << "::" << __func__ << ": Error when starting listening" << endl;
 #endif // DEVELOP
 
-        // Stop the listener
+        // Stop the server
         stop();
 
-        return SERVER_ERROR_START_LISTENER;
+        return SERVER_ERROR_START_SERVER;
     }
 
     // Start the thread to accept new connections
     if (accHandler.joinable())
-        throw Server_error("Start listener thread failed: Thread is already running"s);
-    accHandler = thread{&Server::listenerAccept, this};
+        throw Server_error("Start server thread failed: Thread is already running"s);
+    accHandler = thread{&Server::listenConnection, this};
 
-    // Listener is now running
+    // Server is now running
     running = true;
 
 #ifdef DEVELOP
-    cout << typeid(this).name() << "::" << __func__ << ": Listener started on port " << port << endl;
+    cout << typeid(this).name() << "::" << __func__ << ": Server started on port " << port << endl;
 #endif // DEVELOP
 
     return initCode;
@@ -116,7 +116,7 @@ void Server<SocketType, SocketDeleter>::stop()
 {
     using namespace std;
 
-    // Stop the listener
+    // Stop the server
     running = false;
 
     // Block listening TCP socket to abort all reads
@@ -134,7 +134,7 @@ void Server<SocketType, SocketDeleter>::stop()
     close(tcpSocket);
 
 #ifdef DEVELOP
-    cout << typeid(this).name() << "::" << __func__ << ": Listener stopped" << endl;
+    cout << typeid(this).name() << "::" << __func__ << ": Server stopped" << endl;
 #endif // DEVELOP
 
     return;
@@ -236,14 +236,14 @@ std::string Server<SocketType, SocketDeleter>::getClientIp(const int clientId) c
 }
 
 template <class SocketType, class SocketDeleter>
-void Server<SocketType, SocketDeleter>::listenerAccept()
+void Server<SocketType, SocketDeleter>::listenConnection()
 {
     using namespace std;
 
-    // Get the size of the socket address for the listener (important for connection establishment)
+    // Get the size of the socket address for the server (important for connection establishment)
     socklen_t socketAddress_len{sizeof(socketAddress)};
 
-    // Accept new connections while the listener is running
+    // Accept new connections while the server is running
     while (running)
     {
         // Wait for a new connection to accept
@@ -271,7 +271,7 @@ void Server<SocketType, SocketDeleter>::listenerAccept()
 
         // When a new connection is established, the incoming messages of this connection should be read in a new process
         unique_ptr<RunningFlag> recRunning{new RunningFlag{true}};
-        thread rec_t{&Server::listenerReceive, this, newConnection, recRunning.get()};
+        thread rec_t{&Server::listenMessage, this, newConnection, recRunning.get()};
 
         // Get all finished receive handlers
         vector<int> toRemove;
@@ -316,7 +316,7 @@ void Server<SocketType, SocketDeleter>::listenerAccept()
 }
 
 template <class SocketType, class SocketDeleter>
-void Server<SocketType, SocketDeleter>::listenerReceive(const int clientId, RunningFlag *const recRunning_p)
+void Server<SocketType, SocketDeleter>::listenMessage(const int clientId, RunningFlag *const recRunning_p)
 {
     using namespace std;
 
