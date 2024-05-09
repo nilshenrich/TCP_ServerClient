@@ -49,21 +49,39 @@ int main()
         {
         case 'c':
         case 'C':
-            tcpClient_continuous.start("localhost", 8082);
-            tlsClient_continuous.start("localhost", 8084, "../keys/ca/ca_cert.pem", "../keys/client/client_cert.pem", "../keys/client/client_key.pem");
+        {
+            int startTcp = tcpClient_continuous.start("localhost", 8082);
+            int startTls = tlsClient_continuous.start("localhost", 8084, "../keys/ca/ca_cert.pem", "../keys/client/client_cert.pem", "../keys/client/client_key.pem");
+            if (startTcp != 0 || startTls != 0)
+            {
+                ::std::cout << "Error starting continuous clients." << ::std::endl
+                            << "TCP client (continuous) returned " << startTcp << ::std::endl
+                            << "TLS client (continuous) returned " << startTls << ::std::endl;
+                return -1;
+            }
             ::std::this_thread::sleep_for(::std::chrono::duration<double, ::std::milli>(50)); // Wait a short time for connection to be established
             tcpClient_continuous.sendMsg("Hello TCP server! - continuous mode");
             tlsClient_continuous.sendMsg("Hello TLS server! - continuous mode");
             break;
+        }
 
         case 'f':
         case 'F':
-            tcpClient_fragmented.start("localhost", 8081);
-            tlsClient_fragmented.start("localhost", 8083, "../keys/ca/ca_cert.pem", "../keys/client/client_cert.pem", "../keys/client/client_key.pem");
+        {
+            int startTcp = tcpClient_fragmented.start("localhost", 8081);
+            int startTls = tlsClient_fragmented.start("localhost", 8083, "../keys/ca/ca_cert.pem", "../keys/client/client_cert.pem", "../keys/client/client_key.pem");
+            if (startTcp != 0 || startTls != 0)
+            {
+                ::std::cout << "Error starting fragmented clients." << ::std::endl
+                            << "TCP client (fragmented) returned " << startTcp << ::std::endl
+                            << "TLS client (fragmented) returned " << startTls << ::std::endl;
+                return -1;
+            }
             ::std::this_thread::sleep_for(::std::chrono::duration<double, ::std::milli>(50)); // Wait a short time for connection to be established
             tcpClient_fragmented.sendMsg("Hello TCP server! - fragmented mode");
             tlsClient_fragmented.sendMsg("Hello TLS server! - fragmented mode");
             break;
+        }
 
         default:
             return 0;

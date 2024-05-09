@@ -53,10 +53,19 @@ int main()
     tlsServer_continuous.setWorkOnClosed(tcp_workOnClosed);
 
     // Start servers
-    tcpServer_fragmented.start(8081);
-    tcpServer_continuous.start(8082);
-    tlsServer_fragmented.start(8083, "../keys/ca/ca_cert.pem", "../keys/server/server_cert.pem", "../keys/server/server_key.pem");
-    tlsServer_continuous.start(8084, "../keys/ca/ca_cert.pem", "../keys/server/server_cert.pem", "../keys/server/server_key.pem");
+    int startTcp_fragmented = tcpServer_fragmented.start(8081);
+    int startTcp_continuous = tcpServer_continuous.start(8082);
+    int startTls_fragmented = tlsServer_fragmented.start(8083, "../keys/ca/ca_cert.pem", "../keys/server/server_cert.pem", "../keys/server/server_key.pem");
+    int startTls_continuous = tlsServer_continuous.start(8084, "../keys/ca/ca_cert.pem", "../keys/server/server_cert.pem", "../keys/server/server_key.pem");
+    if (startTcp_fragmented != 0 || startTcp_continuous != 0 || startTls_fragmented != 0 || startTls_continuous != 0)
+    {
+        ::std::cout << "Error starting servers." << ::std::endl
+                    << "TCP server (fragmented) returned " << startTcp_fragmented << ::std::endl
+                    << "TCP server (continuous) returned " << startTcp_continuous << ::std::endl
+                    << "TLS server (fragmented) returned " << startTls_fragmented << ::std::endl
+                    << "TLS server (continuous) returned " << startTls_continuous << ::std::endl;
+        return -1;
+    }
 
     // Halt program
     ::std::cout << "Press ENTER to exit the program..." << ::std::endl;

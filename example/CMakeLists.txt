@@ -19,3 +19,8 @@ target_compile_options(client PRIVATE -fexceptions -Wall -g -Og
 
 target_link_libraries(server -lcrypto -lcrypt -lssl -pthread)
 target_link_libraries(client -lcrypto -lcrypt -lssl -pthread)
+
+# Create TLS certificates using EC
+execute_process(COMMAND bash -c "echo 'Create TLS certificates ...'")
+execute_process(COMMAND bash -c "${CMAKE_CURRENT_LIST_DIR}/CreateCerts.sh")
+execute_process(COMMAND bash -c "echo 'Done.'")
