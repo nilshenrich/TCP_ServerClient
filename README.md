@@ -23,6 +23,9 @@ TLS encryption with two-way authentication is supported.
       - [Create instance](#create-instance-1)
       - [Define and link worker methods](#define-and-link-worker-methods-1)
       - [Client methods](#client-methods)
+  - [Start return codes](#start-return-codes)
+    - [Server](#server-1)
+    - [Client](#client-1)
   - [Known issues](#known-issues)
     - [Pipe error if client sends immediately after exiting start](#pipe-error-if-client-sends-immediately-after-exiting-start)
   
@@ -217,6 +220,7 @@ void worker_message(int clientId, string msg)
 // Output stream generator
 ofstream *generator_outStream(int clientId)
 {
+    // This method is called when establishing a new connection, even before the worker_established method
     // Stream must be generated with new
     // This example uses file stream but any other ostream could be used
     // (clientId could be changed if needed)
@@ -318,6 +322,8 @@ The following methods are the same for all kinds of servers (TCP or TLS in fragm
     tlsServer.start(8082, "ca_cert.pem", "server_cert.pem", "server_key.pem");
     ```
 
+    For return codes, please see [Start return codes - server](#server-1)
+
 2. stop():
 
     The **stop**-method stops a running server.
@@ -409,6 +415,8 @@ This function can be linked to client similarly to server via standalone, member
     tcpClient.start("serverHost", 8082, "ca_cert.pem", "client_cert.pem", "client_key.pem");
     ```
 
+    For return codes, please see [Start return codes - client](#client-1)
+
 2. stop():
 
     The **stop**-method stops a running client.
@@ -430,6 +438,40 @@ This function can be linked to client similarly to server via standalone, member
     The **isRunning**-method returns the running flag of the client.\
     **True** means: *The client is running*\
     **False** means: *The client is not running*
+
+## Start return codes
+
+When calling the **start**-method, on server or client, an ineger value is returned. 0 always means success and the server/client is now running in the background until the **stop**-method is called. Other values indicate the following errors errors (see [Defines.h](Server/include/Defines.h) for server and [Defines.h](Client/include/Defines.h) for client):
+
+### Server
+
+* **10**: Server could not start because of wrong port number
+* **20**: Server could not start because of SSL context error
+* **30**: Server could not start because of wrong path to CA cert file
+* **31**: Server could not start because of wrong path to certificate file
+* **32**: Server could not start because of wrong path to key file
+* **33**: Server could not start because of bad CA cert file
+* **34**: Server could not start because of bad certificate file
+* **35**: Server could not start because of bad key file or non matching key with certificate
+* **40**: Server could not start because of TCP socket creation error
+* **41**: Server could not start because of TCP socket option error
+* **42**: Server could not start because of TCP socket bind error
+* **43**: Server could not start because of TCP socket listen error
+
+### Client
+
+* **10**: Client could not start because of wrong port number
+* **20**: Client could not start because of SSL context error
+* **30**: Client could not start because of wrong path to CA cert file
+* **31**: Client could not start because of wrong path to certifcate file
+* **32**: Client could not start because of wrong path to key file
+* **33**: Client could not start because of bad CA cert file
+* **34**: Client could not start because of bad certificate file
+* **35**: Client could not start because of bad key file or non matching key with certificate
+* **40**: Client could not start because of TCP socket creation error
+* **41**: Client could not start because of TCP socket options error
+* **50**: Client could not start because of TCP socket connection error
+* **60**: Client could not start because of an error while initializing the connection
 
 ## Known issues
 
