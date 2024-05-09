@@ -313,7 +313,7 @@ The following methods are the same for all kinds of servers (TCP or TLS in fragm
 
 1. start():
 
-    The **start**-method is used to start a TCP or TLS server. When this method returns 0, the server runs in the background. If the return value is other that 0, please see [Defines.h](Server/include/Defines.h) for definition of error codes.
+    The **start**-method is used to start a TCP or TLS server. When this method returns 0, the server runs in the background. If the return value is other that 0, please see [Defines.h](Server/include/Defines.h) or [Start return codes - server](#server-1) for definition of error codes.
 
     ```cpp
     TcpServer tcpServer;
@@ -321,8 +321,6 @@ The following methods are the same for all kinds of servers (TCP or TLS in fragm
     tcpServer.start(8081);
     tlsServer.start(8082, "ca_cert.pem", "server_cert.pem", "server_key.pem");
     ```
-
-    For return codes, please see [Start return codes - server](#server-1)
 
 2. stop():
 
@@ -406,7 +404,7 @@ This function can be linked to client similarly to server via standalone, member
 
 1. start():
 
-    The **start**-method is used to start a TCP or TLS client. When this method returns 0, the client runs in the background. If the return value is other that 0, please see [Defines.h](Client/include/Defines.h) for definition of error codes.
+    The **start**-method is used to start a TCP or TLS client. When this method returns 0, the client runs in the background. If the return value is other that 0, please see [Defines.h](Client/include/Defines.h) or [Start return codes - client](#client-1) for definition of error codes.
 
     ```cpp
     TcpClient tcpClient;
@@ -414,8 +412,6 @@ This function can be linked to client similarly to server via standalone, member
     tcpClient.start("serverHost", 8081);
     tcpClient.start("serverHost", 8082, "ca_cert.pem", "client_cert.pem", "client_key.pem");
     ```
-
-    For return codes, please see [Start return codes - client](#client-1)
 
 2. stop():
 
