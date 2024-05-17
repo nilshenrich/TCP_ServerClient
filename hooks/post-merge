@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# Get the current branch name
+branch_name=$(git branch | grep "*" | sed "s/\* //")
+
+# Get root directory
+root_dir=$(readlink -nf .)
+
+echo "----- POST MERGE -----"
+
+if [[ $branch_name == develop ]]
+then
+    # ---------- Nothing to be done ----------
+fi
+
+echo "--- POST MERGE END ---"

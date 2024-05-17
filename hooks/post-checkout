@@ -1,0 +1,40 @@
+#!/bin/bash
+
+branch_switched=$3
+
+if [[ $branch_switched != '1' ]]
+then
+    exit 0
+fi
+
+echo "----- POST CHECKOUT -----"
+
+# Get name of checked out branch
+current_branch=$(git rev-parse --abbrev-ref HEAD)
+
+# Get root directory
+root_dir=$(readlink -nf .)
+
+##################################################
+# Checked out a release branch
+##################################################
+if [[ $current_branch == release/* ]]
+then
+    # ---------- Update version ----------
+    version=$(echo $current_branch | sed "s/release\///g" | sed -E "s/^[a-zA-Z]+//g")
+    find $root_dir/Server/ -type f -name "*.h" -exec sed -i -E "s/@version\s*[1234567890\.\+]+$/@version $version/g" {} \;
+    find $root_dir/Server/ -type f -name "*.cpp" -exec sed -i -E "s/@version\s*[1234567890\.\+]+$/@version $version/g" {} \;
+    find $root_dir/Server/ -type f -name "*.tpp" -exec sed -i -E "s/@version\s*[1234567890\.\+]+$/@version $version/g" {} \;
+    find $root_dir/Server -type f -name CMakeLists.txt -exec sed -i -E "s/project\((\w+)\s+VERSION\s+[1234567890\.\+]+/project(\1 VERSION $version/g" {} \;
+    find $root_dir/Client/ -type f -name "*.h" -exec sed -i -E "s/@version\s*[1234567890\.\+]+$/@version $version/g" {} \;
+    find $root_dir/Client/ -type f -name "*.cpp" -exec sed -i -E "s/@version\s*[1234567890\.\+]+$/@version $version/g" {} \;
+    find $root_dir/Client/ -type f -name "*.tpp" -exec sed -i -E "s/@version\s*[1234567890\.\+]+$/@version $version/g" {} \;
+    find $root_dir/Client -type f -name CMakeLists.txt -exec sed -i -E "s/project\((\w+)\s+VERSION\s+[1234567890\.\+]+/project(\1 VERSION $version/g" {} \;
+    find $root_dir/example -type f -name CMakeLists.txt -exec sed -i -E "s/project\((\w+)\s+VERSION\s+[1234567890\.\+]+/project(\1 VERSION $version/g" {} \;
+    git add $root_dir
+    git commit -m "<hook> Update to version $version"
+else
+    echo "Nothing to be done for branch '$current_branch'"
+fi
+
+echo "--- POST CHECKOUT END ---"
