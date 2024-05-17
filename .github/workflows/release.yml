@@ -1,38 +1,38 @@
 name: release
 
 on:
-    push:
-        tags:
-            - "v*"
+  push:
+    tags:
+      - "v*"
 
 jobs:
-    release:
-        name: release
-        runs-on: ubuntu-latest
-        steps:
+  release:
+    name: release
+    runs-on: ubuntu-latest
+    steps:
 
-            - name: Checkout
-              uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v3
 
-            - name: Get tag name
-              id: tag-name
-              run: echo "out=$(basename $GITHUB_REF)" >> $GITHUB_OUTPUT
+      - name: Get tag name
+        id: tag-name
+        run: echo "out=$(basename $GITHUB_REF)" >> $GITHUB_OUTPUT
 
-            - name: Get tag message
-              id: tag-message
-              run: |
-                TAG_MSG=$(git tag -l --format='%(contents)' ${{ steps.tag-name.outputs.out }})
-                echo "TAG_MSG<<EOF" >> $GITHUB_ENV
-                echo "$TAG_MSG" >> $GITHUB_ENV
-                echo "EOF" >> $GITHUB_ENV
+      - name: Get tag message
+        id: tag-message
+        run: |
+          TAG_MSG=$(git tag -l --format='%(contents)' ${{ steps.tag-name.outputs.out }})
+          echo "TAG_MSG<<EOF" >> $GITHUB_ENV
+          echo "$TAG_MSG" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
 
-            - name: Create release
-              uses: actions/create-release@v1
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              with:
-                  tag_name: ${{ steps.tag-name.outputs.out }}
-                  release_name: ${{ steps.tag-name.outputs.out }}
-                  body: ${{ env.TAG_MSG }}
-                  draft: false
-                  prerelease: false
+      - name: Create release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.tag-name.outputs.out }}
+          release_name: ${{ steps.tag-name.outputs.out }}
+          body: ${{ env.TAG_MSG }}
+          draft: false
+          prerelease: false

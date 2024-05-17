@@ -103,7 +103,7 @@ TEST_F(General_TlsClient_Test_Start, NegTest_WrongCaPath)
 // ====================================================================================================================
 TEST_F(General_TlsClient_Test_Start, NegTest_WrongCertPath)
 {
-    EXPECT_EQ(tlsClient.start("localhost", port, KeyPaths::CaCert, "fake/path/to/client.crt", KeyPaths::ListenerKey), CLIENT_ERROR_START_WRONG_CERT_PATH);
+    EXPECT_EQ(tlsClient.start("localhost", port, KeyPaths::CaCert, "fake/path/to/client.crt", KeyPaths::ServerKey), CLIENT_ERROR_START_WRONG_CERT_PATH);
     EXPECT_EQ(tlsServer.getClientIds().size(), 0);
 }
 

@@ -4,7 +4,7 @@
  * @brief Base framework for all classes that build a network client based on TCP.
  * This class contains no functionality, but serves a base framework for the creation of stable clients based on TCP.
  * When compiling with the -DDEBUG flag, the class will print out all received messages to the console.
- * @version 1.0
+ * @version 2.0
  * @date 2021-12-28
  *
  * @copyright Copyright (c) 2021
@@ -29,7 +29,7 @@
 #include <netdb.h>
 #include <sys/socket.h>
 
-#include "Defines.h"
+#include "ClientDefines.h"
 
 namespace tcp
 {
@@ -130,7 +130,7 @@ namespace tcp
 
         /**
          * @brief Start the client and connects to the server.
-         * If connection to listener succeeds, this method returns CLIENT_START_OK, otherwise it returns an error code.
+         * If connection to server succeeds, this method returns CLIENT_START_OK, otherwise it returns an error code.
          *
          * @param serverIp
          * @param serverPort

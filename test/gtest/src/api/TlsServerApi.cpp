@@ -19,9 +19,9 @@ TlsServerApi_continuous::TlsServerApi_continuous() : tlsServer{}
 }
 TlsServerApi_continuous::~TlsServerApi_continuous() {}
 
-int TlsServerApi_fragmentation::start(const int port, const std::string pathToCaCert, const std::string pathToListenerCert, const std::string pathToListenerKey)
+int TlsServerApi_fragmentation::start(const int port, const std::string pathToCaCert, const std::string pathToServerCert, const std::string pathToServerKey)
 {
-    return tlsServer.start(port, pathToCaCert.c_str(), pathToListenerCert.c_str(), pathToListenerKey.c_str());
+    return tlsServer.start(port, pathToCaCert.c_str(), pathToServerCert.c_str(), pathToServerKey.c_str());
 }
 
 void TlsServerApi_fragmentation::stop()
@@ -55,9 +55,9 @@ void TlsServerApi_fragmentation::workOnEstablished(const int) {}
 
 void TlsServerApi_fragmentation::workOnClosed(const int) {}
 
-int TlsServerApi_continuous::start(const int port, const std::string pathToCaCert, const std::string pathToListenerCert, const std::string pathToListenerKey)
+int TlsServerApi_continuous::start(const int port, const std::string pathToCaCert, const std::string pathToServerCert, const std::string pathToServerKey)
 {
-    return tlsServer.start(port, pathToCaCert.c_str(), pathToListenerCert.c_str(), pathToListenerKey.c_str());
+    return tlsServer.start(port, pathToCaCert.c_str(), pathToServerCert.c_str(), pathToServerKey.c_str());
 }
 
 void TlsServerApi_continuous::stop()

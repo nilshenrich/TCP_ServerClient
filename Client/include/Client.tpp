@@ -286,7 +286,7 @@ void Client<SocketType, SocketDeleter>::receive()
         else
         {
             // Just forward incoming message to output stream
-            CONTINUOUS_OUTPUT_STREAM << msg;
+            CONTINUOUS_OUTPUT_STREAM << msg << flush;
         }
     }
 }

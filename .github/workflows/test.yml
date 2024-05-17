@@ -1,37 +1,59 @@
 name: test
 
 on:
-    push:
-        branches:
-            - main
-    pull_request:
-        branches:
-            - main
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
-    gtest:
-        name: gtest
-        runs-on: ubuntu-latest
-        steps:
+  gtest:
+    name: gtest
+    runs-on: ubuntu-latest
+    steps:
 
-            - name: Install dependencies
-              run: |
-                  sudo apt-get update
-                  sudo apt-get install -y build-essential cmake libssl-dev openssl
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake libssl-dev openssl
 
-            - name: Checkout
-              uses: actions/checkout@v3
-              with:
-                  submodules: recursive
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
 
-            - name: Run tests
-              run: ./RunAllTests.sh
-              working-directory: test/gtest
+      - name: Install GoogleTest
+        run: |
+          mkdir build
+          cd build
+          cmake ..
+          sudo make install
+        working-directory: test/gtest/googletest
 
-            - name: Upload test results
-              if: always()
-              uses: actions/upload-artifact@v3
-              with:
-                  name: test-results-gtest
-                  path: test/gtest/results.json
-                  if-no-files-found: error
+      - name: Build
+        run: |
+          mkdir build
+          cd build
+          cmake ..
+          make -j4
+        working-directory: test/gtest
+
+      - name: Run tests
+        run: ./RunFilteredTests.sh ${{ matrix.protocol }} ${{ matrix.mode }} ${{ matrix.certType }}
+        working-directory: test/gtest
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results-gtest_${{ matrix.protocol }}-${{ matrix.mode }}-${{ matrix.certType }}
+          path: test/gtest/results.json
+          if-no-files-found: error
+    
+    strategy:
+      matrix:
+        protocol: ["tcp", "tls"]
+        mode:     ["continuous", "fragmentation", "general"]
+        certType: ["ec", "rsa"]

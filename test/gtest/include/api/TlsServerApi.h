@@ -24,7 +24,7 @@ namespace TestApi
          * @param port TLS port to listen on
          * @return int SERVER_START_OK if successful, other if failed
          */
-        int start(const int port, const std::string pathToCaCert = KeyPaths::CaCert, const std::string pathToListenerCert = KeyPaths::ListenerCert, const std::string pathToListenerKey = KeyPaths::ListenerKey);
+        int start(const int port, const std::string pathToCaCert = KeyPaths::CaCert, const std::string pathToServerCert = KeyPaths::ServerCert, const std::string pathToServerKey = KeyPaths::ServerKey);
 
         /**
          * @brief Stop TLS server
@@ -97,7 +97,7 @@ namespace TestApi
          * @param port TLS port to listen on
          * @return int SERVER_START_OK if successful, other if failed
          */
-        int start(const int port, const std::string pathToCaCert = KeyPaths::CaCert, const std::string pathToListenerCert = KeyPaths::ListenerCert, const std::string pathToListenerKey = KeyPaths::ListenerKey);
+        int start(const int port, const std::string pathToCaCert = KeyPaths::CaCert, const std::string pathToServerCert = KeyPaths::ServerCert, const std::string pathToServerKey = KeyPaths::ServerKey);
 
         /**
          * @brief Stop TLS server

@@ -2,7 +2,7 @@
  * @file TlsServer.h
  * @author Nils Henrich
  * @brief TLS server for encrypted data transfer with authentication.
- * @version 1.0
+ * @version 2.0
  * @date 2021-12-27
  *
  * @copyright Copyright (c) 2021
