@@ -37,13 +37,13 @@ target_link_options(tlsserver PUBLIC $<$<CONFIG:RELEASE>: -s>)
 # Use C++17 standard
 set_target_properties(tcpserver PROPERTIES
     VERSION ${PROJECT_VERSION}
-    SOVERSION 1
+    SOVERSION ${PROJECT_VERSION_MAJOR}
     PUBLIC_HEADER "include/TcpServer.h;include/Server.h;include/ServerDefines.h;include/Server.tpp"
     CXX_STANDARD 17
     CMAKE_CXX_STANDARD_REQUIRED True)
 set_target_properties(tlsserver PROPERTIES
     VERSION ${PROJECT_VERSION}
-    SOVERSION 1
+    SOVERSION ${PROJECT_VERSION_MAJOR}
     PUBLIC_HEADER "include/TlsServer.h;include/Server.h;include/ServerDefines.h;include/Server.tpp"
     CXX_STANDARD 17
     CMAKE_CXX_STANDARD_REQUIRED True)
