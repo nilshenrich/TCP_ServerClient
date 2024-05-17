@@ -6,8 +6,8 @@
 cmake_minimum_required(VERSION 3.10)
 
 # Project name
-project(tcpserver VERSION 1.0 DESCRIPTION "TCP server")
-project(tlsserver VERSION 1.0 DESCRIPTION "TLS server")
+project(tcpserver VERSION 2.0 DESCRIPTION "TCP server")
+project(tlsserver VERSION 2.0 DESCRIPTION "TLS server")
 
 # Include standard directories
 include(GNUInstallDirs)
