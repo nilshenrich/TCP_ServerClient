@@ -29,7 +29,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
-#include "Defines.h"
+#include "ServerDefines.h"
 
 namespace tcp
 {

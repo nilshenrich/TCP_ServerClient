@@ -12,6 +12,7 @@ TLS encryption with two-way authentication is supported.
   - [System requirements](#system-requirements)
   - [Installation](#installation)
   - [Usage](#usage)
+    - [Include in custom projects](#include-in-custom-projects)
     - [Message modes](#message-modes)
       - [Fragmented](#fragmented)
       - [Continuous](#continuous)
@@ -153,12 +154,27 @@ To see a basic example that shows you all functionality, please build and run th
     ./client
     ```
 
+### Include in custom projects
+
+Compiling the project installs the library on your system.\
+To use it in your project, include the header files from the sub-folder **tcp**:
+
+```cpp
+#include <tcp/TcpServer.h>
+#include <tcp/TcpClient.h>
+#include <tcp/TlsServer.h>
+#include <tcp/TlsClient.h>
+
+using namespace std;
+using namespace tcp; // The entire library is in the namespace tcp
+```
+
 The following linker flags are mandatory to be set to tell the system what libraries to use:
 
-* **-lTcpServer**   if the TCP server is used
-* **-lTcpClient**   if the TCP client is used
-* **-lTlsServer**   if the TLS server is used
-* **-lTlsClient**   if the TLS client is used
+* **-ltcpserver**   if the TCP server is used
+* **-ltcpclient**   if the TCP client is used
+* **-ltlsserver**   if the TLS server is used
+* **-ltlsclient**   if the TLS client is used
 * **-lcrypto**      if the TLS encryption is used
 * **-lssl**         if the TLS encryption is used
 * **-pthread**      always needed

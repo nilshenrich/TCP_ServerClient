@@ -1,5 +1,5 @@
 /**
- * @file Defines.h
+ * @file ServerDefines.h
  * @author Nils Henrich
  * @brief Basic definitions for the server.
  * @version 1.0

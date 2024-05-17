@@ -1,5 +1,5 @@
 /**
- * @file Defines.h
+ * @file ClientDefines.h
  * @author Nils Henrich
  * @brief Basic definitions for the network client
  * @version 1.0
