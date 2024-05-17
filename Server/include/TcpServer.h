@@ -2,7 +2,7 @@
  * @file TcpServer.h
  * @author Nils Henrich
  * @brief TCP server for unencrypted data transfer without authentication.
- * @version 1.0
+ * @version 2.0
  * @date 2021-12-27
  *
  * @copyright Copyright (c) 2021

@@ -2,7 +2,7 @@
  * @file ServerDefines.h
  * @author Nils Henrich
  * @brief Basic definitions for the server.
- * @version 1.0
+ * @version 2.0
  * @date 2021-12-27
  *
  * @copyright Copyright (c) 2021
