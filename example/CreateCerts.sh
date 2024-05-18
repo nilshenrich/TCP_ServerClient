@@ -35,14 +35,14 @@ openssl ecparam -name secp521r1 -genkey -noout -out ${currentDir}/keys/ca/ca_key
 openssl req -new -x509 -days 365 -sha512 -utf8 \
     -key ${currentDir}/keys/ca/ca_key.pem \
     -out ${currentDir}/keys/ca/ca_cert.pem \
-    -subj "/C=${C}/ST=${ST}/L=${L}/O=Networking/OU=Networking.Authority/CN=localhost"
+    -subj "/C=${C}/ST=${ST}/L=${L}/O=Example/OU=Example.Authority/CN=localhost"
 
 # Create server private key and certificate signing request and sign it with the CA
 openssl ecparam -name secp521r1 -genkey -noout -out ${currentDir}/keys/server/server_key.pem
 openssl req -new -sha512 -utf8 \
     -key ${currentDir}/keys/server/server_key.pem \
     -out ${currentDir}/keys/server/server_req.csr \
-    -subj "/C=${C}/ST=${ST}/L=${L}/O=Networking/OU=Networking.Server/CN=localhost"
+    -subj "/C=${C}/ST=${ST}/L=${L}/O=Example/OU=Example.Server/CN=localhost"
 openssl x509 -req -days 365 \
     -in ${currentDir}/keys/server/server_req.csr \
     -CA ${currentDir}/keys/ca/ca_cert.pem \
@@ -55,7 +55,7 @@ openssl ecparam -name secp521r1 -genkey -noout -out ${currentDir}/keys/client/cl
 openssl req -new -sha512 -utf8 \
     -key ${currentDir}/keys/client/client_key.pem \
     -out ${currentDir}/keys/client/client_req.csr \
-    -subj "/C=${C}/ST=${ST}/L=${L}/O=Networking/OU=Networking.Client/CN=localhost"
+    -subj "/C=${C}/ST=${ST}/L=${L}/O=Example/OU=Example.Client/CN=localhost"
 openssl x509 -req -days 365 \
     -in ${currentDir}/keys/client/client_req.csr \
     -CA ${currentDir}/keys/ca/ca_cert.pem \
