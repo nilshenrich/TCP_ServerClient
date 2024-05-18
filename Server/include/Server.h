@@ -36,10 +36,10 @@ namespace tcp
     /**
      * @brief Exception class for the Server class.
      */
-    class Server_error : public std::exception
+    class Server_error : public ::std::exception
     {
     public:
-        Server_error(std::string msg = "unexpected server error") : msg{msg} {}
+        Server_error(::std::string msg = "unexpected server error") : msg{msg} {}
         virtual ~Server_error() {}
 
         const char *what()
@@ -48,7 +48,7 @@ namespace tcp
         }
 
     private:
-        const std::string msg;
+        const ::std::string msg;
 
         // Delete default constructor
         Server_error() = delete;
@@ -62,7 +62,7 @@ namespace tcp
      * @brief Class to manage running flag in threads.
      *
      */
-    using RunningFlag = std::atomic_bool;
+    using RunningFlag = ::std::atomic_bool;
     class Server_running_manager
     {
     public:
@@ -90,7 +90,7 @@ namespace tcp
      * @param SocketType
      * @param SocketDeleter
      */
-    template <class SocketType, class SocketDeleter = std::default_delete<SocketType>>
+    template <class SocketType, class SocketDeleter = ::std::default_delete<SocketType>>
     class Server
     {
     public:
@@ -145,50 +145,50 @@ namespace tcp
          * @param msg
          * @return bool (true if successful, false if not)
          */
-        bool sendMsg(const int clientId, const std::string &msg);
+        bool sendMsg(const int clientId, const ::std::string &msg);
 
         /**
          * @brief Set worker executed on each incoming message in fragmentation mode
          *
          * @param worker
          */
-        void setWorkOnMessage(std::function<void(const int, const std::string)> worker);
+        void setWorkOnMessage(::std::function<void(const int, const ::std::string)> worker);
 
         /**
          * @brief Set creator creating a forwarding out stream for each established connection in continuous mode
          *
          * @param creator
          */
-        void setCreateForwardStream(std::function<std::ostream *(const int)> creator);
+        void setCreateForwardStream(::std::function<::std::ostream *(const int)> creator);
 
         /**
          * @brief Set worker executed on each new established connection
          *
          * @param worker
          */
-        void setWorkOnEstablished(std::function<void(const int)> worker);
+        void setWorkOnEstablished(::std::function<void(const int)> worker);
 
         /**
          * @brief Set worker executed on each closed connection
          *
          * @param worker
          */
-        void setWorkOnClosed(std::function<void(const int)> worker);
+        void setWorkOnClosed(::std::function<void(const int)> worker);
 
         /**
          * @brief Get all connected clients identified by ID as list
          *
          * @return vector<int>
          */
-        std::vector<int> getAllClientIds() const;
+        ::std::vector<int> getAllClientIds() const;
 
         /**
          * @brief Get the IP address of a specific connected client (Identified by its TCP ID).
          *
          * @param clientId
-         * @return std::string
+         * @return string
          */
-        std::string getClientIp(const int clientId) const;
+        ::std::string getClientIp(const int clientId) const;
 
         /**
          * @brief Return if server is running
@@ -235,9 +235,9 @@ namespace tcp
          * This method is abstract and must be implemented by derived classes.
          *
          * @param socket
-         * @return std::string
+         * @return string
          */
-        virtual std::string readMsg(SocketType *socket) = 0;
+        virtual ::std::string readMsg(SocketType *socket) = 0;
 
         /**
          * @brief Send raw data to a specific client (Identified by its TCP ID).
@@ -248,13 +248,13 @@ namespace tcp
          * @param msg
          * @return bool
          */
-        virtual bool writeMsg(const int clientId, const std::string &msg) = 0;
+        virtual bool writeMsg(const int clientId, const ::std::string &msg) = 0;
 
         // Map to store all active connections with their identifying TCP ID
-        std::map<int, std::unique_ptr<SocketType, SocketDeleter>> activeConnections{};
+        ::std::map<int, ::std::unique_ptr<SocketType, SocketDeleter>> activeConnections{};
 
         // Mutex to protect the activeConnections map
-        std::mutex activeConnections_m{};
+        ::std::mutex activeConnections_m{};
 
         // Maximum TCP packet size
         const static int MAXIMUM_RECEIVE_PACKAGE_SIZE{16384};
@@ -283,23 +283,23 @@ namespace tcp
         int tcpSocket{0};
 
         // Thread to accept new connections
-        std::thread accHandler{};
+        ::std::thread accHandler{};
 
         // All receiving threads (One per connected client) and their running status
-        std::map<int, std::thread> recHandlers{};
-        std::map<int, std::unique_ptr<RunningFlag>> recHandlersRunning{};
+        ::std::map<int, ::std::thread> recHandlers{};
+        ::std::map<int, ::std::unique_ptr<RunningFlag>> recHandlersRunning{};
 
         // Flag to indicate if the server is running
         RunningFlag running{false};
 
         // Pointer to a function that returns an out stream to forward incoming data to
-        std::function<std::ostream *(const int)> generateNewForwardStream{nullptr};
-        std::map<int, std::unique_ptr<std::ostream>> forwardStreams;
+        ::std::function<::std::ostream *(const int)> generateNewForwardStream{nullptr};
+        ::std::map<int, ::std::unique_ptr<::std::ostream>> forwardStreams;
 
         // Pointer to worker functions on incoming message (for fragmentation mode only), established or closed connection
-        std::function<void(const int, const std::string)> workOnMessage{nullptr};
-        std::function<void(const int)> workOnEstablished{nullptr};
-        std::function<void(const int)> workOnClosed{nullptr};
+        ::std::function<void(const int, const ::std::string)> workOnMessage{nullptr};
+        ::std::function<void(const int)> workOnEstablished{nullptr};
+        ::std::function<void(const int)> workOnClosed{nullptr};
 
         // Delimiter for the message framing (incoming and outgoing) (default is '\n')
         const char DELIMITER_FOR_FRAGMENTATION;

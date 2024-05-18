@@ -36,7 +36,7 @@ namespace tcp
     /**
      * @brief Stream that actually does nothing
      */
-    class NullBuffer : public std::streambuf
+    class NullBuffer : public ::std::streambuf
     {
     public:
         int overflow(int c) override final
@@ -48,10 +48,10 @@ namespace tcp
     /**
      * @brief Exception class for the Client class.
      */
-    class Client_error : public std::exception
+    class Client_error : public ::std::exception
     {
     public:
-        Client_error(std::string msg = "unexpected client error") : msg{msg} {}
+        Client_error(::std::string msg = "unexpected client error") : msg{msg} {}
         virtual ~Client_error() {}
 
         const char *what()
@@ -60,7 +60,7 @@ namespace tcp
         }
 
     private:
-        const std::string msg;
+        const ::std::string msg;
 
         // Delete default constructor
         Client_error() = delete;
@@ -74,7 +74,7 @@ namespace tcp
      * @brief Class to manage running flag in threads.
      *
      */
-    using RunningFlag = std::atomic_bool;
+    using RunningFlag = ::std::atomic_bool;
     class Client_running_manager
     {
     public:
@@ -101,7 +101,7 @@ namespace tcp
      * @param SocketType
      * @param SocketDeleter
      */
-    template <class SocketType, class SocketDeleter = std::default_delete<SocketType>>
+    template <class SocketType, class SocketDeleter = ::std::default_delete<SocketType>>
     class Client
     {
     public:
@@ -110,10 +110,10 @@ namespace tcp
          *
          * @param os                                Stream to forward incoming stream to
          */
-        Client(std::ostream &os) : CONTINUOUS_OUTPUT_STREAM{os},
-                                   DELIMITER_FOR_FRAGMENTATION{0},
-                                   MAXIMUM_MESSAGE_LENGTH_FOR_FRAGMENTATION{0},
-                                   MESSAGE_FRAGMENTATION_ENABLED{false} {}
+        Client(::std::ostream &os) : CONTINUOUS_OUTPUT_STREAM{os},
+                                     DELIMITER_FOR_FRAGMENTATION{0},
+                                     MAXIMUM_MESSAGE_LENGTH_FOR_FRAGMENTATION{0},
+                                     MESSAGE_FRAGMENTATION_ENABLED{false} {}
 
         /**
          * @brief Constructor for fragmented messages
@@ -139,7 +139,7 @@ namespace tcp
          * @param pathToPrivKey
          * @return int
          */
-        int start(const std::string &serverIp,
+        int start(const ::std::string &serverIp,
                   const int serverPort,
                   const char *const pathToCaCert = nullptr,
                   const char *const pathToCert = nullptr,
@@ -157,14 +157,14 @@ namespace tcp
          * @return true
          * @return false
          */
-        bool sendMsg(const std::string &msg);
+        bool sendMsg(const ::std::string &msg);
 
         /**
          * @brief Set worker executed on each incoming message in fragmentation mode
          *
          * @param worker
          */
-        void setWorkOnMessage(std::function<void(const std::string)> worker);
+        void setWorkOnMessage(::std::function<void(const ::std::string)> worker);
 
         /**
          * @brief Return if client is running
@@ -206,9 +206,9 @@ namespace tcp
          * This method is expected to return the received data as a string with blocking read (Empty string means failure).
          * This method is abstract and must be implemented by derived classes.
          *
-         * @return std::string
+         * @return string
          */
-        virtual std::string readMsg() = 0;
+        virtual ::std::string readMsg() = 0;
 
         /**
          * @brief Write raw data to the server connection.
@@ -219,11 +219,11 @@ namespace tcp
          * @return true
          * @return false
          */
-        virtual bool writeMsg(const std::string &msg) = 0;
+        virtual bool writeMsg(const ::std::string &msg) = 0;
 
         // Client sockets (TCP and user defined)
         int tcpSocket;
-        std::unique_ptr<SocketType, SocketDeleter> clientSocket{nullptr};
+        ::std::unique_ptr<SocketType, SocketDeleter> clientSocket{nullptr};
 
         // Maximum package size for receiving data
         const static int MAXIMUM_RECEIVE_PACKAGE_SIZE{16384};
@@ -244,17 +244,17 @@ namespace tcp
         };
 
         // Thread for receiving data from the server
-        std::thread recHandler{};
+        ::std::thread recHandler{};
 
         // All working threads and their running status
-        std::vector<std::thread> workHandlers;
-        std::vector<std::unique_ptr<RunningFlag>> workHandlersRunning;
+        ::std::vector<::std::thread> workHandlers;
+        ::std::vector<::std::unique_ptr<RunningFlag>> workHandlersRunning;
 
         // Pointer to worker function for incoming messages (for fragmentation mode only)
-        std::function<void(const std::string)> workOnMessage{nullptr};
+        ::std::function<void(const ::std::string)> workOnMessage{nullptr};
 
         // Out stream to forward continuous input stream to
-        std::ostream &CONTINUOUS_OUTPUT_STREAM;
+        ::std::ostream &CONTINUOUS_OUTPUT_STREAM;
 
         // Delimiter for the message framing (incoming and outgoing) (default is '\n')
         const char DELIMITER_FOR_FRAGMENTATION;
@@ -267,7 +267,7 @@ namespace tcp
 
         // Buffer/Stream doing nothing
         NullBuffer nullbuffer;
-        std::ostream nullstream{&nullbuffer};
+        ::std::ostream nullstream{&nullbuffer};
 
         // Disallow copy
         Client() = delete;

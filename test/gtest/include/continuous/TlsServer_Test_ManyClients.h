@@ -25,7 +25,7 @@ namespace Test
 
         // TLS server and collection of clients
         TestApi::TlsServerApi_continuous tlsServer;
-        std::map<int, std::unique_ptr<TestApi::TlsClientApi_continuous>> tlsClients;
+        ::std::map<int, ::std::unique_ptr<TestApi::TlsClientApi_continuous>> tlsClients;
 
         // Port to use
         int port;

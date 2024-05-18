@@ -25,7 +25,7 @@ namespace Test
 
         // TCP server and collection of clients
         TestApi::TcpServerApi_continuous tcpServer;
-        std::map<int, std::unique_ptr<TestApi::TcpClientApi_continuous>> tcpClients;
+        ::std::map<int, ::std::unique_ptr<TestApi::TcpClientApi_continuous>> tcpClients;
 
         // Port to use
         int port;

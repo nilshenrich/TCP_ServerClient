@@ -43,7 +43,7 @@ namespace tcp
        * @param delimiter     Character to split messages on
        * @param messageMaxLen Maximum message length
        */
-      TlsServer(char delimiter, size_t messageMaxLen = std::numeric_limits<size_t>::max() - 1);
+      TlsServer(char delimiter, size_t messageMaxLen = ::std::numeric_limits<size_t>::max() - 1);
 
       /**
        * @brief Destructor
@@ -56,9 +56,9 @@ namespace tcp
        * @param clientId
        * @param tlsSocket
        * @param subjPart
-       * @return std::string
+       * @return string
        */
-      std::string getSubjPartFromClientCert(const int clientId, const SSL *tlsSocket, const int subjPart);
+      ::std::string getSubjPartFromClientCert(const int clientId, const SSL *tlsSocket, const int subjPart);
 
    private:
       /**
@@ -96,9 +96,9 @@ namespace tcp
        * If no data is available, it returns an empty string.
        *
        * @param socket
-       * @return std::string
+       * @return string
        */
-      std::string readMsg(SSL *socket) override final;
+      ::std::string readMsg(SSL *socket) override final;
 
       /**
        * @brief Send raw data to a specific client (Identified by its TCP ID).
@@ -108,10 +108,10 @@ namespace tcp
        * @return true
        * @return false
        */
-      bool writeMsg(const int clientId, const std::string &msg) override final;
+      bool writeMsg(const int clientId, const ::std::string &msg) override final;
 
       // TLS context of the server
-      std::unique_ptr<SSL_CTX, void (*)(SSL_CTX *)> serverContext{nullptr, SSL_CTX_free};
+      ::std::unique_ptr<SSL_CTX, void (*)(SSL_CTX *)> serverContext{nullptr, SSL_CTX_free};
 
       // Disallow copy
       TlsServer(const TlsServer &) = delete;

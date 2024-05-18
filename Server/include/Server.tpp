@@ -141,7 +141,7 @@ void Server<SocketType, SocketDeleter>::stop()
 }
 
 template <class SocketType, class SocketDeleter>
-bool Server<SocketType, SocketDeleter>::sendMsg(const int clientId, const std::string &msg)
+bool Server<SocketType, SocketDeleter>::sendMsg(const int clientId, const ::std::string &msg)
 {
     using namespace std;
 
@@ -181,25 +181,25 @@ bool Server<SocketType, SocketDeleter>::sendMsg(const int clientId, const std::s
 }
 
 template <class SocketType, class SocketDeleter>
-void Server<SocketType, SocketDeleter>::setWorkOnMessage(std::function<void(const int, const std::string)> worker)
+void Server<SocketType, SocketDeleter>::setWorkOnMessage(::std::function<void(const int, const ::std::string)> worker)
 {
     workOnMessage = worker;
 }
 
 template <class SocketType, class SocketDeleter>
-void Server<SocketType, SocketDeleter>::setCreateForwardStream(std::function<std::ostream *(const int)> creator)
+void Server<SocketType, SocketDeleter>::setCreateForwardStream(::std::function<::std::ostream *(const int)> creator)
 {
     generateNewForwardStream = creator;
 }
 
 template <class SocketType, class SocketDeleter>
-void Server<SocketType, SocketDeleter>::setWorkOnEstablished(std::function<void(const int)> worker)
+void Server<SocketType, SocketDeleter>::setWorkOnEstablished(::std::function<void(const int)> worker)
 {
     workOnEstablished = worker;
 }
 
 template <class SocketType, class SocketDeleter>
-void Server<SocketType, SocketDeleter>::setWorkOnClosed(std::function<void(const int)> worker)
+void Server<SocketType, SocketDeleter>::setWorkOnClosed(::std::function<void(const int)> worker)
 {
     workOnClosed = worker;
 }

@@ -1,6 +1,6 @@
 template <class SocketType, class SocketDeleter>
 int Client<SocketType, SocketDeleter>::start(
-    const std::string &serverIp,
+    const ::std::string &serverIp,
     const int serverPort,
     const char *const pathToCaCert,
     const char *const pathToCert,
@@ -137,7 +137,7 @@ void Client<SocketType, SocketDeleter>::stop()
 }
 
 template <class SocketType, class SocketDeleter>
-bool Client<SocketType, SocketDeleter>::sendMsg(const std::string &msg)
+bool Client<SocketType, SocketDeleter>::sendMsg(const ::std::string &msg)
 {
     using namespace std;
 
@@ -176,7 +176,7 @@ bool Client<SocketType, SocketDeleter>::sendMsg(const std::string &msg)
 }
 
 template <class SocketType, class SocketDeleter>
-void Client<SocketType, SocketDeleter>::setWorkOnMessage(std::function<void(const std::string)> worker)
+void Client<SocketType, SocketDeleter>::setWorkOnMessage(::std::function<void(const ::std::string)> worker)
 {
     workOnMessage = worker;
 }

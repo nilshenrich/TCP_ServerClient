@@ -38,21 +38,21 @@ namespace TestApi
          * @param tcpMsg Message to send
          * @return bool true if successful, false if failed
          */
-        bool sendMsg(const int tcpClientId, const std::string &tcpMsg);
+        bool sendMsg(const int tcpClientId, const ::std::string &tcpMsg);
 
         /**
          * @brief Get buffered message from TCP clients and clear buffer
          *
-         * @return std::vector<MessageFromClient> Vector of buffered messages
+         * @return vector<MessageFromClient> Vector of buffered messages
          */
-        std::vector<MessageFromClient> getBufferedMsg();
+        ::std::vector<MessageFromClient> getBufferedMsg();
 
         /**
          * @brief Get IDs of all connected clients
          *
-         * @return std::vector<int> Vector of client IDs
+         * @return vector<int> Vector of client IDs
          */
-        std::vector<int> getClientIds();
+        ::std::vector<int> getClientIds();
 
     private:
         /**
@@ -61,7 +61,7 @@ namespace TestApi
          * @param tcpClientId       Client ID
          * @param tcpMsgFromClient  Message from client
          */
-        void workOnMessage(const int tcpClientId, const std::string tcpMsgFromClient);
+        void workOnMessage(const int tcpClientId, const ::std::string tcpMsgFromClient);
 
         /**
          * @brief Do nothing on established connection
@@ -78,11 +78,11 @@ namespace TestApi
         void workOnClosed(const int tcpClientId);
 
         // TCP server
-        tcp::TcpServer tcpServer;
+        ::tcp::TcpServer tcpServer;
 
         // Buffered messages
-        std::vector<MessageFromClient> bufferedMsg;
-        std::mutex bufferedMsg_m;
+        ::std::vector<MessageFromClient> bufferedMsg;
+        ::std::mutex bufferedMsg_m;
     };
 
     class TcpServerApi_continuous
@@ -111,21 +111,21 @@ namespace TestApi
          * @param tcpMsg Message to send
          * @return bool true if successful, false if failed
          */
-        bool sendMsg(const int tcpClientId, const std::string &tcpMsg);
+        bool sendMsg(const int tcpClientId, const ::std::string &tcpMsg);
 
         /**
          * @brief Get buffered message from TCP clients and clear buffer
          *
-         * @return std::map<int, std::string> Vector of buffered messages
+         * @return map<int, string> Vector of buffered messages
          */
-        std::map<int, std::string> getBufferedMsg();
+        ::std::map<int, ::std::string> getBufferedMsg();
 
         /**
          * @brief Get IDs of all connected clients
          *
-         * @return std::vector<int> Vector of client IDs
+         * @return vector<int> Vector of client IDs
          */
-        std::vector<int> getClientIds();
+        ::std::vector<int> getClientIds();
 
     private:
         /**
@@ -143,18 +143,18 @@ namespace TestApi
         void workOnClosed(const int tcpClientId);
 
         // TCP server
-        tcp::TcpServer tcpServer;
+        ::tcp::TcpServer tcpServer;
 
         /**
          * @brief Generate an output stream to a string for each client
          *
          * @param clientId
-         * @return std::ostringstream*
+         * @return ostringstream*
          */
-        std::ostringstream *generateContinuousStream(int clientId);
+        ::std::ostringstream *generateContinuousStream(int clientId);
 
         // Buffered messages
-        std::map<int, std::ostringstream *> bufferedMsg;
+        ::std::map<int, ::std::ostringstream *> bufferedMsg;
     };
 
 } // namespace TestApi

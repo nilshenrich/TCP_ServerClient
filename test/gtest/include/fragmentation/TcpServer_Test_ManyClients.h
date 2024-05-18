@@ -25,7 +25,7 @@ namespace Test
 
         // TCP server and collection of clients
         TestApi::TcpServerApi_fragmentation tcpServer;
-        std::map<int, std::unique_ptr<TestApi::TcpClientApi_fragmentation>> tcpClients;
+        ::std::map<int, ::std::unique_ptr<TestApi::TcpClientApi_fragmentation>> tcpClients;
 
         // Port to use
         int port;

@@ -31,7 +31,7 @@ namespace tcp
          *
          * @param os                                Stream to forward incoming stream to
          */
-        TlsClient(std::ostream &os = std::cout);
+        TlsClient(::std::ostream &os = ::std::cout);
 
         /**
          * @brief Constructor for fragmented messages
@@ -39,7 +39,7 @@ namespace tcp
          * @param delimiter                         Character to split messages on
          * @param messageMaxLen                     Maximum message length
          */
-        TlsClient(char delimiter, size_t messageMaxLen = std::numeric_limits<size_t>::max() - 1);
+        TlsClient(char delimiter, size_t messageMaxLen = ::std::numeric_limits<size_t>::max() - 1);
 
         /**
          * @brief Destructor
@@ -76,9 +76,9 @@ namespace tcp
         /**
          * @brief Read raw data from the encrypted TLS socket
          *
-         * @return std::string
+         * @return string
          */
-        std::string readMsg() override final;
+        ::std::string readMsg() override final;
 
         /**
          * @brief Write raw data to the encrypted TLS socket
@@ -87,10 +87,10 @@ namespace tcp
          * @return true
          * @return false
          */
-        bool writeMsg(const std::string &msg) override final;
+        bool writeMsg(const ::std::string &msg) override final;
 
         // TLS context
-        std::unique_ptr<SSL_CTX, void (*)(SSL_CTX *)> clientContext{nullptr, SSL_CTX_free};
+        ::std::unique_ptr<SSL_CTX, void (*)(SSL_CTX *)> clientContext{nullptr, SSL_CTX_free};
 
         // Disallow copy
         TlsClient(const TlsClient &) = delete;

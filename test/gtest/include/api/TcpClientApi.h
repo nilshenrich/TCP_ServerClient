@@ -25,7 +25,7 @@ namespace TestApi
          * @param port TCP port of TCP server
          * @return int CLIENT_CONNECT_OK if successful, other if failed
          */
-        int start(const std::string &ip, const int port);
+        int start(const ::std::string &ip, const int port);
 
         /**
          * @brief Disconnect from TCP server
@@ -38,14 +38,14 @@ namespace TestApi
          * @param tcpMsg Message to send
          * @return bool true if successful, false if failed
          */
-        bool sendMsg(const std::string &tcpMsg);
+        bool sendMsg(const ::std::string &tcpMsg);
 
         /**
          * @brief Get buffered message from TCP server and clear buffer
          *
-         * @return std::vector<std::string> Vector of buffered messages
+         * @return vector<string> Vector of buffered messages
          */
-        std::vector<std::string> getBufferedMsg();
+        ::std::vector<::std::string> getBufferedMsg();
 
     private:
         /**
@@ -53,14 +53,14 @@ namespace TestApi
          *
          * @param tcpMsgFromServer Message from server
          */
-        void workOnMessage(const std::string tcpMsgFromServer);
+        void workOnMessage(const ::std::string tcpMsgFromServer);
 
         // TCP client
-        tcp::TcpClient tcpClient;
+        ::tcp::TcpClient tcpClient;
 
         // Buffered messages
-        std::vector<std::string> bufferedMsg;
-        std::mutex bufferedMsg_m;
+        ::std::vector<::std::string> bufferedMsg;
+        ::std::mutex bufferedMsg_m;
     };
 
     class TcpClientApi_continuous
@@ -76,7 +76,7 @@ namespace TestApi
          * @param port TCP port of TCP server
          * @return int CLIENT_CONNECT_OK if successful, other if failed
          */
-        int start(const std::string &ip, const int port);
+        int start(const ::std::string &ip, const int port);
 
         /**
          * @brief Disconnect from TCP server
@@ -89,21 +89,21 @@ namespace TestApi
          * @param tcpMsg Message to send
          * @return bool true if successful, false if failed
          */
-        bool sendMsg(const std::string &tcpMsg);
+        bool sendMsg(const ::std::string &tcpMsg);
 
         /**
          * @brief Get buffered message from TCP server and clear buffer
          *
-         * @return std::string Vector of buffered messages
+         * @return string Vector of buffered messages
          */
-        std::string getBufferedMsg();
+        ::std::string getBufferedMsg();
 
     private:
         // TCP client
-        tcp::TcpClient tcpClient;
+        ::tcp::TcpClient tcpClient;
 
         // Buffered message
-        std::ostringstream bufferedMsg_os{std::ios_base::ate};
+        ::std::ostringstream bufferedMsg_os{::std::ios_base::ate};
     };
 
 } // namespace TestApi

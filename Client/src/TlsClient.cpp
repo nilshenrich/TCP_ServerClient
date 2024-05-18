@@ -3,7 +3,7 @@
 using namespace std;
 using namespace tcp;
 
-TlsClient::TlsClient(std::ostream &os) : Client(os) {}
+TlsClient::TlsClient(ostream &os) : Client(os) {}
 TlsClient::TlsClient(char delimiter, size_t messageMaxLen) : Client(delimiter, messageMaxLen) {}
 
 TlsClient::~TlsClient()

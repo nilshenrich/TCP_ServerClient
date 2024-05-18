@@ -32,7 +32,7 @@ namespace tcp
        * @param delimiter     Character to split messages on
        * @param messageMaxLen Maximum message length
        */
-      TcpServer(char delimiter, size_t messageMaxLen = std::numeric_limits<size_t>::max() - 1);
+      TcpServer(char delimiter, size_t messageMaxLen = ::std::numeric_limits<size_t>::max() - 1);
 
       /**
        * @brief Destructor
@@ -70,9 +70,9 @@ namespace tcp
        * If no data is available, it returns an empty string.
        *
        * @param socket
-       * @return std::string
+       * @return string
        */
-      std::string readMsg(int *socket) override final;
+      ::std::string readMsg(int *socket) override final;
 
       /**
        * @brief Send raw data to a specific client (Identified by its TCP ID).
@@ -83,7 +83,7 @@ namespace tcp
        * @return true
        * @return false
        */
-      bool writeMsg(const int clientId, const std::string &msg) override final;
+      bool writeMsg(const int clientId, const ::std::string &msg) override final;
 
       // Disallow copy
       TcpServer(const TcpServer &) = delete;

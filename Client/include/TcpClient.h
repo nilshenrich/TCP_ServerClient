@@ -15,7 +15,7 @@ namespace tcp
          *
          * @param os                                Stream to forward incoming stream to
          */
-        TcpClient(std::ostream &os = std::cout);
+        TcpClient(::std::ostream &os = ::std::cout);
 
         /**
          * @brief Constructor for fragmented messages
@@ -23,7 +23,7 @@ namespace tcp
          * @param delimiter                         Character to split messages on
          * @param messageMaxLen                     Maximum message length
          */
-        TcpClient(char delimiter, size_t messageMaxLen = std::numeric_limits<size_t>::max() - 1);
+        TcpClient(char delimiter, size_t messageMaxLen = ::std::numeric_limits<size_t>::max() - 1);
 
         /**
          * @brief Destructor
@@ -57,9 +57,9 @@ namespace tcp
         /**
          * @brief Read raw data from the unencrypted TCP socket
          *
-         * @return std::string
+         * @return string
          */
-        std::string readMsg() override final;
+        ::std::string readMsg() override final;
 
         /**
          * @brief Send raw data to the unencrypted TCP socket
@@ -68,7 +68,7 @@ namespace tcp
          * @return true
          * @return bool
          */
-        bool writeMsg(const std::string &msg) override final;
+        bool writeMsg(const ::std::string &msg) override final;
 
         // Disallow copy
         TcpClient(const TcpClient &) = delete;
