@@ -13,16 +13,17 @@ project(tlsclient VERSION 2.0 DESCRIPTION "TLS client")
 include(GNUInstallDirs)
 
 # The deault build type is Release
+# For Release install in default location, for Debug install in build folder locally
 # If build type is other that Release or Debug, throw an error
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   set(PATH_INSTALL_LIB ${CMAKE_CURRENT_SOURCE_DIR}/build/lib)
-  set(PATH_INSTALL_INCLUDE ${CMAKE_CURRENT_SOURCE_DIR}/build/include/tcp)
+  set(PATH_INSTALL_INCLUDE ${CMAKE_CURRENT_SOURCE_DIR}/build/include/tcp_serverclient)
 elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
   set(PATH_INSTALL_LIB ${CMAKE_INSTALL_LIBDIR})
-  set(PATH_INSTALL_INCLUDE ${CMAKE_INSTALL_INCLUDEDIR}/tcp)
+  set(PATH_INSTALL_INCLUDE ${CMAKE_INSTALL_INCLUDEDIR}/tcp_serverclient)
 else()
   message(FATAL_ERROR "CMAKE_BUILD_TYPE must be 'Release' or 'Debug'")
 endif()

@@ -1,7 +1,7 @@
 #include "tcp/client/TcpClient.h"
 
 using namespace std;
-using namespace tcp;
+using namespace tcp_serverclient;
 
 TcpClient::TcpClient(ostream &os) : Client(os) {}
 TcpClient::TcpClient(char delimiter, size_t messageMaxLen) : Client(delimiter, messageMaxLen) {}

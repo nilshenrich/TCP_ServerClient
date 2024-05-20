@@ -1,6 +1,6 @@
 #include "tcp/server/TcpServer.h"
 
-using namespace tcp;
+using namespace tcp_serverclient;
 using namespace std;
 
 TcpServer::TcpServer() : Server{} {}

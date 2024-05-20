@@ -6,7 +6,7 @@
 
 #include "general/client/Client.h"
 
-namespace tcp
+namespace tcp_serverclient
 {
     /**
      * @brief Deleter for TLS object

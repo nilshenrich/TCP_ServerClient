@@ -12,7 +12,7 @@
 #ifndef SERVERDEFINES_H_INCLUDED
 #define SERVERDEFINES_H_INCLUDED
 
-namespace tcp
+namespace tcp_serverclient
 {
     enum : int
     {

@@ -17,7 +17,7 @@
 
 #include "general/server/Server.h"
 
-namespace tcp
+namespace tcp_serverclient
 {
    // Deleter for SSL objects
    struct Server_SSL_Deleter

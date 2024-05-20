@@ -16,7 +16,7 @@
 
 #include "general/server/Server.h"
 
-namespace tcp
+namespace tcp_serverclient
 {
    class TcpServer : public Server<int>
    {

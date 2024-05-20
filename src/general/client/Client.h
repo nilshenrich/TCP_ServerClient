@@ -31,7 +31,7 @@
 
 #include "ClientDefines.h"
 
-namespace tcp
+namespace tcp_serverclient
 {
     /**
      * @brief Stream that actually does nothing

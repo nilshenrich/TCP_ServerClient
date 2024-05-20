@@ -5,7 +5,7 @@
 
 #include "general/client/Client.h"
 
-namespace tcp
+namespace tcp_serverclient
 {
     class TcpClient : public Client<int>
     {

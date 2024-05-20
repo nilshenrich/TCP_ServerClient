@@ -31,7 +31,7 @@
 
 #include "ServerDefines.h"
 
-namespace tcp
+namespace tcp_serverclient
 {
     /**
      * @brief Exception class for the Server class.
