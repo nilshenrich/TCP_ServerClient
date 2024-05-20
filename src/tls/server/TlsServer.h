@@ -15,7 +15,7 @@
 #include <limits>
 #include <openssl/ssl.h>
 
-#include "Server.h"
+#include "general/server/Server.h"
 
 namespace tcp
 {
