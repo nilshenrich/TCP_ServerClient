@@ -342,13 +342,11 @@ namespace tcp_serverclient
         const char *const pathToCert,
         const char *const pathToPrivKey)
     {
-        using namespace std;
-
         // If the server is already running, return error
         if (running)
         {
 #ifdef DEVELOP
-            cerr << typeid(this).name() << "::" << __func__ << ": Server already running" << endl;
+            ::std::cerr << typeid(this).name() << "::" << __func__ << ": Server already running" << endl;
 #endif // DEVELOP
 
             return -1;
@@ -358,7 +356,7 @@ namespace tcp_serverclient
         if (1 > port || 65535 < port)
         {
 #ifdef DEVELOP
-            cerr << typeid(this).name() << "::" << __func__ << ": The port " << port << " couldn't be used" << endl;
+            ::std::cerr << typeid(this).name() << "::" << __func__ << ": The port " << port << " couldn't be used" << endl;
 #endif // DEVELOP
 
             return SERVER_ERROR_START_WRONG_PORT;
@@ -375,7 +373,7 @@ namespace tcp_serverclient
         if (-1 == tcpSocket)
         {
 #ifdef DEVELOP
-            cerr << typeid(this).name() << "::" << __func__ << ": Error when creating TCP socket to listen on" << endl;
+            ::std::cerr << typeid(this).name() << "::" << __func__ << ": Error when creating TCP socket to listen on" << endl;
 #endif // DEVELOP
 
             // Stop the server
@@ -391,7 +389,7 @@ namespace tcp_serverclient
         if (setsockopt(tcpSocket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)))
         {
 #ifdef DEVELOP
-            cerr << typeid(this).name() << "::" << __func__ << ": Error when setting TCP socket options" << endl;
+            ::std::cerr << typeid(this).name() << "::" << __func__ << ": Error when setting TCP socket options" << endl;
 #endif // DEVELOP
 
             // Stop the server
@@ -411,7 +409,7 @@ namespace tcp_serverclient
         if (bind(tcpSocket, (struct sockaddr *)&socketAddress, sizeof(socketAddress)))
         {
 #ifdef DEVELOP
-            cerr << typeid(this).name() << "::" << __func__ << ": Error when binding server to port " << port << endl;
+            ::std::cerr << typeid(this).name() << "::" << __func__ << ": Error when binding server to port " << port << endl;
 #endif // DEVELOP
 
             // Stop the server
@@ -424,7 +422,7 @@ namespace tcp_serverclient
         if (listen(tcpSocket, SOMAXCONN))
         {
 #ifdef DEVELOP
-            cerr << typeid(this).name() << "::" << __func__ << ": Error when starting listening" << endl;
+            ::std::cerr << typeid(this).name() << "::" << __func__ << ": Error when starting listening" << endl;
 #endif // DEVELOP
 
             // Stop the server
@@ -442,7 +440,7 @@ namespace tcp_serverclient
         running = true;
 
 #ifdef DEVELOP
-        cout << typeid(this).name() << "::" << __func__ << ": Server started on port " << port << endl;
+        ::std::cout << typeid(this).name() << "::" << __func__ << ": Server started on port " << port << endl;
 #endif // DEVELOP
 
         return initCode;
@@ -451,8 +449,6 @@ namespace tcp_serverclient
     template <class SocketType, class SocketDeleter>
     void Server<SocketType, SocketDeleter>::stop()
     {
-        using namespace std;
-
         // Stop the server
         running = false;
 
@@ -471,7 +467,7 @@ namespace tcp_serverclient
         close(tcpSocket);
 
 #ifdef DEVELOP
-        cout << typeid(this).name() << "::" << __func__ << ": Server stopped" << endl;
+        ::std::cout << typeid(this).name() << "::" << __func__ << ": Server stopped" << endl;
 #endif // DEVELOP
 
         return;
@@ -480,15 +476,13 @@ namespace tcp_serverclient
     template <class SocketType, class SocketDeleter>
     bool Server<SocketType, SocketDeleter>::sendMsg(const int clientId, const ::std::string &msg)
     {
-        using namespace std;
-
         if (MESSAGE_FRAGMENTATION_ENABLED)
         {
             // Check if message doesn't contain delimiter
-            if (msg.find(DELIMITER_FOR_FRAGMENTATION) != string::npos)
+            if (msg.find(DELIMITER_FOR_FRAGMENTATION) != ::std::string::npos)
             {
 #ifdef DEVELOP
-                cerr << typeid(this).name() << "::" << __func__ << ": Message contains delimiter" << endl;
+                ::std::cerr << typeid(this).name() << "::" << __func__ << ": Message contains delimiter" << endl;
 #endif // DEVELOP
 
                 return false;
@@ -498,7 +492,7 @@ namespace tcp_serverclient
             if (msg.length() > MAXIMUM_MESSAGE_LENGTH_FOR_FRAGMENTATION)
             {
 #ifdef DEVELOP
-                cerr << typeid(this).name() << "::" << __func__ << ": Message is too long" << endl;
+                ::std::cerr << typeid(this).name() << "::" << __func__ << ": Message is too long" << endl;
 #endif // DEVELOP
 
                 return false;
@@ -506,12 +500,12 @@ namespace tcp_serverclient
         }
 
         // Extend message with start and end characters and send it
-        lock_guard<mutex> lck{activeConnections_m};
+        ::std::lock_guard<::std::mutex> lck{activeConnections_m};
         if (activeConnections.find(clientId) != activeConnections.end())
-            return writeMsg(clientId, MESSAGE_FRAGMENTATION_ENABLED ? msg + string{DELIMITER_FOR_FRAGMENTATION} : msg);
+            return writeMsg(clientId, MESSAGE_FRAGMENTATION_ENABLED ? msg + ::std::string{DELIMITER_FOR_FRAGMENTATION} : msg);
 
 #ifdef DEVELOP
-        cerr << typeid(this).name() << "::" << __func__ << ": Client " << clientId << " is not connected" << endl;
+        ::std::cerr << typeid(this).name() << "::" << __func__ << ": Client " << clientId << " is not connected" << endl;
 #endif // DEVELOP
 
         return false;
@@ -544,8 +538,6 @@ namespace tcp_serverclient
     template <class SocketType, class SocketDeleter>
     std::vector<int> Server<SocketType, SocketDeleter>::getAllClientIds() const
     {
-        using namespace std;
-
         vector<int> ret;
         for (auto &v : activeConnections)
             ret.push_back(v.first);
@@ -555,28 +547,24 @@ namespace tcp_serverclient
     template <class SocketType, class SocketDeleter>
     std::string Server<SocketType, SocketDeleter>::getClientIp(const int clientId) const
     {
-        using namespace std;
-
         struct sockaddr_in addr;
         socklen_t addrSize = sizeof(struct sockaddr_in);
         if (getpeername(clientId, (struct sockaddr *)&addr, &addrSize))
         {
 #ifdef DEVELOP
-            cerr << typeid(this).name() << "::" << __func__ << ": Error reading client " << clientId << "'s IP address" << endl;
+            ::std::cerr << typeid(this).name() << "::" << __func__ << ": Error reading client " << clientId << "'s IP address" << endl;
 #endif // DEVELOP
 
             return "Failed Read!";
         }
 
         // Convert the IP address to a string and return it
-        return string{inet_ntoa(addr.sin_addr)};
+        return ::std::string{inet_ntoa(addr.sin_addr)};
     }
 
     template <class SocketType, class SocketDeleter>
     void Server<SocketType, SocketDeleter>::listenConnection()
     {
-        using namespace std;
-
         // Get the size of the socket address for the server (important for connection establishment)
         socklen_t socketAddress_len{sizeof(socketAddress)};
 
@@ -592,7 +580,7 @@ namespace tcp_serverclient
                 continue;
 
 #ifdef DEVELOP
-            cout << typeid(this).name() << "::" << __func__ << ": New client connected: " << newConnection << endl;
+            ::std::cout << typeid(this).name() << "::" << __func__ << ": New client connected: " << newConnection << endl;
 #endif // DEVELOP
 
             // Initialize the (so far unencrypted) connection
@@ -602,12 +590,12 @@ namespace tcp_serverclient
 
             // Add connection to active connections
             {
-                lock_guard<mutex> lck{activeConnections_m};
-                activeConnections[newConnection] = unique_ptr<SocketType, SocketDeleter>{connection_p};
+                ::std::lock_guard<::std::mutex> lck{activeConnections_m};
+                activeConnections[newConnection] = ::std::unique_ptr<SocketType, SocketDeleter>{connection_p};
             }
 
             // When a new connection is established, the incoming messages of this connection should be read in a new process
-            unique_ptr<RunningFlag> recRunning{new RunningFlag{true}};
+            ::std::unique_ptr<RunningFlag> recRunning{new RunningFlag{true}};
             thread rec_t{&Server::listenMessage, this, newConnection, recRunning.get()};
 
             // Get all finished receive handlers
@@ -634,13 +622,13 @@ namespace tcp_serverclient
         // Abort receiving for all active connections by shutting down the read channel
         // Complete shutdown and close is done in receive threads
         {
-            lock_guard<mutex> lck{activeConnections_m};
+            ::std::lock_guard<::std::mutex> lck{activeConnections_m};
             for (const auto &it : activeConnections)
             {
                 shutdown(it.first, SHUT_RD);
 
 #ifdef DEVELOP
-                cout << typeid(this).name() << "::" << __func__ << ": Closed connection to client " << it.first << endl;
+                ::std::cout << typeid(this).name() << "::" << __func__ << ": Closed connection to client " << it.first << endl;
 #endif // DEVELOP
             }
         }
@@ -655,15 +643,13 @@ namespace tcp_serverclient
     template <class SocketType, class SocketDeleter>
     void Server<SocketType, SocketDeleter>::listenMessage(const int clientId, RunningFlag *const recRunning_p)
     {
-        using namespace std;
-
         // Mark Thread as running (Add running flag and connect to handler)
         Server_running_manager running_mgr{*recRunning_p};
 
         // Get connection from map
         SocketType *connection_p;
         {
-            lock_guard<mutex> lck{activeConnections_m};
+            ::std::lock_guard<::std::mutex> lck{activeConnections_m};
             if (activeConnections.find(clientId) == activeConnections.end())
                 return;
             connection_p = activeConnections[clientId].get();
@@ -671,7 +657,7 @@ namespace tcp_serverclient
 
         // Create continuous stream for this connection
         if (generateNewForwardStream)
-            forwardStreams[clientId] = unique_ptr<ostream>{generateNewForwardStream(clientId)};
+            forwardStreams[clientId] = ::std::unique_ptr<::std::ostream>{generateNewForwardStream(clientId)};
 
         // Run worker for new established connections
         if (workOnEstablished)
@@ -679,24 +665,24 @@ namespace tcp_serverclient
 
         // Vectors of running work handlers and their status flags
         vector<thread> workHandlers;
-        vector<unique_ptr<RunningFlag>> workHandlersRunning;
+        vector<::std::unique_ptr<RunningFlag>> workHandlersRunning;
 
         // Read incoming messages from this connection as long as the connection is active
-        string buffer;
+        ::std::string buffer;
         while (1)
         {
             // Wait for new incoming message (implemented in derived classes)
             // If message is empty string, the connection is broken
             // BUG: Execution stucks here if server is stopped immediately after client connection
-            string msg{readMsg(connection_p)};
+            ::std::string msg{readMsg(connection_p)};
             if (msg.empty())
             {
 #ifdef DEVELOP
-                cout << typeid(this).name() << "::" << __func__ << ": Connection to client " << clientId << " broken" << endl;
+                ::std::cout << typeid(this).name() << "::" << __func__ << ": Connection to client " << clientId << " broken" << endl;
 #endif // DEVELOP
 
                 {
-                    lock_guard<mutex> lck{activeConnections_m};
+                    ::std::lock_guard<::std::mutex> lck{activeConnections_m};
 
                     // Deinitialize the connection
                     connectionDeinit(connection_p);
@@ -732,9 +718,9 @@ namespace tcp_serverclient
                 // Get raw message separated by delimiter
                 // If delimiter is found, the message is split into two parts
                 size_t delimiter_pos{msg.find(DELIMITER_FOR_FRAGMENTATION)};
-                while (string::npos != delimiter_pos)
+                while (::std::string::npos != delimiter_pos)
                 {
-                    string msg_part{msg.substr(0, delimiter_pos)};
+                    ::std::string msg_part{msg.substr(0, delimiter_pos)};
                     msg = msg.substr(delimiter_pos + 1);
                     delimiter_pos = msg.find(DELIMITER_FOR_FRAGMENTATION);
 
@@ -742,7 +728,7 @@ namespace tcp_serverclient
                     if (buffer.size() + msg_part.size() > MAXIMUM_MESSAGE_LENGTH_FOR_FRAGMENTATION)
                     {
 #ifdef DEVELOP
-                        cerr << typeid(this).name() << "::" << __func__ << ": Message from client " << clientId << " is too long" << endl;
+                        ::std::cerr << typeid(this).name() << "::" << __func__ << ": Message from client " << clientId << " is too long" << endl;
 #endif // DEVELOP
 
                         buffer.clear();
@@ -752,12 +738,12 @@ namespace tcp_serverclient
                     buffer += msg_part;
 
 #ifdef DEVELOP
-                    cout << typeid(this).name() << "::" << __func__ << ": Message from client " << clientId << ": " << buffer << endl;
+                    ::std::cout << typeid(this).name() << "::" << __func__ << ": Message from client " << clientId << ": " << buffer << endl;
 #endif // DEVELOP
 
                     // Run code to handle the message
-                    unique_ptr<RunningFlag> workRunning{new RunningFlag{true}};
-                    thread work_t{[this, clientId](RunningFlag *const workRunning_p, string buffer)
+                    ::std::unique_ptr<RunningFlag> workRunning{new RunningFlag{true}};
+                    thread work_t{[this, clientId](RunningFlag *const workRunning_p, ::std::string buffer)
                                   {
                                       // Mark Thread as running
                                       Server_running_manager running_mgr{*workRunning_p};

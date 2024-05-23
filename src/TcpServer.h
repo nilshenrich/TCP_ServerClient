@@ -112,17 +112,17 @@ namespace tcp_serverclient
       return new int{clientId};
    }
 
-   bool TcpServer::writeMsg(const int clientId, const string &msg)
+   bool TcpServer::writeMsg(const int clientId, const ::std::string &msg)
    {
 #ifdef DEVELOP
-      cout << typeid(this).name() << "::" << __func__ << ": Send to client " << clientId << ": " << msg << endl;
+      ::std::cout << typeid(this).name() << "::" << __func__ << ": Send to client " << clientId << ": " << msg << endl;
 #endif // DEVELOP
 
       const size_t lenMsg{msg.size()};
       return send(clientId, msg.c_str(), lenMsg, 0) == (ssize_t)lenMsg;
    }
 
-   string TcpServer::readMsg(int *socket)
+   ::std::string TcpServer::readMsg(int *socket)
    {
       // Buffer for received data.
       char buffer[MAXIMUM_RECEIVE_PACKAGE_SIZE]{0};
@@ -131,7 +131,7 @@ namespace tcp_serverclient
       ssize_t lenMsg{recv(*socket, buffer, MAXIMUM_RECEIVE_PACKAGE_SIZE, 0)};
 
       // Return received data as string (or empty string if no data is available).
-      return string{buffer, 0 < lenMsg ? static_cast<size_t>(lenMsg) : 0UL};
+      return ::std::string{buffer, 0 < lenMsg ? static_cast<size_t>(lenMsg) : 0UL};
    }
 
    void TcpServer::connectionDeinit(int *)

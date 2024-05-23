@@ -77,7 +77,7 @@ namespace tcp_serverclient
 
     // ============================== Implementation of methods. ==============================
 
-    TcpClient::TcpClient(ostream &os) : Client(os) {}
+    TcpClient::TcpClient(::std::ostream &os) : Client(os) {}
     TcpClient::TcpClient(char delimiter, size_t messageMaxLen) : Client(delimiter, messageMaxLen) {}
 
     TcpClient::~TcpClient()
@@ -102,7 +102,7 @@ namespace tcp_serverclient
         return;
     }
 
-    string TcpClient::readMsg()
+    ::std::string TcpClient::readMsg()
     {
         // Buffer to store the data received from the server
         char buffer[MAXIMUM_RECEIVE_PACKAGE_SIZE]{0};
@@ -111,13 +111,13 @@ namespace tcp_serverclient
         ssize_t lenMsg{recv(tcpSocket, buffer, MAXIMUM_RECEIVE_PACKAGE_SIZE, 0)};
 
         // Return the received message as a string (Empty string if receive failed)
-        return string{buffer, 0 < lenMsg ? static_cast<size_t>(lenMsg) : 0UL};
+        return ::std::string{buffer, 0 < lenMsg ? static_cast<size_t>(lenMsg) : 0UL};
     }
 
-    bool TcpClient::writeMsg(const string &msg)
+    bool TcpClient::writeMsg(const ::std::string &msg)
     {
 #ifdef DEVELOP
-        cout << typeid(this).name() << "::" << __func__ << ": Send to server: " << msg << endl;
+        ::std::cout << typeid(this).name() << "::" << __func__ << ": Send to server: " << msg << endl;
 #endif // DEVELOP
 
         const size_t lenMsg{msg.size()};
