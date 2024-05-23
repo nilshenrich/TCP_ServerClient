@@ -15,10 +15,10 @@
 #include <tcp_serverclient/tls/server/TlsServer.h>
 
 // Global server instances
-::tcp::TcpServer tcpServer_fragmented{'\n'}; // newline as delimiter
-::tcp::TcpServer tcpServer_continuous;
-::tcp::TlsServer tlsServer_fragmented{'\n'}; // newline as delimiter
-::tcp::TlsServer tlsServer_continuous;
+::tcp_serverclient::TcpServer tcpServer_fragmented{'\n'}; // newline as delimiter
+::tcp_serverclient::TcpServer tcpServer_continuous;
+::tcp_serverclient::TlsServer tlsServer_fragmented{'\n'}; // newline as delimiter
+::tcp_serverclient::TlsServer tlsServer_continuous;
 
 // Define worker methods
 void tcp_fragmented_workOnEstablished(int id) { tcpServer_fragmented.sendMsg(id, "Hello TCP client " + ::std::to_string(id) + " in fragmented mode!"); }

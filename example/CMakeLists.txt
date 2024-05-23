@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 project(example VERSION 2.0 DESCRIPTION "Example of using the TCP client and server classes")
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../build/include)
+link_directories(${CMAKE_CURRENT_SOURCE_DIR}/../build/lib)
 
 file(GLOB sourcefiles_server server.cpp)
 file(GLOB sourcefiles_client client.cpp)
@@ -18,7 +19,7 @@ target_compile_options(client PRIVATE -fexceptions -Wall -g -Og
     $<$<CONFIG:DEBUG>: -DDEVELOP>)
 
 target_link_libraries(server -lcrypto -lcrypt -lssl -pthread -ltcpserver -ltlsserver)
-target_link_libraries(client -lcrypto -lcrypt -lssl -pthread -ttcpclient -ltlsclient)
+target_link_libraries(client -lcrypto -lcrypt -lssl -pthread -ltcpclient -ltlsclient)
 
 # ---------- Commands to be executed when creating makefile ----------
 
