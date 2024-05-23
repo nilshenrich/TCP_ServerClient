@@ -1,4 +1,5 @@
 # For debugging please use the command "cmake -DCMAKE_BUILD_TYPE=Debug .."
+# For local installation please use the command "cmake -DCMAKE_BUILD_TYPE=Local .."
 
 # Minimum required cmake version
 cmake_minimum_required(VERSION 3.10)
@@ -18,7 +19,7 @@ include(GNUInstallDirs)
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+if(CMAKE_BUILD_TYPE MATCHES "^(Debug|Local)$")
   set(PATH_INSTALL_LIB ${CMAKE_CURRENT_SOURCE_DIR}/build/lib)
   set(PATH_INSTALL_INCLUDE ${CMAKE_CURRENT_SOURCE_DIR}/build/include/tcp_serverclient)
 elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
@@ -38,10 +39,10 @@ add_library(tlsclient SHARED src/tls/client/TlsClient.cpp)
 include_directories(src)
 
 # Set compiler flags
-target_compile_options(tcpserver PUBLIC -fexceptions $<$<CONFIG:DEBUG>: -DDEVELOP -Wall -g -Og> $<$<CONFIG:RELEASE>: -O3>)
-target_compile_options(tcpclient PUBLIC -fexceptions $<$<CONFIG:DEBUG>: -DDEVELOP -Wall -g -Og> $<$<CONFIG:RELEASE>: -O3>)
-target_compile_options(tlsserver PUBLIC -fexceptions $<$<CONFIG:DEBUG>: -DDEVELOP -Wall -g -Og> $<$<CONFIG:RELEASE>: -O3>)
-target_compile_options(tlsclient PUBLIC -fexceptions $<$<CONFIG:DEBUG>: -DDEVELOP -Wall -g -Og> $<$<CONFIG:RELEASE>: -O3>)
+target_compile_options(tcpserver PUBLIC -fexceptions $<$<CONFIG:DEBUG>: -DDEVELOP -Wall -g -Og> $<$<OR:$<CONFIG:RELEASE>,$<CONFIG:LOCAL>>: -O3>)
+target_compile_options(tcpclient PUBLIC -fexceptions $<$<CONFIG:DEBUG>: -DDEVELOP -Wall -g -Og> $<$<OR:$<CONFIG:RELEASE>,$<CONFIG:LOCAL>>: -O3>)
+target_compile_options(tlsserver PUBLIC -fexceptions $<$<CONFIG:DEBUG>: -DDEVELOP -Wall -g -Og> $<$<OR:$<CONFIG:RELEASE>,$<CONFIG:LOCAL>>: -O3>)
+target_compile_options(tlsclient PUBLIC -fexceptions $<$<CONFIG:DEBUG>: -DDEVELOP -Wall -g -Og> $<$<OR:$<CONFIG:RELEASE>,$<CONFIG:LOCAL>>: -O3>)
 target_link_options(tlsserver PUBLIC $<$<CONFIG:RELEASE>: -s>)
 target_link_options(tlsclient PUBLIC $<$<CONFIG:RELEASE>: -s>)
 target_link_options(tcpserver PUBLIC $<$<CONFIG:RELEASE>: -s>)
@@ -73,3 +74,5 @@ add_custom_target(client DEPENDS tcpclient tlsclient COMMENT "Just build TCP cli
 # Install library
 install(TARGETS tcpserver tcpclient tlsserver tlsclient LIBRARY DESTINATION ${PATH_INSTALL_LIB})
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/general ${CMAKE_CURRENT_SOURCE_DIR}/src/tcp ${CMAKE_CURRENT_SOURCE_DIR}/src/tls DESTINATION ${PATH_INSTALL_INCLUDE} FILES_MATCHING PATTERN "*.h")
+
+message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")

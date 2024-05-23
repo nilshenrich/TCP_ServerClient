@@ -1,4 +1,4 @@
-#include "tcp/server/TcpServer.h"
+#include "TcpServer.h"
 
 using namespace tcp_serverclient;
 using namespace std;

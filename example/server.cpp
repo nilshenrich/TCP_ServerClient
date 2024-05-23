@@ -11,8 +11,8 @@
 #include <iostream>
 #include <fstream>
 
-#include "TcpServer.h"
-#include "TlsServer.h"
+#include <tcp_serverclient/tcp/server/TcpServer.h>
+#include <tcp_serverclient/tls/server/TlsServer.h>
 
 // Global server instances
 ::tcp::TcpServer tcpServer_fragmented{'\n'}; // newline as delimiter
