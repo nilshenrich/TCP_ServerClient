@@ -7,7 +7,7 @@
 #include <vector>
 #include <mutex>
 
-#include "TcpServer.h"
+#include "TcpServer.hpp"
 #include "TestDefines.h"
 
 namespace TestApi
@@ -78,7 +78,7 @@ namespace TestApi
         void workOnClosed(const int tcpClientId);
 
         // TCP server
-        ::tcp::TcpServer tcpServer;
+        ::tcp_serverclient::TcpServer tcpServer;
 
         // Buffered messages
         ::std::vector<MessageFromClient> bufferedMsg;
@@ -143,7 +143,7 @@ namespace TestApi
         void workOnClosed(const int tcpClientId);
 
         // TCP server
-        ::tcp::TcpServer tcpServer;
+        ::tcp_serverclient::TcpServer tcpServer;
 
         /**
          * @brief Generate an output stream to a string for each client

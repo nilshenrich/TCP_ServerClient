@@ -7,7 +7,7 @@
 #include <vector>
 #include <mutex>
 
-#include "TlsServer.h"
+#include "TlsServer.hpp"
 #include "TestDefines.h"
 
 namespace TestApi
@@ -78,7 +78,7 @@ namespace TestApi
         void workOnClosed(const int tlsClientId);
 
         // TLS server
-        ::tcp::TlsServer tlsServer;
+        ::tcp_serverclient::TlsServer tlsServer;
 
         // Buffered messages
         ::std::vector<MessageFromClient> bufferedMsg;
@@ -143,7 +143,7 @@ namespace TestApi
         void workOnClosed(const int tlsClientId);
 
         // TLS server
-        ::tcp::TlsServer tlsServer;
+        ::tcp_serverclient::TlsServer tlsServer;
 
         /**
          * @brief Generate an output stream to a string for each client

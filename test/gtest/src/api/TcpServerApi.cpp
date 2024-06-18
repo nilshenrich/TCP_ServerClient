@@ -2,7 +2,7 @@
 
 using namespace std;
 using namespace TestApi;
-using namespace tcp;
+using namespace tcp_serverclient;
 
 TcpServerApi_fragmentation::TcpServerApi_fragmentation(size_t messageMaxLen) : tcpServer{'\x00', messageMaxLen}
 {

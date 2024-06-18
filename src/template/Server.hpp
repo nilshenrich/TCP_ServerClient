@@ -11,8 +11,8 @@
  *
  */
 
-#ifndef SERVER_H
-#define SERVER_H
+#ifndef SERVER_HPP_
+#define SERVER_HPP_
 
 #include <iostream>
 #include <string>
@@ -791,4 +791,4 @@ namespace tcp_serverclient
     }
 }
 
-#endif // SERVER_H
+#endif // SERVER_HPP_

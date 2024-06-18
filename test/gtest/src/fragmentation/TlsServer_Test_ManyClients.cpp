@@ -2,7 +2,7 @@
 
 using namespace std;
 using namespace Test;
-using namespace tcp;
+using namespace tcp_serverclient;
 
 Fragmentation_TlsServer_Test_ManyClients::Fragmentation_TlsServer_Test_ManyClients() {}
 Fragmentation_TlsServer_Test_ManyClients::~Fragmentation_TlsServer_Test_ManyClients() {}

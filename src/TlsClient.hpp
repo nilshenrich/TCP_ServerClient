@@ -9,8 +9,8 @@
  *
  */
 
-#ifndef TLSCLIENT_H
-#define TLSCLIENT_H
+#ifndef TLSCLIENT_HPP_
+#define TLSCLIENT_HPP_
 
 #include <limits>
 #include <openssl/ssl.h>
@@ -308,4 +308,4 @@ namespace tcp_serverclient
     }
 }
 
-#endif // TLSCLIENT_H
+#endif // TLSCLIENT_HPP_

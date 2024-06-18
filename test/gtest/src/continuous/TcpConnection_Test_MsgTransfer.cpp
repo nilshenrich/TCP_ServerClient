@@ -2,7 +2,7 @@
 
 using namespace std;
 using namespace Test;
-using namespace tcp;
+using namespace tcp_serverclient;
 
 Continuous_TcpConnection_Test_MsgTransfer::Continuous_TcpConnection_Test_MsgTransfer() {}
 Continuous_TcpConnection_Test_MsgTransfer::~Continuous_TcpConnection_Test_MsgTransfer() {}

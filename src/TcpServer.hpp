@@ -9,8 +9,8 @@
  *
  */
 
-#ifndef TCPSERVER_H
-#define TCPSERVER_H
+#ifndef TCPSERVER_HPP_
+#define TCPSERVER_HPP_
 
 #include <limits>
 
@@ -140,4 +140,4 @@ namespace tcp_serverclient
    }
 }
 
-#endif // TCPSERVER_H
+#endif // TCPSERVER_HPP_

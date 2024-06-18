@@ -2,7 +2,7 @@
 
 using namespace std;
 using namespace Test;
-using namespace tcp;
+using namespace tcp_serverclient;
 
 Fragmentation_TcpConnection_Test_MsgTransfer::Fragmentation_TcpConnection_Test_MsgTransfer() {}
 Fragmentation_TcpConnection_Test_MsgTransfer::~Fragmentation_TcpConnection_Test_MsgTransfer() {}

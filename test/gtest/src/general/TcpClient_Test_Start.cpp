@@ -2,7 +2,7 @@
 
 using namespace std;
 using namespace Test;
-using namespace tcp;
+using namespace tcp_serverclient;
 
 General_TcpClient_Test_Start::General_TcpClient_Test_Start() {}
 General_TcpClient_Test_Start::~General_TcpClient_Test_Start() {}

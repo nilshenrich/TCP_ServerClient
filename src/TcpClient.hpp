@@ -9,8 +9,8 @@
  *
  */
 
-#ifndef TCPCLIENT_H
-#define TCPCLIENT_H
+#ifndef TCPCLIENT_HPP_
+#define TCPCLIENT_HPP_
 
 #include <limits>
 
@@ -136,4 +136,4 @@ namespace tcp_serverclient
     }
 }
 
-#endif // TCPCLIENT_H
+#endif // TCPCLIENT_HPP_

@@ -7,7 +7,7 @@
 #include <vector>
 #include <mutex>
 
-#include "TcpClient.h"
+#include "TcpClient.hpp"
 #include "TestDefines.h"
 
 namespace TestApi
@@ -56,7 +56,7 @@ namespace TestApi
         void workOnMessage(const ::std::string tcpMsgFromServer);
 
         // TCP client
-        ::tcp::TcpClient tcpClient;
+        ::tcp_serverclient::TcpClient tcpClient;
 
         // Buffered messages
         ::std::vector<::std::string> bufferedMsg;
@@ -100,7 +100,7 @@ namespace TestApi
 
     private:
         // TCP client
-        ::tcp::TcpClient tcpClient;
+        ::tcp_serverclient::TcpClient tcpClient;
 
         // Buffered message
         ::std::ostringstream bufferedMsg_os{::std::ios_base::ate};

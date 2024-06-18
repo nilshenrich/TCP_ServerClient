@@ -11,8 +11,8 @@
  *
  */
 
-#ifndef CLIENT_H
-#define CLIENT_H
+#ifndef CLIENT_HPP_
+#define CLIENT_HPP_
 
 #include <iostream>
 #include <string>
@@ -585,4 +585,4 @@ namespace tcp_serverclient
     }
 }
 
-#endif // CLIENT_H
+#endif // CLIENT_HPP_

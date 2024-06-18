@@ -2,7 +2,7 @@
 
 using namespace std;
 using namespace Test;
-using namespace tcp;
+using namespace tcp_serverclient;
 
 General_TlsConnection_Test_Connect::General_TlsConnection_Test_Connect() {}
 General_TlsConnection_Test_Connect::~General_TlsConnection_Test_Connect() {}
