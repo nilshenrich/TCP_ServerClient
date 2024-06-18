@@ -1,5 +1,5 @@
 /**
- * @file TcpServer.h
+ * @file TcpServer.hpp
  * @author Nils Henrich
  * @brief TCP server for unencrypted data transfer without authentication.
  * @version 2.0
@@ -89,6 +89,55 @@ namespace tcp_serverclient
       TcpServer(const TcpServer &) = delete;
       TcpServer &operator=(const TcpServer &) = delete;
    };
+
+   // ============================== Implementation of methods. ==============================
+
+   TcpServer::TcpServer() : Server{} {}
+   TcpServer::TcpServer(char delimiter, size_t messageMaxLen) : Server{delimiter, messageMaxLen} {}
+
+   TcpServer::~TcpServer()
+   {
+      stop();
+   }
+
+   int TcpServer::init(const char *const,
+                       const char *const,
+                       const char *const)
+   {
+      return SERVER_START_OK;
+   }
+
+   int *TcpServer::connectionInit(const int clientId)
+   {
+      return new int{clientId};
+   }
+
+   bool TcpServer::writeMsg(const int clientId, const ::std::string &msg)
+   {
+#ifdef DEVELOP
+      ::std::cout << typeid(this).name() << "::" << __func__ << ": Send to client " << clientId << ": " << msg << endl;
+#endif // DEVELOP
+
+      const size_t lenMsg{msg.size()};
+      return send(clientId, msg.c_str(), lenMsg, 0) == (ssize_t)lenMsg;
+   }
+
+   ::std::string TcpServer::readMsg(int *socket)
+   {
+      // Buffer for received data.
+      char buffer[MAXIMUM_RECEIVE_PACKAGE_SIZE]{0};
+
+      // Wait for data to be available.
+      ssize_t lenMsg{recv(*socket, buffer, MAXIMUM_RECEIVE_PACKAGE_SIZE, 0)};
+
+      // Return received data as string (or empty string if no data is available).
+      return ::std::string{buffer, 0 < lenMsg ? static_cast<size_t>(lenMsg) : 0UL};
+   }
+
+   void TcpServer::connectionDeinit(int *)
+   {
+      return;
+   }
 }
 
 #endif // TCPSERVER_H
