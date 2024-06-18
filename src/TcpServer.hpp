@@ -14,7 +14,7 @@
 
 #include <limits>
 
-#include "../../general/server/Server.h"
+#include "template/Server.hpp"
 
 namespace tcp_serverclient
 {

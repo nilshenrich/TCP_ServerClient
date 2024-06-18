@@ -29,8 +29,6 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
-#include "ServerDefines.h"
-
 namespace tcp_serverclient
 {
     // Return codes

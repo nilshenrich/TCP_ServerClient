@@ -29,8 +29,6 @@
 #include <netdb.h>
 #include <sys/socket.h>
 
-#include "ClientDefines.h"
-
 namespace tcp_serverclient
 {
     // Return codes

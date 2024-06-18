@@ -15,7 +15,7 @@
 #include <limits>
 #include <openssl/ssl.h>
 
-#include "../../general/client/Client.h"
+#include "template/Client.hpp"
 
 namespace tcp_serverclient
 {
