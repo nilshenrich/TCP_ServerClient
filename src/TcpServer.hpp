@@ -1,5 +1,5 @@
 /**
- * @file TcpServer.h
+ * @file TcpServer.hpp
  * @author Nils Henrich
  * @brief TCP server for unencrypted data transfer without authentication.
  * @version 2.0

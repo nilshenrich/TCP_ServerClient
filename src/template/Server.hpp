@@ -1,5 +1,5 @@
 /**
- * @file Server.h
+ * @file Server.hpp
  * @author Nils Henrich
  * @brief Base framework for all classes that build a network server based on TCP.
  * This class contains no functionality, but serves as a base framework for the creation of stable servers based on TCP.

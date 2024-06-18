@@ -1,3 +1,14 @@
+/**
+ * @file TcpClient.hpp
+ * @author Nils Henrich
+ * @brief TCP client for unencrypted data transfer without authentication.
+ * @version 2.0
+ * @date 2021-12-27
+ *
+ * @copyright Copyright (c) 2021
+ *
+ */
+
 #ifndef TCPCLIENT_H
 #define TCPCLIENT_H
 

@@ -1,3 +1,14 @@
+/**
+ * @file TlsClient.hpp
+ * @author Nils Henrich
+ * @brief TLS client for encrypted data transfer with authentication.
+ * @version 2.0
+ * @date 2021-12-27
+ *
+ * @copyright Copyright (c) 2021
+ *
+ */
+
 #ifndef TLSCLIENT_H
 #define TLSCLIENT_H
 

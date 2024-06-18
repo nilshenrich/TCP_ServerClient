@@ -1,5 +1,5 @@
 /**
- * @file Client.h
+ * @file Client.hpp
  * @author Nils Henrich
  * @brief Base framework for all classes that build a network client based on TCP.
  * This class contains no functionality, but serves a base framework for the creation of stable clients based on TCP.

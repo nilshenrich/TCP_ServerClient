@@ -1,5 +1,5 @@
 /**
- * @file TlsServer.h
+ * @file TlsServer.hpp
  * @author Nils Henrich
  * @brief TLS server for encrypted data transfer with authentication.
  * @version 2.0
