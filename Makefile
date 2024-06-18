@@ -4,5 +4,4 @@ install: SHELL:=/bin/bash
 install:
 	targetDir='/usr/local/include/tcp' ;\
 	rm -rf $$targetDir ;\
-	mkdir $$targetDir ;\
-	cp -r ./src/* $$targetDir ;\
+	cp -r ./src $$targetDir ;\
