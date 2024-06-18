@@ -431,8 +431,8 @@ namespace tcp_serverclient
 
         // Start the thread to accept new connections
         if (accHandler.joinable())
-            throw Server_error("Start server thread failed: Thread is already running"s);
-        accHandler = thread{&Server::listenConnection, this};
+            throw Server_error("Start server thread failed: Thread is already running");
+        accHandler = ::std::thread{&Server::listenConnection, this};
 
         // Server is now running
         running = true;
@@ -536,7 +536,7 @@ namespace tcp_serverclient
     template <class SocketType, class SocketDeleter>
     std::vector<int> Server<SocketType, SocketDeleter>::getAllClientIds() const
     {
-        vector<int> ret;
+        ::std::vector<int> ret;
         for (auto &v : activeConnections)
             ret.push_back(v.first);
         return ret;
@@ -594,10 +594,10 @@ namespace tcp_serverclient
 
             // When a new connection is established, the incoming messages of this connection should be read in a new process
             ::std::unique_ptr<RunningFlag> recRunning{new RunningFlag{true}};
-            thread rec_t{&Server::listenMessage, this, newConnection, recRunning.get()};
+            ::std::thread rec_t{&Server::listenMessage, this, newConnection, recRunning.get()};
 
             // Get all finished receive handlers
-            vector<int> toRemove;
+            ::std::vector<int> toRemove;
             for (auto &flag : recHandlersRunning)
             {
                 if (!*flag.second.get())
@@ -613,8 +613,8 @@ namespace tcp_serverclient
             }
 
             // Add new receive handler (Running flag is added inside receive thread)
-            recHandlers[newConnection] = move(rec_t);
-            recHandlersRunning[newConnection] = move(recRunning);
+            recHandlers[newConnection] = ::std::move(rec_t);
+            recHandlersRunning[newConnection] = ::std::move(recRunning);
         }
 
         // Abort receiving for all active connections by shutting down the read channel
@@ -662,8 +662,8 @@ namespace tcp_serverclient
             workOnEstablished(clientId);
 
         // Vectors of running work handlers and their status flags
-        vector<thread> workHandlers;
-        vector<::std::unique_ptr<RunningFlag>> workHandlersRunning;
+        ::std::vector<::std::thread> workHandlers;
+        ::std::vector<::std::unique_ptr<RunningFlag>> workHandlersRunning;
 
         // Read incoming messages from this connection as long as the connection is active
         ::std::string buffer;
@@ -741,18 +741,18 @@ namespace tcp_serverclient
 
                     // Run code to handle the message
                     ::std::unique_ptr<RunningFlag> workRunning{new RunningFlag{true}};
-                    thread work_t{[this, clientId](RunningFlag *const workRunning_p, ::std::string buffer)
-                                  {
-                                      // Mark Thread as running
-                                      Server_running_manager running_mgr{*workRunning_p};
+                    ::std::thread work_t{[this, clientId](RunningFlag *const workRunning_p, ::std::string buffer)
+                                         {
+                                             // Mark Thread as running
+                                             Server_running_manager running_mgr{*workRunning_p};
 
-                                      // Run code to handle the incoming message
-                                      if (workOnMessage)
-                                          workOnMessage(clientId, move(buffer));
+                                             // Run code to handle the incoming message
+                                             if (workOnMessage)
+                                                 workOnMessage(clientId, ::std::move(buffer));
 
-                                      return;
-                                  },
-                                  workRunning.get(), move(buffer)};
+                                             return;
+                                         },
+                                         workRunning.get(), ::std::move(buffer)};
 
                     // Remove all finished work handlers from the vector
                     size_t workHandlers_s{workHandlersRunning.size()};
@@ -768,8 +768,8 @@ namespace tcp_serverclient
                         }
                     }
 
-                    workHandlers.push_back(move(work_t));
-                    workHandlersRunning.push_back(move(workRunning));
+                    workHandlers.push_back(::std::move(work_t));
+                    workHandlersRunning.push_back(::std::move(workRunning));
                 }
                 buffer += msg;
             }
@@ -779,7 +779,7 @@ namespace tcp_serverclient
             {
                 // Just forward incoming message to output stream
                 if (forwardStreams.find(clientId) != forwardStreams.end())
-                    *forwardStreams[clientId].get() << msg << flush;
+                    *forwardStreams[clientId].get() << msg << ::std::flush;
             }
         }
     }

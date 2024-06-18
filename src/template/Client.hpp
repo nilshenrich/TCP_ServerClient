@@ -387,7 +387,7 @@ namespace tcp_serverclient
         // If background task already exists, return with error
         if (recHandler.joinable())
             throw Client_error("Error while starting background receive task. Background task already exists");
-        recHandler = thread{&Client::receive, this};
+        recHandler = ::std::thread{&Client::receive, this};
 
         // Client is now running
         running = true;
@@ -536,18 +536,18 @@ namespace tcp_serverclient
 #endif // DEVELOP
 
                     ::std::unique_ptr<RunningFlag> workRunning{new RunningFlag{true}};
-                    thread work_t{[this](RunningFlag *workRunning_p, ::std::string buffer)
-                                  {
-                                      // Mark thread as running
-                                      Client_running_manager running_mgr{*workRunning_p};
+                    ::std::thread work_t{[this](RunningFlag *workRunning_p, ::std::string buffer)
+                                         {
+                                             // Mark thread as running
+                                             Client_running_manager running_mgr{*workRunning_p};
 
-                                      // Run code to handle the incoming message
-                                      if (workOnMessage)
-                                          workOnMessage(move(buffer));
+                                             // Run code to handle the incoming message
+                                             if (workOnMessage)
+                                                 workOnMessage(::std::move(buffer));
 
-                                      return;
-                                  },
-                                  workRunning.get(), move(buffer)};
+                                             return;
+                                         },
+                                         workRunning.get(), ::std::move(buffer)};
 
                     // Remove all finished work handlers from the vector
                     size_t workHandlers_s{workHandlersRunning.size()};
@@ -563,8 +563,8 @@ namespace tcp_serverclient
                         }
                     }
 
-                    workHandlers.push_back(move(work_t));
-                    workHandlersRunning.push_back(move(workRunning));
+                    workHandlers.push_back(::std::move(work_t));
+                    workHandlersRunning.push_back(::std::move(workRunning));
                 }
                 buffer += msg;
             }
@@ -573,7 +573,7 @@ namespace tcp_serverclient
             else
             {
                 // Just forward incoming message to output stream
-                CONTINUOUS_OUTPUT_STREAM << msg << flush;
+                CONTINUOUS_OUTPUT_STREAM << msg << ::std::flush;
             }
         }
     }

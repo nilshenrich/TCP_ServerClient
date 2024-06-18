@@ -1,3 +1,6 @@
+# For debugging please use the command "cmake -DCMAKE_BUILD_TYPE=Debug .."
+# For local installation please use the command "cmake -DCMAKE_BUILD_TYPE=Local .."
+
 cmake_minimum_required(VERSION 3.10)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -18,8 +21,8 @@ target_compile_options(server PRIVATE -fexceptions -Wall -g -Og
 target_compile_options(client PRIVATE -fexceptions -Wall -g -Og
     $<$<CONFIG:DEBUG>: -DDEVELOP>)
 
-target_link_libraries(server -lcrypto -lcrypt -lssl -pthread -ltcpserver -ltlsserver)
-target_link_libraries(client -lcrypto -lcrypt -lssl -pthread -ltcpclient -ltlsclient)
+target_link_libraries(server -lcrypto -lcrypt -lssl -pthread)
+target_link_libraries(client -lcrypto -lcrypt -lssl -pthread)
 
 # ---------- Commands to be executed when creating makefile ----------
 
@@ -28,9 +31,11 @@ execute_process(COMMAND bash -c "echo 'Create TLS certificates ...'")
 execute_process(COMMAND bash -c "${CMAKE_CURRENT_LIST_DIR}/CreateCerts.sh")
 execute_process(COMMAND bash -c "echo 'Done.'")
 
-# Install the entire project with build type 'Local'
-if(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/../build)
-    execute_process(COMMAND mkdir build WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/..)    
+# Install the entire project
+if ("$ENV{USER}" STREQUAL "root")
+    execute_process(COMMAND bash -c "echo 'Installing the project ...'")
+    execute_process(COMMAND make WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/..)
+else()
+    execute_process(COMMAND bash -c "echo 'Installing the project as root ...'")
+    execute_process(COMMAND sudo make WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/..)
 endif()
-execute_process(COMMAND cmake -DCMAKE_BUILD_TYPE=Local .. WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../build)
-execute_process(COMMAND make install WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../build)
