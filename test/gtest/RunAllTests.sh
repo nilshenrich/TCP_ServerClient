@@ -15,6 +15,11 @@ MODES="continuous fragmentation general"
 # List of certificate types to test
 CERTS="ec rsa"
 
+# Text colors to be used
+col_fail='\033[0;31m' # red
+col_pass='\033[0;32m' # green
+col_auto='\033[0m' # neutral color (system default)
+
 # Run all tests in all combinations
 finalResult=""
 executionConter=0
@@ -32,11 +37,17 @@ do
             # Get number of failed tests and total number of tests and append to final results
             numTestsTotal=$(jq -s '.[0].tests' $reportFile)
             numTestsFailed=$(jq -s '.[0].failures' $reportFile)
-            finalResult+=$(printf %4s "[$executionConter]")
-            finalResult+=$(printf %13s "$numTestsFailed/$numTestsTotal")
-            finalResult+=$(printf %9s "$p_protocol")
-            finalResult+=$(printf %14s "$p_mode")
-            finalResult+=$(printf %9s "$p_certType")
+            finalResult+=$(printf %4s "[$executionConter]") # Add execution counter as ID
+            if [ $numTestsFailed -eq 0 ]; then # Text color if based on passed or failed
+                finalResult+="${col_pass}"
+            else
+                finalResult+="${col_fail}"
+            fi
+            finalResult+=$(printf %13s "$numTestsFailed/$numTestsTotal") # Add number of failed tests and total
+            finalResult+=${col_auto} # Continue with default text color
+            finalResult+=$(printf %9s "$p_protocol") # Add protocol
+            finalResult+=$(printf %14s "$p_mode") # Add mode
+            finalResult+=$(printf %9s "$p_certType") # Add cert type
             finalResult+="\n"
 
             # Rename report file to include protocol, mode and cert type
