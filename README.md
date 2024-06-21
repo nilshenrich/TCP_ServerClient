@@ -21,6 +21,7 @@ TLS encryption with two-way authentication is supported.
     - [Client](#client-1)
   - [Known issues](#known-issues)
     - [Pipe error if client sends immediately after exiting start](#pipe-error-if-client-sends-immediately-after-exiting-start)
+    - [Test execution gets stuck after starting TLS server](#test-execution-gets-stuck-after-starting-tls-server)
   
 </details>
 
@@ -511,3 +512,8 @@ server.start(8080);
 
 // Do your stuff here ...
 ```
+
+### [Test execution gets stuck after starting TLS server](https://github.com/nilshenrich/TCP_ServerClient/issues/4)
+
+In some gtest executions, the runtime gets stuck right after starting TLS server, see:
+![Unittest_stuck](https://private-user-images.githubusercontent.com/57060396/341879963-e12b0e48-da9e-43e0-9079-d32dea267326.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3MTkwMDE1MzMsIm5iZiI6MTcxOTAwMTIzMywicGF0aCI6Ii81NzA2MDM5Ni8zNDE4Nzk5NjMtZTEyYjBlNDgtZGE5ZS00M2UwLTkwNzktZDMyZGVhMjY3MzI2LnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNDA2MjElMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjQwNjIxVDIwMjAzM1omWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPWE5ZWI5YzA2Nzk3NjQ0OThmZmU0MzI1NjAxMDA1Mzc1Yjc3NTdiYzU1NjMzMTZmNmM3MjNkOWM5ZDRiOGNmMmYmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0JmFjdG9yX2lkPTAma2V5X2lkPTAmcmVwb19pZD0wIn0.zeSSqdkbGsMUXunyF6BefZLOE3QxwJ7MZ9UN24vy6IM)
