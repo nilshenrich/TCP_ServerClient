@@ -7,7 +7,7 @@
 #include <vector>
 #include <mutex>
 
-#include "TcpServer.h"
+#include "TcpServer.hpp"
 #include "TestDefines.h"
 
 namespace TestApi

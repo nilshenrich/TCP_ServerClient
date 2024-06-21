@@ -7,7 +7,7 @@
 #include <vector>
 #include <mutex>
 
-#include "TlsClient.h"
+#include "TlsClient.hpp"
 #include "TestDefines.h"
 
 namespace TestApi
