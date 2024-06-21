@@ -7,7 +7,7 @@
 #include <vector>
 #include <mutex>
 
-#include "TlsClient.h"
+#include "TlsClient.hpp"
 #include "TestDefines.h"
 
 namespace TestApi
@@ -25,7 +25,7 @@ namespace TestApi
          * @param port TLS port of TLS server
          * @return int TLSCLIENT_CONNECT_OK if successful, other if failed
          */
-        int start(const std::string &ip, const int port, const std::string pathToCaCert = KeyPaths::CaCert, const std::string pathToClientCert = KeyPaths::ClientCert, const std::string pathToClientKey = KeyPaths::ClientKey);
+        int start(const ::std::string &ip, const int port, const ::std::string pathToCaCert = KeyPaths::CaCert, const ::std::string pathToClientCert = KeyPaths::ClientCert, const ::std::string pathToClientKey = KeyPaths::ClientKey);
 
         /**
          * @brief Disconnect from TLS server
@@ -38,28 +38,28 @@ namespace TestApi
          * @param tcpMsg Message to send
          * @return bool true if successful, false if failed
          */
-        bool sendMsg(const std::string &tcpMsg);
+        bool sendMsg(const ::std::string &tcpMsg);
 
         /**
          * @brief Get buffered message from TLS server and clear buffer
          *
-         * @return std::vector<std::string> Vector of buffered messages
+         * @return vector<string> Vector of buffered messages
          */
-        std::vector<std::string> getBufferedMsg();
+        ::std::vector<::std::string> getBufferedMsg();
 
     private:
         /**
          * @brief Buffer incoming messages
          * @param tlsMsgFromClient Message from server
          */
-        void workOnMessage(const std::string tlsMsgFromServer);
+        void workOnMessage(const ::std::string tlsMsgFromServer);
 
         // TCP client
-        tcp::TlsClient tlsClient;
+        ::tcp::TlsClient tlsClient;
 
         // Buffered messages
-        std::vector<std::string> bufferedMsg;
-        std::mutex bufferedMsg_m;
+        ::std::vector<::std::string> bufferedMsg;
+        ::std::mutex bufferedMsg_m;
     };
 
     class TlsClientApi_continuous
@@ -75,7 +75,7 @@ namespace TestApi
          * @param port TLS port of TLS server
          * @return int TLSCLIENT_CONNECT_OK if successful, other if failed
          */
-        int start(const std::string &ip, const int port, const std::string pathToCaCert = KeyPaths::CaCert, const std::string pathToClientCert = KeyPaths::ClientCert, const std::string pathToClientKey = KeyPaths::ClientKey);
+        int start(const ::std::string &ip, const int port, const ::std::string pathToCaCert = KeyPaths::CaCert, const ::std::string pathToClientCert = KeyPaths::ClientCert, const ::std::string pathToClientKey = KeyPaths::ClientKey);
 
         /**
          * @brief Disconnect from TLS server
@@ -88,21 +88,21 @@ namespace TestApi
          * @param tcpMsg Message to send
          * @return bool true if successful, false if failed
          */
-        bool sendMsg(const std::string &tcpMsg);
+        bool sendMsg(const ::std::string &tcpMsg);
 
         /**
          * @brief Get buffered message from TLS server and clear buffer
          *
-         * @return std::vector<std::string> Vector of buffered messages
+         * @return vector<string> Vector of buffered messages
          */
-        std::string getBufferedMsg();
+        ::std::string getBufferedMsg();
 
     private:
         // TCP client
-        tcp::TlsClient tlsClient;
+        ::tcp::TlsClient tlsClient;
 
         // Buffered messages
-        std::ostringstream bufferedMsg_os{std::ios_base::ate};
+        ::std::ostringstream bufferedMsg_os{::std::ios_base::ate};
     };
 
 } // namespace TestApi

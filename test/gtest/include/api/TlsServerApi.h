@@ -7,7 +7,7 @@
 #include <vector>
 #include <mutex>
 
-#include "TlsServer.h"
+#include "TlsServer.hpp"
 #include "TestDefines.h"
 
 namespace TestApi
@@ -24,7 +24,7 @@ namespace TestApi
          * @param port TLS port to listen on
          * @return int SERVER_START_OK if successful, other if failed
          */
-        int start(const int port, const std::string pathToCaCert = KeyPaths::CaCert, const std::string pathToServerCert = KeyPaths::ServerCert, const std::string pathToServerKey = KeyPaths::ServerKey);
+        int start(const int port, const ::std::string pathToCaCert = KeyPaths::CaCert, const ::std::string pathToServerCert = KeyPaths::ServerCert, const ::std::string pathToServerKey = KeyPaths::ServerKey);
 
         /**
          * @brief Stop TLS server
@@ -38,21 +38,21 @@ namespace TestApi
          * @param tlsMsg Message to send
          * @return bool true if successful, false if failed
          */
-        bool sendMsg(const int tlsClientId, const std::string &tlsMsg);
+        bool sendMsg(const int tlsClientId, const ::std::string &tlsMsg);
 
         /**
          * @brief Get buffered message from TLS clients and clear buffer
          *
-         * @return std::vector<MessageFromClient> Vector of buffered messages
+         * @return vector<MessageFromClient> Vector of buffered messages
          */
-        std::vector<MessageFromClient> getBufferedMsg();
+        ::std::vector<MessageFromClient> getBufferedMsg();
 
         /**
          * @brief Get IDs of all connected clients
          *
-         * @return std::vector<int> Vector of client IDs
+         * @return vector<int> Vector of client IDs
          */
-        std::vector<int> getClientIds();
+        ::std::vector<int> getClientIds();
 
     private:
         /**
@@ -61,7 +61,7 @@ namespace TestApi
          * @param tlsClientId       Client ID
          * @param tlsMsgFromClient  Message from client
          */
-        void workOnMessage(const int tlsClientId, const std::string tlsMsgFromClient);
+        void workOnMessage(const int tlsClientId, const ::std::string tlsMsgFromClient);
 
         /**
          * @brief Do nothing on established connection
@@ -78,11 +78,11 @@ namespace TestApi
         void workOnClosed(const int tlsClientId);
 
         // TLS server
-        tcp::TlsServer tlsServer;
+        ::tcp::TlsServer tlsServer;
 
         // Buffered messages
-        std::vector<MessageFromClient> bufferedMsg;
-        std::mutex bufferedMsg_m;
+        ::std::vector<MessageFromClient> bufferedMsg;
+        ::std::mutex bufferedMsg_m;
     };
 
     class TlsServerApi_continuous
@@ -97,7 +97,7 @@ namespace TestApi
          * @param port TLS port to listen on
          * @return int SERVER_START_OK if successful, other if failed
          */
-        int start(const int port, const std::string pathToCaCert = KeyPaths::CaCert, const std::string pathToServerCert = KeyPaths::ServerCert, const std::string pathToServerKey = KeyPaths::ServerKey);
+        int start(const int port, const ::std::string pathToCaCert = KeyPaths::CaCert, const ::std::string pathToServerCert = KeyPaths::ServerCert, const ::std::string pathToServerKey = KeyPaths::ServerKey);
 
         /**
          * @brief Stop TLS server
@@ -111,21 +111,21 @@ namespace TestApi
          * @param tlsMsg Message to send
          * @return bool true if successful, false if failed
          */
-        bool sendMsg(const int tlsClientId, const std::string &tlsMsg);
+        bool sendMsg(const int tlsClientId, const ::std::string &tlsMsg);
 
         /**
          * @brief Get buffered message from TLS clients and clear buffer
          *
-         * @return std::map<int, std::string> Vector of buffered messages
+         * @return map<int, string> Vector of buffered messages
          */
-        std::map<int, std::string> getBufferedMsg();
+        ::std::map<int, ::std::string> getBufferedMsg();
 
         /**
          * @brief Get IDs of all connected clients
          *
-         * @return std::vector<int> Vector of client IDs
+         * @return vector<int> Vector of client IDs
          */
-        std::vector<int> getClientIds();
+        ::std::vector<int> getClientIds();
 
     private:
         /**
@@ -143,18 +143,18 @@ namespace TestApi
         void workOnClosed(const int tlsClientId);
 
         // TLS server
-        tcp::TlsServer tlsServer;
+        ::tcp::TlsServer tlsServer;
 
         /**
          * @brief Generate an output stream to a string for each client
          *
          * @param clientId
-         * @return std::ostringstream*
+         * @return ostringstream*
          */
-        std::ostringstream *generateContinuousStream(int clientId);
+        ::std::ostringstream *generateContinuousStream(int clientId);
 
         // Buffered messages
-        std::map<int, std::ostringstream *> bufferedMsg;
+        ::std::map<int, ::std::ostringstream *> bufferedMsg;
     };
 
 } // namespace TestApi
