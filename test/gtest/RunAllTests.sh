@@ -32,7 +32,7 @@ do
             # Get number of failed tests and total number of tests and append to final results
             numTestsTotal=$(jq -s '.[0].tests' $reportFile)
             numTestsFailed=$(jq -s '.[0].failures' $reportFile)
-            finalResult+=$(printf %5s "[$executionConter]")
+            finalResult+=$(printf %4s "[$executionConter]")
             finalResult+=$(printf %13s "$numTestsFailed/$numTestsTotal")
             finalResult+=$(printf %9s "$p_protocol")
             finalResult+=$(printf %14s "$p_mode")
@@ -47,5 +47,5 @@ done
 
 # Print final results
 echo "Final results:"
-echo "   ID Failed/Total Protocol          Mode CertType"
+echo "  ID Failed/Total Protocol          Mode CertType"
 echo -e "$finalResult"
