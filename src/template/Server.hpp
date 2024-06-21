@@ -344,7 +344,7 @@ namespace tcp
         if (running)
         {
 #ifdef DEVELOP
-            ::std::cerr << typeid(this).name() << "::" << __func__ << ": Server already running" << endl;
+            ::std::cerr << typeid(this).name() << "::" << __func__ << ": Server already running" << ::std::endl;
 #endif // DEVELOP
 
             return -1;
@@ -354,7 +354,7 @@ namespace tcp
         if (1 > port || 65535 < port)
         {
 #ifdef DEVELOP
-            ::std::cerr << typeid(this).name() << "::" << __func__ << ": The port " << port << " couldn't be used" << endl;
+            ::std::cerr << typeid(this).name() << "::" << __func__ << ": The port " << port << " couldn't be used" << ::std::endl;
 #endif // DEVELOP
 
             return SERVER_ERROR_START_WRONG_PORT;
@@ -371,7 +371,7 @@ namespace tcp
         if (-1 == tcpSocket)
         {
 #ifdef DEVELOP
-            ::std::cerr << typeid(this).name() << "::" << __func__ << ": Error when creating TCP socket to listen on" << endl;
+            ::std::cerr << typeid(this).name() << "::" << __func__ << ": Error when creating TCP socket to listen on" << ::std::endl;
 #endif // DEVELOP
 
             // Stop the server
@@ -387,7 +387,7 @@ namespace tcp
         if (setsockopt(tcpSocket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)))
         {
 #ifdef DEVELOP
-            ::std::cerr << typeid(this).name() << "::" << __func__ << ": Error when setting TCP socket options" << endl;
+            ::std::cerr << typeid(this).name() << "::" << __func__ << ": Error when setting TCP socket options" << ::std::endl;
 #endif // DEVELOP
 
             // Stop the server
@@ -407,7 +407,7 @@ namespace tcp
         if (bind(tcpSocket, (struct sockaddr *)&socketAddress, sizeof(socketAddress)))
         {
 #ifdef DEVELOP
-            ::std::cerr << typeid(this).name() << "::" << __func__ << ": Error when binding server to port " << port << endl;
+            ::std::cerr << typeid(this).name() << "::" << __func__ << ": Error when binding server to port " << port << ::std::endl;
 #endif // DEVELOP
 
             // Stop the server
@@ -420,7 +420,7 @@ namespace tcp
         if (listen(tcpSocket, SOMAXCONN))
         {
 #ifdef DEVELOP
-            ::std::cerr << typeid(this).name() << "::" << __func__ << ": Error when starting listening" << endl;
+            ::std::cerr << typeid(this).name() << "::" << __func__ << ": Error when starting listening" << ::std::endl;
 #endif // DEVELOP
 
             // Stop the server
@@ -438,7 +438,7 @@ namespace tcp
         running = true;
 
 #ifdef DEVELOP
-        ::std::cout << typeid(this).name() << "::" << __func__ << ": Server started on port " << port << endl;
+        ::std::cout << typeid(this).name() << "::" << __func__ << ": Server started on port " << port << ::std::endl;
 #endif // DEVELOP
 
         return initCode;
@@ -465,7 +465,7 @@ namespace tcp
         close(tcpSocket);
 
 #ifdef DEVELOP
-        ::std::cout << typeid(this).name() << "::" << __func__ << ": Server stopped" << endl;
+        ::std::cout << typeid(this).name() << "::" << __func__ << ": Server stopped" << ::std::endl;
 #endif // DEVELOP
 
         return;
@@ -480,7 +480,7 @@ namespace tcp
             if (msg.find(DELIMITER_FOR_FRAGMENTATION) != ::std::string::npos)
             {
 #ifdef DEVELOP
-                ::std::cerr << typeid(this).name() << "::" << __func__ << ": Message contains delimiter" << endl;
+                ::std::cerr << typeid(this).name() << "::" << __func__ << ": Message contains delimiter" << ::std::endl;
 #endif // DEVELOP
 
                 return false;
@@ -490,7 +490,7 @@ namespace tcp
             if (msg.length() > MAXIMUM_MESSAGE_LENGTH_FOR_FRAGMENTATION)
             {
 #ifdef DEVELOP
-                ::std::cerr << typeid(this).name() << "::" << __func__ << ": Message is too long" << endl;
+                ::std::cerr << typeid(this).name() << "::" << __func__ << ": Message is too long" << ::std::endl;
 #endif // DEVELOP
 
                 return false;
@@ -503,7 +503,7 @@ namespace tcp
             return writeMsg(clientId, MESSAGE_FRAGMENTATION_ENABLED ? msg + ::std::string{DELIMITER_FOR_FRAGMENTATION} : msg);
 
 #ifdef DEVELOP
-        ::std::cerr << typeid(this).name() << "::" << __func__ << ": Client " << clientId << " is not connected" << endl;
+        ::std::cerr << typeid(this).name() << "::" << __func__ << ": Client " << clientId << " is not connected" << ::std::endl;
 #endif // DEVELOP
 
         return false;
@@ -550,7 +550,7 @@ namespace tcp
         if (getpeername(clientId, (struct sockaddr *)&addr, &addrSize))
         {
 #ifdef DEVELOP
-            ::std::cerr << typeid(this).name() << "::" << __func__ << ": Error reading client " << clientId << "'s IP address" << endl;
+            ::std::cerr << typeid(this).name() << "::" << __func__ << ": Error reading client " << clientId << "'s IP address" << ::std::endl;
 #endif // DEVELOP
 
             return "Failed Read!";
@@ -578,7 +578,7 @@ namespace tcp
                 continue;
 
 #ifdef DEVELOP
-            ::std::cout << typeid(this).name() << "::" << __func__ << ": New client connected: " << newConnection << endl;
+            ::std::cout << typeid(this).name() << "::" << __func__ << ": New client connected: " << newConnection << ::std::endl;
 #endif // DEVELOP
 
             // Initialize the (so far unencrypted) connection
@@ -626,7 +626,7 @@ namespace tcp
                 shutdown(it.first, SHUT_RD);
 
 #ifdef DEVELOP
-                ::std::cout << typeid(this).name() << "::" << __func__ << ": Closed connection to client " << it.first << endl;
+                ::std::cout << typeid(this).name() << "::" << __func__ << ": Closed connection to client " << it.first << ::std::endl;
 #endif // DEVELOP
             }
         }
@@ -676,7 +676,7 @@ namespace tcp
             if (msg.empty())
             {
 #ifdef DEVELOP
-                ::std::cout << typeid(this).name() << "::" << __func__ << ": Connection to client " << clientId << " broken" << endl;
+                ::std::cout << typeid(this).name() << "::" << __func__ << ": Connection to client " << clientId << " broken" << ::std::endl;
 #endif // DEVELOP
 
                 {
@@ -726,7 +726,7 @@ namespace tcp
                     if (buffer.size() + msg_part.size() > MAXIMUM_MESSAGE_LENGTH_FOR_FRAGMENTATION)
                     {
 #ifdef DEVELOP
-                        ::std::cerr << typeid(this).name() << "::" << __func__ << ": Message from client " << clientId << " is too long" << endl;
+                        ::std::cerr << typeid(this).name() << "::" << __func__ << ": Message from client " << clientId << " is too long" << ::std::endl;
 #endif // DEVELOP
 
                         buffer.clear();
@@ -736,7 +736,7 @@ namespace tcp
                     buffer += msg_part;
 
 #ifdef DEVELOP
-                    ::std::cout << typeid(this).name() << "::" << __func__ << ": Message from client " << clientId << ": " << buffer << endl;
+                    ::std::cout << typeid(this).name() << "::" << __func__ << ": Message from client " << clientId << ": " << buffer << ::std::endl;
 #endif // DEVELOP
 
                     // Run code to handle the message

@@ -1,5 +1,4 @@
 # For debugging please use the command "cmake -DCMAKE_BUILD_TYPE=Debug .."
-# For local installation please use the command "cmake -DCMAKE_BUILD_TYPE=Local .."
 
 cmake_minimum_required(VERSION 3.10)
 
@@ -16,13 +15,17 @@ file(GLOB sourcefiles_client client.cpp)
 add_executable(server ${sourcefiles_server})
 add_executable(client ${sourcefiles_client})
 
-target_compile_options(server PRIVATE -fexceptions -Wall -g -Og
-    $<$<CONFIG:DEBUG>: -DDEVELOP>)
-target_compile_options(client PRIVATE -fexceptions -Wall -g -Og
-    $<$<CONFIG:DEBUG>: -DDEVELOP>)
+target_compile_options(server PRIVATE -fexceptions -Wall $<$<NOT:$<CONFIG:Debug>>: -O3> $<$<CONFIG:DEBUG>: -g -Og -DDEVELOP>)
+target_compile_options(client PRIVATE -fexceptions -Wall $<$<NOT:$<CONFIG:Debug>>: -O3> $<$<CONFIG:DEBUG>: -g -Og -DDEVELOP>)
 
 target_link_libraries(server -lcrypto -lcrypt -lssl -pthread)
 target_link_libraries(client -lcrypto -lcrypt -lssl -pthread)
+
+# Message build type
+string(TOUPPER "${CMAKE_BUILD_TYPE}" CMAKE_BUILD_TYPE_UPPER)
+if ("${CMAKE_BUILD_TYPE_UPPER}" STREQUAL "DEBUG")
+    message(STATUS "Build type: ${CMAKE_BUILD_TYPE_UPPER}")
+endif()
 
 # ---------- Commands to be executed when creating makefile ----------
 
