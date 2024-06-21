@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.10)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-project(example VERSION 2.0 DESCRIPTION "Example of using the TCP client and server classes")
+project(example VERSION 3.0.0 DESCRIPTION "Example of using the TCP client and server classes")
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../build/include)
 link_directories(${CMAKE_CURRENT_SOURCE_DIR}/../build/lib)
