@@ -24,7 +24,7 @@ namespace tcp_serverclient
       /**
        * @brief Constructor for continuous stream forwarding
        */
-      TcpServer();
+      TcpServer() : Server{} {}
 
       /**
        * @brief Constructor for fragmented messages
@@ -32,12 +32,12 @@ namespace tcp_serverclient
        * @param delimiter     Character to split messages on
        * @param messageMaxLen Maximum message length
        */
-      TcpServer(char delimiter, size_t messageMaxLen = ::std::numeric_limits<size_t>::max() - 1);
+      TcpServer(char delimiter, size_t messageMaxLen = ::std::numeric_limits<size_t>::max() - 1) : Server{delimiter, messageMaxLen} {}
 
       /**
        * @brief Destructor
        */
-      virtual ~TcpServer();
+      virtual ~TcpServer() { stop(); }
 
    private:
       /**
@@ -47,7 +47,7 @@ namespace tcp_serverclient
        */
       int init(const char *const = nullptr,
                const char *const = nullptr,
-               const char *const = nullptr) override final;
+               const char *const = nullptr) override final { return SERVER_START_OK; }
 
       /**
        * @brief Initialize connection to a specific client (Identified by its TCP ID) (Do nothing. Just return pointer to TCP ID).
@@ -55,14 +55,14 @@ namespace tcp_serverclient
        * @param clientId
        * @return int*
        */
-      int *connectionInit(const int clientId) override final;
+      int *connectionInit(const int clientId) override final { return new int{clientId}; }
 
       /**
        * @brief Deinitialize connection to a specific client (Identified by its TCP ID) (Do nothing.).
        *
        * @param socket
        */
-      void connectionDeinit(int *socket) override final;
+      void connectionDeinit(int *socket) override final {}
 
       /**
        * @brief Read data from a specific client (Identified by its TCP ID).
@@ -72,7 +72,17 @@ namespace tcp_serverclient
        * @param socket
        * @return string
        */
-      ::std::string readMsg(int *socket) override final;
+      ::std::string readMsg(int *socket) override final
+      {
+         // Buffer for received data.
+         char buffer[MAXIMUM_RECEIVE_PACKAGE_SIZE]{0};
+
+         // Wait for data to be available.
+         ssize_t lenMsg{recv(*socket, buffer, MAXIMUM_RECEIVE_PACKAGE_SIZE, 0)};
+
+         // Return received data as string (or empty string if no data is available).
+         return ::std::string{buffer, 0 < lenMsg ? static_cast<size_t>(lenMsg) : 0UL};
+      }
 
       /**
        * @brief Send raw data to a specific client (Identified by its TCP ID).
@@ -83,61 +93,20 @@ namespace tcp_serverclient
        * @return true
        * @return false
        */
-      bool writeMsg(const int clientId, const ::std::string &msg) override final;
+      bool writeMsg(const int clientId, const ::std::string &msg) override final
+      {
+#ifdef DEVELOP
+         ::std::cout << typeid(this).name() << "::" << __func__ << ": Send to client " << clientId << ": " << msg << endl;
+#endif // DEVELOP
+
+         const size_t lenMsg{msg.size()};
+         return send(clientId, msg.c_str(), lenMsg, 0) == (ssize_t)lenMsg;
+      }
 
       // Disallow copy
       TcpServer(const TcpServer &) = delete;
       TcpServer &operator=(const TcpServer &) = delete;
    };
-
-   // ============================== Implementation of methods. ==============================
-
-   TcpServer::TcpServer() : Server{} {}
-   TcpServer::TcpServer(char delimiter, size_t messageMaxLen) : Server{delimiter, messageMaxLen} {}
-
-   TcpServer::~TcpServer()
-   {
-      stop();
-   }
-
-   int TcpServer::init(const char *const,
-                       const char *const,
-                       const char *const)
-   {
-      return SERVER_START_OK;
-   }
-
-   int *TcpServer::connectionInit(const int clientId)
-   {
-      return new int{clientId};
-   }
-
-   bool TcpServer::writeMsg(const int clientId, const ::std::string &msg)
-   {
-#ifdef DEVELOP
-      ::std::cout << typeid(this).name() << "::" << __func__ << ": Send to client " << clientId << ": " << msg << endl;
-#endif // DEVELOP
-
-      const size_t lenMsg{msg.size()};
-      return send(clientId, msg.c_str(), lenMsg, 0) == (ssize_t)lenMsg;
-   }
-
-   ::std::string TcpServer::readMsg(int *socket)
-   {
-      // Buffer for received data.
-      char buffer[MAXIMUM_RECEIVE_PACKAGE_SIZE]{0};
-
-      // Wait for data to be available.
-      ssize_t lenMsg{recv(*socket, buffer, MAXIMUM_RECEIVE_PACKAGE_SIZE, 0)};
-
-      // Return received data as string (or empty string if no data is available).
-      return ::std::string{buffer, 0 < lenMsg ? static_cast<size_t>(lenMsg) : 0UL};
-   }
-
-   void TcpServer::connectionDeinit(int *)
-   {
-      return;
-   }
 }
 
 #endif // TCPSERVER_HPP_

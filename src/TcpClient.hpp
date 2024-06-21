@@ -26,7 +26,7 @@ namespace tcp_serverclient
          *
          * @param os                                Stream to forward incoming stream to
          */
-        TcpClient(::std::ostream &os = ::std::cout);
+        TcpClient(::std::ostream &os = ::std::cout) : Client(os) {}
 
         /**
          * @brief Constructor for fragmented messages
@@ -34,12 +34,12 @@ namespace tcp_serverclient
          * @param delimiter                         Character to split messages on
          * @param messageMaxLen                     Maximum message length
          */
-        TcpClient(char delimiter, size_t messageMaxLen = ::std::numeric_limits<size_t>::max() - 1);
+        TcpClient(char delimiter, size_t messageMaxLen = ::std::numeric_limits<size_t>::max() - 1) : Client(delimiter, messageMaxLen) {}
 
         /**
          * @brief Destructor
          */
-        virtual ~TcpClient();
+        virtual ~TcpClient() { stop(); }
 
     private:
         /**
@@ -50,7 +50,7 @@ namespace tcp_serverclient
          */
         int init(const char *const,
                  const char *const,
-                 const char *const) override final;
+                 const char *const) override final { return 0; }
 
         /**
          * @brief Initialize the connection
@@ -58,19 +58,29 @@ namespace tcp_serverclient
          *
          * @return int*
          */
-        int *connectionInit() override final;
+        int *connectionInit() override final { return new int{tcpSocket}; }
 
         /**
          * @brief Deinitialize the connection (Do nothing)
          */
-        void connectionDeinit() override final;
+        void connectionDeinit() override final {}
 
         /**
          * @brief Read raw data from the unencrypted TCP socket
          *
          * @return string
          */
-        ::std::string readMsg() override final;
+        ::std::string readMsg() override final
+        {
+            // Buffer to store the data received from the server
+            char buffer[MAXIMUM_RECEIVE_PACKAGE_SIZE]{0};
+
+            // Wait for the server to send data
+            ssize_t lenMsg{recv(tcpSocket, buffer, MAXIMUM_RECEIVE_PACKAGE_SIZE, 0)};
+
+            // Return the received message as a string (Empty string if receive failed)
+            return ::std::string{buffer, 0 < lenMsg ? static_cast<size_t>(lenMsg) : 0UL};
+        }
 
         /**
          * @brief Send raw data to the unencrypted TCP socket
@@ -79,61 +89,20 @@ namespace tcp_serverclient
          * @return true
          * @return bool
          */
-        bool writeMsg(const ::std::string &msg) override final;
+        bool writeMsg(const ::std::string &msg) override final
+        {
+#ifdef DEVELOP
+            ::std::cout << typeid(this).name() << "::" << __func__ << ": Send to server: " << msg << endl;
+#endif // DEVELOP
+
+            const size_t lenMsg{msg.size()};
+            return send(tcpSocket, msg.c_str(), lenMsg, 0) == (ssize_t)lenMsg;
+        }
 
         // Disallow copy
         TcpClient(const TcpClient &) = delete;
         TcpClient &operator=(const TcpClient &) = delete;
     };
-
-    // ============================== Implementation of methods. ==============================
-
-    TcpClient::TcpClient(::std::ostream &os) : Client(os) {}
-    TcpClient::TcpClient(char delimiter, size_t messageMaxLen) : Client(delimiter, messageMaxLen) {}
-
-    TcpClient::~TcpClient()
-    {
-        stop();
-    }
-
-    int TcpClient::init(const char *const,
-                        const char *const,
-                        const char *const)
-    {
-        return 0;
-    }
-
-    int *TcpClient::connectionInit()
-    {
-        return new int{tcpSocket};
-    }
-
-    void TcpClient::connectionDeinit()
-    {
-        return;
-    }
-
-    ::std::string TcpClient::readMsg()
-    {
-        // Buffer to store the data received from the server
-        char buffer[MAXIMUM_RECEIVE_PACKAGE_SIZE]{0};
-
-        // Wait for the server to send data
-        ssize_t lenMsg{recv(tcpSocket, buffer, MAXIMUM_RECEIVE_PACKAGE_SIZE, 0)};
-
-        // Return the received message as a string (Empty string if receive failed)
-        return ::std::string{buffer, 0 < lenMsg ? static_cast<size_t>(lenMsg) : 0UL};
-    }
-
-    bool TcpClient::writeMsg(const ::std::string &msg)
-    {
-#ifdef DEVELOP
-        ::std::cout << typeid(this).name() << "::" << __func__ << ": Send to server: " << msg << endl;
-#endif // DEVELOP
-
-        const size_t lenMsg{msg.size()};
-        return send(tcpSocket, msg.c_str(), lenMsg, 0) == (ssize_t)lenMsg;
-    }
 }
 
 #endif // TCPCLIENT_HPP_
