@@ -29,7 +29,7 @@
 #include <netdb.h>
 #include <sys/socket.h>
 
-namespace tcp_serverclient
+namespace tcp
 {
     // Return codes
     enum : int

@@ -16,7 +16,7 @@
 
 #include "template/Server.hpp"
 
-namespace tcp_serverclient
+namespace tcp
 {
    class TcpServer : public Server<int>
    {

@@ -17,7 +17,7 @@
 
 #include "template/Server.hpp"
 
-namespace tcp_serverclient
+namespace tcp
 {
    // Deleter for SSL objects
    struct Server_SSL_Deleter

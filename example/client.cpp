@@ -27,10 +27,10 @@ int main()
     while (true)
     {
         // Create client instances
-        ::tcp_serverclient::TcpClient tcpClient_fragmented{'\n'}; // newline as delimiter
-        ::tcp_serverclient::TcpClient tcpClient_continuous{tcp_continuous_stream};
-        ::tcp_serverclient::TlsClient tlsClient_fragmented{'\n'}; // newline as delimiter
-        ::tcp_serverclient::TlsClient tlsClient_continuous{tls_continuous_stream};
+        ::tcp::TcpClient tcpClient_fragmented{'\n'}; // newline as delimiter
+        ::tcp::TcpClient tcpClient_continuous{tcp_continuous_stream};
+        ::tcp::TlsClient tlsClient_fragmented{'\n'}; // newline as delimiter
+        ::tcp::TlsClient tlsClient_continuous{tls_continuous_stream};
 
         // Link all worker methods and forwarding streams
         tcpClient_fragmented.setWorkOnMessage(tcp_fragmented_workOnMessage);

@@ -17,7 +17,7 @@
 
 #include "template/Client.hpp"
 
-namespace tcp_serverclient
+namespace tcp
 {
     /**
      * @brief Deleter for TLS object

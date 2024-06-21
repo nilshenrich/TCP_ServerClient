@@ -29,7 +29,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
-namespace tcp_serverclient
+namespace tcp
 {
     // Return codes
     enum : int

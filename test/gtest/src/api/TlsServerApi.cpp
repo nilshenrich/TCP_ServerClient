@@ -2,7 +2,7 @@
 
 using namespace std;
 using namespace TestApi;
-using namespace tcp_serverclient;
+using namespace tcp;
 
 TlsServerApi_fragmentation::TlsServerApi_fragmentation(size_t messageMaxLen) : tlsServer{'\x00', messageMaxLen}
 {

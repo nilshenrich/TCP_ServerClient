@@ -16,7 +16,7 @@
 
 #include "template/Client.hpp"
 
-namespace tcp_serverclient
+namespace tcp
 {
     class TcpClient : public Client<int>
     {
