@@ -11,7 +11,8 @@ namespace TestConstants
     const ::std::chrono::milliseconds WAITFOR_CONNECT_TLS{50};
 
     // Wait for TCP/TLS connection to be closed
-    const ::std::chrono::milliseconds DISCONNECTION_TIMEOUT{10};
+    const ::std::chrono::milliseconds WAITFOR_DISCONNECT_TCP{10};
+    const ::std::chrono::milliseconds WAITFOR_DISCONNECT_TLS{10};
 
     // Wait for TCP/TLS message transfer
     const ::std::chrono::milliseconds WAITFOR_MSG_TCP{100};

@@ -63,7 +63,6 @@ TEST_F(Fragmentation_TcpServer_Test_Send, NegTest_ClientDisconnectedBefore)
 {
     // Disconnect client
     tcpClient.stop();
-    this_thread::sleep_for(TestConstants::DISCONNECTION_TIMEOUT);
 
     // Send message to client that is disconnected immediately before
     EXPECT_FALSE(tcpServer.sendMsg(clientId, "Test message"));

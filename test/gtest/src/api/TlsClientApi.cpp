@@ -22,6 +22,7 @@ int TlsClientApi_fragmentation::start(const string &ip, const int port, string p
 void TlsClientApi_fragmentation::stop()
 {
     tlsClient.stop();
+    this_thread::sleep_for(TestConstants::WAITFOR_DISCONNECT_TLS);
     return;
 }
 
@@ -53,6 +54,7 @@ int TlsClientApi_continuous::start(const string &ip, const int port, string path
 void TlsClientApi_continuous::stop()
 {
     tlsClient.stop();
+    this_thread::sleep_for(TestConstants::WAITFOR_DISCONNECT_TLS);
     return;
 }
 

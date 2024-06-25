@@ -41,7 +41,6 @@ TEST_F(Continuous_TcpClient_Test_Send, NegTest_ServerNotRunning)
 {
     // Stop TCP server
     tcpServer.stop();
-    this_thread::sleep_for(TestConstants::DISCONNECTION_TIMEOUT);
 
     // Send message to server that has stopped running immediately before
     EXPECT_FALSE(tcpClient.sendMsg("Test message"));

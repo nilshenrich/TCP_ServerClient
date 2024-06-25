@@ -22,6 +22,7 @@ int TcpClientApi_fragmentation::start(const string &ip, const int port)
 void TcpClientApi_fragmentation::stop()
 {
     tcpClient.stop();
+    this_thread::sleep_for(TestConstants::WAITFOR_DISCONNECT_TCP);
     return;
 }
 
@@ -53,6 +54,7 @@ int TcpClientApi_continuous::start(const string &ip, const int port)
 void TcpClientApi_continuous::stop()
 {
     tcpClient.stop();
+    this_thread::sleep_for(TestConstants::WAITFOR_DISCONNECT_TCP);
     return;
 }
 

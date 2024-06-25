@@ -41,7 +41,6 @@ TEST_F(Continuous_TlsClient_Test_Send, NegTest_ServerNotRunning)
 {
     // Stop TLS server
     tlsServer.stop();
-    this_thread::sleep_for(TestConstants::DISCONNECTION_TIMEOUT);
 
     // Send message to server that has stopped running immediately before
     EXPECT_FALSE(tlsClient.sendMsg("Test message"));
