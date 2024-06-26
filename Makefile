@@ -1,7 +1,9 @@
 .PHONY: install
 
-install: SHELL:=/bin/bash
-install:
+tcp: SHELL:=/bin/bash
+tcp:
 	targetDir='/usr/local/include/tcp' ;\
 	rm -rf $$targetDir ;\
-	cp -r ./src $$targetDir ;\
+	cp -r ./src/basic $$targetDir ;\
+
+install: tcp
