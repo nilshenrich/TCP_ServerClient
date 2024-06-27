@@ -14,7 +14,8 @@ FtpServer::FtpServer() : tcpControl{'\n', MAXIMUM_MESSAGE_LENGTH},
                          work_readFile{[](const string) -> ifstream
                                        { return ifstream{}; }} // Default: Return null-stream
 {
-    // TODO: Link TCP server worker methods to provide FTP server functionality
+    // Link TCP server worker methods to provide FTP server functionality
+    tcpControl.setWorkOnEstablished(bind(&FtpServer::on_newClient, this, placeholders::_1));
 }
 FtpServer::~FtpServer() { stop(); }
 
@@ -27,3 +28,8 @@ void FtpServer::setWork_listDirectory(function<valarray<Item>(const string)> wor
 void FtpServer::setWork_readFile(function<ifstream(const string)> worker) { work_readFile = worker; }
 
 bool FtpServer::isRunning() const { return tcpControl.isRunning(); }
+
+void FtpServer::on_newClient(const int clientId)
+{
+    tcpControl.sendMsg(clientId, to_string(Response::WELCOME) + " Welcome");
+}

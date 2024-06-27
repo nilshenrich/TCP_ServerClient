@@ -21,7 +21,7 @@
 namespace ftp
 {
     // Item type
-    enum ItemType
+    enum class ItemType
     {
         directory,
         file,
@@ -82,6 +82,11 @@ namespace ftp
         bool isRunning() const;
 
     private:
+        /**
+         * @brief Worker methods for incoming messages
+         */
+        void on_newClient(const int clientId);
+
         // Underlying TCP server
         ::tcp::TcpServer tcpControl; // Fragmented
 
@@ -95,6 +100,17 @@ namespace ftp
         const size_t MAXIMUM_MESSAGE_LENGTH{4096};
         const int PORT_CONTROL{21};
     };
+
+    // Request keywords
+    namespace Request
+    {
+    }
+
+    // Response codes
+    namespace Response
+    {
+        const int WELCOME = 220;
+    }
 }
 
 #endif // FTPSERVER_HPP_
