@@ -75,7 +75,7 @@ namespace ftp
         void setWork_readFile(::std::function<::std::ifstream(const ::std::string)> work);
 
         /**
-         * @brief Return if the FTP server is running
+         * @brief Return if the FTP server is running (means if underlying TCP server is running)
          *
          * @return bool (true if running, false if not)
          */
@@ -90,6 +90,10 @@ namespace ftp
         ::std::function<bool(const ::std::string)> work_checkAccessible;                           // Check if path is accessible (directory or file)
         ::std::function<::std::valarray<Item>(const ::std::string)> work_listDirectory;            // List directory content
         ::std::function<::std::ifstream(const ::std::string)> work_readFile;                       // Read file content
+
+        // Constants
+        const size_t MAXIMUM_MESSAGE_LENGTH{4096};
+        const int PORT_CONTROL{21};
     };
 }
 
