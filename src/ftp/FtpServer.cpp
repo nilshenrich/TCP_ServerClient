@@ -16,6 +16,8 @@ FtpServer::FtpServer() : tcpControl{'\n', MAXIMUM_MESSAGE_LENGTH},
 {
     // Link TCP server worker methods to provide FTP server functionality
     tcpControl.setWorkOnEstablished(bind(&FtpServer::on_newClient, this, placeholders::_1));
+    tcpControl.setWorkOnMessage(bind(&FtpServer::on_msg, this, placeholders::_1, placeholders::_2));
+    tcpControl.setWorkOnClosed(bind(&FtpServer::on_closed, this, placeholders::_1));
 }
 FtpServer::~FtpServer() { stop(); }
 
@@ -29,7 +31,20 @@ void FtpServer::setWork_readFile(function<ifstream(const string)> worker) { work
 
 bool FtpServer::isRunning() const { return tcpControl.isRunning(); }
 
+string FtpServer::getCommand(const string &msg) const
+{
+    return msg.substr(0, min<size_t>(4, msg.find_first_of(' ')));
+}
+
 void FtpServer::on_newClient(const int clientId)
 {
-    tcpControl.sendMsg(clientId, to_string(Response::WELCOME) + " Welcome");
+    tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::WELCOME)) + " Welcome");
+}
+void FtpServer::on_msg(const int clientId, const string &msg)
+{
+    // TODO: Implement
+}
+void FtpServer::on_closed(const int clientId)
+{
+    // TODO: Implement
 }

@@ -18,6 +18,9 @@
 #include "../basic/TcpServer.hpp"
 #include "../basic/TlsServer.hpp"
 
+// Define getting enum class value as underlying type
+#define ENUM_CLASS_VALUE(x) static_cast<::std::underlying_type_t<decltype(x)>>(x)
+
 namespace ftp
 {
     // Item type
@@ -81,11 +84,46 @@ namespace ftp
          */
         bool isRunning() const;
 
+        /**
+         * @brief Get unique ID for a command string
+         *        This makes it easier to jump in code based on the command
+         *        Each command is made of 3-4 bytes, so the ID is just the numeric representation
+         *
+         * @param command
+         * @return uint32
+         */
+        static constexpr uint32_t hashCommand(const char *const command)
+        {
+            int len{::std::strlen(command)};
+
+            uint32_t id{0};
+            for (int i = 0; i < len; i += 1)
+            {
+                id |= static_cast<uint32_t>(command[i]) << (24 - (i * 8));
+            }
+            return id;
+        }
+
     private:
         /**
          * @brief Worker methods for incoming messages
          */
         void on_newClient(const int clientId);
+        void on_msg(const int clientId, const ::std::string &msg);
+        void on_closed(const int clientId);
+
+        /**
+         * @brief Cut out command from incoming message
+         *        <command> <parameters>
+         *
+         * @param msg
+         * @return ::std::string
+         */
+        ::std::string getCommand(const ::std::string &msg) const;
+
+        // Constants
+        const size_t MAXIMUM_MESSAGE_LENGTH{4096};
+        const int PORT_CONTROL{21};
 
         // Underlying TCP server
         ::tcp::TcpServer tcpControl; // Fragmented
@@ -95,22 +133,20 @@ namespace ftp
         ::std::function<bool(const ::std::string)> work_checkAccessible;                           // Check if path is accessible (directory or file)
         ::std::function<::std::valarray<Item>(const ::std::string)> work_listDirectory;            // List directory content
         ::std::function<::std::ifstream(const ::std::string)> work_readFile;                       // Read file content
-
-        // Constants
-        const size_t MAXIMUM_MESSAGE_LENGTH{4096};
-        const int PORT_CONTROL{21};
     };
 
-    // Request keywords
-    namespace Request
+    // Hashed request keywords
+    enum class Request : uint32_t
     {
-    }
+        USERNAME = FtpServer::hashCommand("USER")
+    };
 
     // Response codes
-    namespace Response
+    enum class Response : int
     {
-        const int WELCOME = 220;
-    }
+        WELCOME = 220,
+        PASSWORD_REQUIRED = 331
+    };
 }
 
 #endif // FTPSERVER_HPP_
