@@ -14,6 +14,7 @@
 #include <functional>
 #include <valarray>
 #include <fstream>
+#include <sstream>
 
 #include "../basic/TcpServer.hpp"
 #include "../basic/TlsServer.hpp"
@@ -42,6 +43,13 @@ namespace ftp
         int gid;             // group id
         int size;            // [file] size in bytes | [directory] number of items
         int mtime;           // modification time in UNIX seconds
+    };
+
+    // Request properties
+    struct Reqp
+    {
+        uint32_t command;
+        ::std::valarray<::std::string> args;
     };
 
     class FtpServer
@@ -94,10 +102,10 @@ namespace ftp
          */
         static constexpr uint32_t hashCommand(const char *const command)
         {
-            int len{::std::strlen(command)};
+            size_t len{::std::strlen(command)};
 
             uint32_t id{0};
-            for (int i = 0; i < len; i += 1)
+            for (size_t i = 0; i < len; i += 1)
             {
                 id |= static_cast<uint32_t>(command[i]) << (24 - (i * 8));
             }
@@ -113,13 +121,13 @@ namespace ftp
         void on_closed(const int clientId);
 
         /**
-         * @brief Cut out command from incoming message
-         *        <command> <parameters>
+         * @brief Cut out command and arguments from incoming message
+         *        <command> <arguments>, ...
          *
          * @param msg
-         * @return ::std::string
+         * @return Reqp
          */
-        ::std::string getCommand(const ::std::string &msg) const;
+        Reqp parseRequest(const ::std::string &msg) const;
 
         // Constants
         const size_t MAXIMUM_MESSAGE_LENGTH{4096};
@@ -145,7 +153,9 @@ namespace ftp
     enum class Response : int
     {
         WELCOME = 220,
-        PASSWORD_REQUIRED = 331
+        PASSWORD_REQUIRED = 331,
+        ERROR_SYNTAX_COMMAND = 500,
+        ERROR_SYNTAX_ARGUMENT = 501
     };
 }
 

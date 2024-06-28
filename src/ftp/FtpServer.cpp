@@ -31,9 +31,18 @@ void FtpServer::setWork_readFile(function<ifstream(const string)> worker) { work
 
 bool FtpServer::isRunning() const { return tcpControl.isRunning(); }
 
-string FtpServer::getCommand(const string &msg) const
+Reqp FtpServer::parseRequest(const string &msg) const
 {
-    return msg.substr(0, min<size_t>(4, msg.find_first_of(' ')));
+    // First word is the command with 3-4 bytes
+    // Following words are arguments separated by spaces
+    vector<string> words{size_t(4)}; // Max 4 words (command with 3 arguments)
+    stringstream ss{msg};
+    string buffer;
+    while (getline(ss, buffer, ' '))
+        words.push_back(buffer);
+
+    vector<string> args{words.begin() + 1, words.end()};
+    return Reqp{hashCommand(words[0].c_str()), valarray<string>{args.data(), args.size()}};
 }
 
 void FtpServer::on_newClient(const int clientId)
@@ -42,7 +51,23 @@ void FtpServer::on_newClient(const int clientId)
 }
 void FtpServer::on_msg(const int clientId, const string &msg)
 {
-    // TODO: Implement
+    Reqp request{parseRequest(msg)};
+    switch (request.command)
+    {
+    case ENUM_CLASS_VALUE(Request::USERNAME):
+    {
+        size_t numArgs{request.args.size()};
+        if (numArgs == 1)
+        {
+            tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::PASSWORD_REQUIRED)) + " Password required for user " + request.args[0]);
+            break;
+        }
+        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_SYNTAX_ARGUMENT)) + " 1 argument expected, but " + to_string(numArgs) + " given");
+        break;
+    }
+    default:
+        break;
+    }
 }
 void FtpServer::on_closed(const int clientId)
 {
