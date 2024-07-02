@@ -69,16 +69,8 @@ void FtpServer::on_msg(const int clientId, const string &msg)
     switch (request.command)
     {
     case ENUM_CLASS_VALUE(Request::USERNAME):
-    {
-        size_t numArgs{request.args.size()};
-        if (numArgs == 1)
-        {
-            tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::PASSWORD_REQUIRED)) + " Password required for user " + request.args[0]);
-            break;
-        }
-        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_SYNTAX_ARGUMENT)) + " 1 argument expected, but " + to_string(numArgs) + " given");
+        on_msg_USER(clientId, request.command, request.args);
         break;
-    }
     default:
         break;
     }
@@ -86,4 +78,25 @@ void FtpServer::on_msg(const int clientId, const string &msg)
 void FtpServer::on_closed(const int clientId)
 {
     // TODO: Implement
+}
+
+//////////////////////////////////////////////////
+// Worker mehods on incoming messages
+//////////////////////////////////////////////////
+
+void FtpServer::on_msg_USER(const int clientId, const uint32_t command, const valarray<string> &args)
+{
+    // Check num of arguments
+    size_t numArgs{args.size()};
+    if (numArgs != 1)
+    {
+        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_SYNTAX_ARGUMENT)) + " 1 argument expected, but " + to_string(numArgs) + " given");
+        return;
+    }
+
+    // TODO: Check user is not logged in already
+
+    // Request fine, require password
+    tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::PASSWORD_REQUIRED)) + " Password required for user " + args[0]);
+    return;
 }

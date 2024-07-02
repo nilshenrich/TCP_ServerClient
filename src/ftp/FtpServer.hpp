@@ -141,6 +141,12 @@ namespace ftp
         ::std::function<bool(const ::std::string)> work_checkAccessible;                           // Check if path is accessible (directory or file)
         ::std::function<::std::valarray<Item>(const ::std::string)> work_listDirectory;            // List directory content
         ::std::function<::std::ifstream(const ::std::string)> work_readFile;                       // Read file content
+
+        //////////////////////////////////////////////////
+        // Worker mehods on incoming messages
+        //////////////////////////////////////////////////
+
+        void on_msg_USER(const int clientId, const uint32_t command, const ::std::valarray<::std::string> &args);
     };
 
     // Hashed request keywords
