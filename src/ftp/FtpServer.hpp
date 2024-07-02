@@ -16,6 +16,7 @@
 #include <fstream>
 #include <cstring>
 #include <map>
+#include <mutex>
 
 #include "../basic/TcpServer.hpp"
 #include "../basic/TlsServer.hpp"
@@ -51,6 +52,14 @@ namespace ftp
     {
         uint32_t command;
         ::std::valarray<::std::string> args;
+    };
+
+    // Session data
+    struct Session
+    {
+        bool loggedIn;
+        ::std::string username;
+        ::std::string currentpath;
     };
 
     class FtpServer
@@ -138,8 +147,8 @@ namespace ftp
         ::tcp::TcpServer tcpControl; // Fragmented
 
         // Active user sessions. Key is client ID, value is username
-        ::std::map<int, ::std::string> users_loggedIn;  // Users that are logged in
-        ::std::map<int, ::std::string> users_requested; // Users from which a password is requested to be logged in
+        ::std::map<int, Session> session{}; // Open sessions
+        ::std::mutex session_m{};           // Mutex for session
 
         // Pointer to functions on incoming message
         ::std::function<bool(const ::std::string, const ::std::string)> work_checkUserCredentials; // Check user credentials: Name, password
@@ -180,11 +189,16 @@ namespace ftp
     enum class Response : int
     {
         OK = 200,
-        WELCOME = 220,
-        PASSWORD_REQUIRED = 331,
+        SUCCESS_WELCOME = 220,
+        SUCCESS_LOGIN = 230,
+        CONTINUE_PASSWORD_REQUIRED = 331,
+        FAILED_LOGIN = 430,
+        FAILED_UNKNOWN_ERROR = 451,
         ERROR_SYNTAX_COMMAND = 500,
         ERROR_SYNTAX_ARGUMENT = 501,
         ERROR_NOTIMPLEMENTED = 502,
+        ERROR_WRONG_ORDER = 503,
+        ERROR_LOGIN = 530,
     };
 
     // File transfer types (EBCDIC not supported)
