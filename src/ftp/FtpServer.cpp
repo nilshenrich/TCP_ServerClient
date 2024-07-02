@@ -35,14 +35,28 @@ Reqp FtpServer::parseRequest(const string &msg) const
 {
     // First word is the command with 3-4 bytes
     // Following words are arguments separated by spaces
-    vector<string> words{size_t(4)}; // Max 4 words (command with 3 arguments)
-    stringstream ss{msg};
-    string buffer;
-    while (getline(ss, buffer, ' '))
-        words.push_back(buffer);
 
-    vector<string> args{words.begin() + 1, words.end()};
-    return Reqp{hashCommand(words[0].c_str()), valarray<string>{args.data(), args.size()}};
+    // Get all space positions and end of string
+    size_t lenMsg{msg.size()};
+    vector<size_t> posSpaces;
+    posSpaces.reserve(lenMsg + 1);
+    for (size_t i = 0; i < lenMsg; i += 1)
+    {
+        if (msg[i] == ' ')
+        {
+            posSpaces.push_back(i);
+        }
+    }
+    size_t numArgs{posSpaces.size()};
+    posSpaces.push_back(msg.size());
+
+    // Extract command and arguments from between spaces
+    valarray<string> args{numArgs};
+    for (size_t i{0}; i < numArgs; i += 1)
+    {
+        args[i] = msg.substr(posSpaces[i] + 1, posSpaces[i + 1] - posSpaces[i] - 1);
+    }
+    return Reqp{hashCommand(msg.substr(0, posSpaces[0]).c_str()), args};
 }
 
 void FtpServer::on_newClient(const int clientId)

@@ -14,7 +14,7 @@
 #include <functional>
 #include <valarray>
 #include <fstream>
-#include <sstream>
+#include <cstring>
 
 #include "../basic/TcpServer.hpp"
 #include "../basic/TlsServer.hpp"
