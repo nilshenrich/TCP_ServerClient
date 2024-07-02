@@ -77,7 +77,11 @@ void FtpServer::on_msg(const int clientId, const string &msg)
 }
 void FtpServer::on_closed(const int clientId)
 {
-    // TODO: Implement
+    // Logout session
+    users_loggedIn.erase(clientId);
+    users_requested.erase(clientId);
+
+    return;
 }
 
 //////////////////////////////////////////////////
