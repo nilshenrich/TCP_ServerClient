@@ -72,6 +72,7 @@ void FtpServer::on_msg(const int clientId, const string &msg)
         on_msg_USER(clientId, request.command, request.args);
         break;
     default:
+        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_NOTIMPLEMENTED)) + " Command not implemented");
         break;
     }
 }
