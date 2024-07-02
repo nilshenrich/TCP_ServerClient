@@ -15,6 +15,7 @@
 #include <valarray>
 #include <fstream>
 #include <cstring>
+#include <map>
 
 #include "../basic/TcpServer.hpp"
 #include "../basic/TlsServer.hpp"
@@ -136,6 +137,10 @@ namespace ftp
         // Underlying TCP server
         ::tcp::TcpServer tcpControl; // Fragmented
 
+        // Active user sessions. Key is client ID, value is username
+        ::std::map<int, ::std::string> users_loggedIn;  // Users that are logged in
+        ::std::map<int, ::std::string> users_requested; // Users from which a password is requested to be logged in
+
         // Pointer to functions on incoming message
         ::std::function<bool(const ::std::string, const ::std::string)> work_checkUserCredentials; // Check user credentials: Name, password
         ::std::function<bool(const ::std::string)> work_checkAccessible;                           // Check if path is accessible (directory or file)
@@ -146,22 +151,48 @@ namespace ftp
         // Worker mehods on incoming messages
         //////////////////////////////////////////////////
 
-        void on_msg_USER(const int clientId, const uint32_t command, const ::std::valarray<::std::string> &args);
+        void on_msg_username(const int clientId, const uint32_t command, const ::std::valarray<::std::string> &args);
+        void on_msg_password(const int clientId, const uint32_t command, const ::std::valarray<::std::string> &args);
+        void on_msg_listDirectory(const int clientId, const uint32_t command, const ::std::valarray<::std::string> &args);
+        void on_msg_changeDirectory(const int clientId, const uint32_t command, const ::std::valarray<::std::string> &args);
+        void on_msg_getDirectory(const int clientId, const uint32_t command, const ::std::valarray<::std::string> &args);
+        void on_msg_fileTransferType(const int clientId, const uint32_t command, const ::std::valarray<::std::string> &args);
+        void on_msg_modePassive(const int clientId, const uint32_t command, const ::std::valarray<::std::string> &args);
+        void on_msg_fileDownload(const int clientId, const uint32_t command, const ::std::valarray<::std::string> &args);
     };
 
     // Hashed request keywords
     enum class Request : uint32_t
     {
-        USERNAME = FtpServer::hashCommand("USER")
+        USERNAME = FtpServer::hashCommand("USER"),
+        PASSWORD = FtpServer::hashCommand("PASS"),
+        LIST_DIR = FtpServer::hashCommand("LIST"),
+        CHANGE_DIR = FtpServer::hashCommand("CWD"),
+        GET_DIR = FtpServer::hashCommand("PWD"),
+        FILE_TRANSFER_TYPE = FtpServer::hashCommand("TYPE"),
+        MODE_PASSIVE_ALL = FtpServer::hashCommand("EPSV"),   // For both IPv4 and IPv6
+        MODE_PASSIVE_SHORT = FtpServer::hashCommand("PASV"), // Only for IPv4
+        MODE_PASSIVE_LONG = FtpServer::hashCommand("LPSV"),  // Only for IPv6
+        FILE_DOWNLOAD = FtpServer::hashCommand("RETR"),
     };
 
     // Response codes
     enum class Response : int
     {
+        OK = 200,
         WELCOME = 220,
         PASSWORD_REQUIRED = 331,
         ERROR_SYNTAX_COMMAND = 500,
-        ERROR_SYNTAX_ARGUMENT = 501
+        ERROR_SYNTAX_ARGUMENT = 501,
+        ERROR_NOTIMPLEMENTED = 502,
+    };
+
+    // File transfer types (EBCDIC not supported)
+    enum class FileTransferType : char
+    {
+        ASCII = 'A',
+        BINARY = 'I',
+        UNICODE = 'U',
     };
 }
 
