@@ -305,3 +305,66 @@ void FtpServer::on_msg_changeDirectory(const int clientId, const uint32_t comman
     tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_ACTION)) + " Directory successfully changed.");
     return;
 }
+
+void FtpServer::on_msg_fileTransferType(const int clientId, const uint32_t command, const valarray<string> &args)
+{
+    // Check if session exists
+    bool connected;
+    {
+        lock_guard<mutex> lck{session_m};
+        connected = session.find(clientId) != session.end();
+    }
+    if (!connected)
+    {
+        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::FAILED_UNKNOWN_ERROR)) + " Session not found.");
+        return;
+    }
+
+    // Check if user is logged in
+    bool loggedIn;
+    {
+        lock_guard<mutex> lck{session_m};
+        loggedIn = session[clientId].loggedIn;
+    }
+    if (!loggedIn)
+    {
+        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_WRONG_ORDER)) + " User not logged in.");
+        return;
+    }
+
+    // Check num of arguments
+    size_t numArgs{args.size()};
+    if (numArgs != 1)
+    {
+        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_SYNTAX_ARGUMENT)) + " 1 argument expected, but " + to_string(numArgs) + " given.");
+        return;
+    }
+
+    // Set file transfer type for user
+    string modename;
+    switch (args[0][0])
+    {
+    case ENUM_CLASS_VALUE(FileTransferType::ASCII):
+        modename = "ASCII";
+        break;
+    case ENUM_CLASS_VALUE(FileTransferType::BINARY):
+        modename = "BINARY";
+        break;
+    case ENUM_CLASS_VALUE(FileTransferType::UNICODE):
+        modename = "UTF-8";
+        break;
+    default:
+        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_ARGUMENT_NOTSUPPORTED)) + " Unsupported file transfer type.");
+        return;
+    }
+
+    {
+        lock_guard<mutex> lck{session_m};
+        if (session.find(clientId) == session.end()) // If session doesn't exist anymore, abort process
+        {
+            return;
+        }
+        session[clientId].mode = args[0][0];
+    }
+    tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::OK)) + " Switching to " + modename + " mode.");
+}

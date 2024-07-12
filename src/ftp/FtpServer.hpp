@@ -203,6 +203,7 @@ namespace ftp
         ERROR_SYNTAX_ARGUMENT = 501,
         ERROR_NOTIMPLEMENTED = 502,
         ERROR_WRONG_ORDER = 503,
+        ERROR_ARGUMENT_NOTSUPPORTED = 504,
         ERROR_LOGIN = 530,
     };
 
