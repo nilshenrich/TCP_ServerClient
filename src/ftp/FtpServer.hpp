@@ -117,7 +117,8 @@ namespace ftp
             uint32_t id{0};
             for (size_t i = 0; i < len; i += 1)
             {
-                id |= static_cast<uint32_t>(command[i]) << (24 - (i * 8));
+                char c{command[i]};
+                id |= static_cast<uint32_t>(c * (c >= 0x20)) << (24 - (i * 8));
             }
             return id;
         }
