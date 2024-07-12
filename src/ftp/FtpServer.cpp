@@ -7,7 +7,7 @@ using namespace ::ftp;
 FtpServer::FtpServer() : tcpControl{'\n', MAXIMUM_MESSAGE_LENGTH},
                          work_checkUserCredentials{[](const string, const string) -> bool
                                                    { return false; }}, // Default: Refuse all user credentials
-                         work_checkAccessible{[](const string) -> bool
+                         work_checkAccessible{[](const string, const string) -> bool
                                               { return false; }}, // Default: Refuse all paths
                          work_listDirectory{[](const string) -> valarray<Item>
                                             { return valarray<Item>{}; }}, // Default: Return empty directory
@@ -25,7 +25,7 @@ int FtpServer::start() { return tcpControl.start(PORT_CONTROL); }
 void FtpServer::stop() { tcpControl.stop(); }
 
 void FtpServer::setWork_checkUserCredentials(function<bool(const string, const string)> worker) { work_checkUserCredentials = worker; }
-void FtpServer::setWork_checkAccessible(function<bool(const string)> worker) { work_checkAccessible = worker; }
+void FtpServer::setWork_checkAccessible(function<bool(const string, const string)> worker) { work_checkAccessible = worker; }
 void FtpServer::setWork_listDirectory(function<valarray<Item>(const string)> worker) { work_listDirectory = worker; }
 void FtpServer::setWork_readFile(function<ifstream(const string)> worker) { work_readFile = worker; }
 
@@ -99,7 +99,7 @@ void FtpServer::on_msg(const int clientId, const string &msg)
         on_msg_fileDownload(clientId, request.command, request.args);
         break;
     default:
-        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_NOTIMPLEMENTED)) + " Command not implemented");
+        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_NOTIMPLEMENTED)) + " Command not implemented.");
         break;
     }
 }
@@ -125,7 +125,7 @@ void FtpServer::on_msg_username(const int clientId, const uint32_t command, cons
     }
     if (!connected)
     {
-        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::FAILED_UNKNOWN_ERROR)) + " Session not found");
+        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::FAILED_UNKNOWN_ERROR)) + " Session not found.");
         return;
     }
 
@@ -133,7 +133,7 @@ void FtpServer::on_msg_username(const int clientId, const uint32_t command, cons
     size_t numArgs{args.size()};
     if (numArgs != 1)
     {
-        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_SYNTAX_ARGUMENT)) + " 1 argument expected, but " + to_string(numArgs) + " given");
+        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_SYNTAX_ARGUMENT)) + " 1 argument expected, but " + to_string(numArgs) + " given.");
         return;
     }
 
@@ -143,7 +143,7 @@ void FtpServer::on_msg_username(const int clientId, const uint32_t command, cons
         session[clientId] = Session{false, args[0], "/"}; // Set username but not logged in
     }
     // Request fine, require password
-    tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::CONTINUE_PASSWORD_REQUIRED)) + " Password required for user " + args[0]);
+    tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::CONTINUE_PASSWORD_REQUIRED)) + " Password required for user " + args[0] + ".");
     return;
 }
 
@@ -157,7 +157,7 @@ void FtpServer::on_msg_password(const int clientId, const uint32_t command, cons
     }
     if (!connected)
     {
-        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::FAILED_UNKNOWN_ERROR)) + " Session not found");
+        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::FAILED_UNKNOWN_ERROR)) + " Session not found.");
         return;
     }
 
@@ -165,7 +165,7 @@ void FtpServer::on_msg_password(const int clientId, const uint32_t command, cons
     size_t numArgs{args.size()};
     if (numArgs != 1)
     {
-        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_SYNTAX_ARGUMENT)) + " 1 argument expected, but " + to_string(numArgs) + " given");
+        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_SYNTAX_ARGUMENT)) + " 1 argument expected, but " + to_string(numArgs) + " given.");
         return;
     }
 
@@ -181,7 +181,7 @@ void FtpServer::on_msg_password(const int clientId, const uint32_t command, cons
             lock_guard<mutex> lck{session_m};
             session[clientId] = Session{false, "", ""}; // Clear session
         }
-        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::FAILED_LOGIN)) + " Login failed");
+        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::FAILED_LOGIN)) + " Login failed.");
         return;
     }
 
@@ -190,6 +190,118 @@ void FtpServer::on_msg_password(const int clientId, const uint32_t command, cons
         lock_guard<mutex> lck{session_m};
         session[clientId] = Session{true, move(username), "/"};
     }
-    tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_LOGIN)) + " Login successful");
+    tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_LOGIN)) + " Login successful.");
+    return;
+}
+
+void FtpServer::on_msg_getDirectory(const int clientId, const uint32_t command, const valarray<string> &args)
+{
+    // Check if session exists
+    bool connected;
+    {
+        lock_guard<mutex> lck{session_m};
+        connected = session.find(clientId) != session.end();
+    }
+    if (!connected)
+    {
+        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::FAILED_UNKNOWN_ERROR)) + " Session not found.");
+        return;
+    }
+
+    // Check if user is logged in
+    bool loggedIn;
+    string username;
+    string path;
+    {
+        lock_guard<mutex> lck{session_m};
+        loggedIn = session[clientId].loggedIn;
+        username = session[clientId].username;
+        path = session[clientId].currentpath;
+    }
+    if (!loggedIn)
+    {
+        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_WRONG_ORDER)) + " User not logged in.");
+        return;
+    }
+
+    // Check num of arguments
+    size_t numArgs{args.size()};
+    if (numArgs != 0)
+    {
+        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_SYNTAX_ARGUMENT)) + " 0 arguments expected, but " + to_string(numArgs) + " given.");
+        return;
+    }
+
+    // Send current directory path to client
+    tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::CURRENT_PATH)) + " \"" + path + "\" is current directory.");
+    return;
+}
+
+void FtpServer::on_msg_changeDirectory(const int clientId, const uint32_t command, const valarray<string> &args)
+{
+    // Check if session exists
+    bool connected;
+    {
+        lock_guard<mutex> lck{session_m};
+        connected = session.find(clientId) != session.end();
+    }
+    if (!connected)
+    {
+        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::FAILED_UNKNOWN_ERROR)) + " Session not found.");
+        return;
+    }
+
+    // Check if user is logged in
+    bool loggedIn;
+    string username;
+    string path;
+    {
+        lock_guard<mutex> lck{session_m};
+        loggedIn = session[clientId].loggedIn;
+        username = session[clientId].username;
+        path = session[clientId].currentpath;
+    }
+    if (!loggedIn)
+    {
+        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_WRONG_ORDER)) + " User not logged in.");
+        return;
+    }
+
+    // Check num of arguments
+    size_t numArgs{args.size()};
+    if (numArgs != 1)
+    {
+        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_SYNTAX_ARGUMENT)) + " 1 argument expected, but " + to_string(numArgs) + " given.");
+        return;
+    }
+
+    // Determine requeted absolute path
+    string path_req;
+    if (args[0].empty() || args[0][0] != '/') // Relative path
+    {
+        path_req = path + "/" + args[0];
+    }
+    else // Absolute path
+    {
+        path_req = args[0];
+    }
+
+    // Check if path is accessible
+    if (!work_checkAccessible(username, path_req))
+    {
+        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::FAILED_FILENOTACCESSIBLE)) + " Requested directory is not accessible.");
+        return;
+    }
+
+    // Change directory and send positive feedback
+    {
+        lock_guard<mutex> lck{session_m};
+        if (session.find(clientId) == session.end()) // If session doesn't exist anymore, abort process
+        {
+            return;
+        }
+        session[clientId].currentpath = path_req;
+    }
+    tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_ACTION)) + " Directory successfully changed.");
     return;
 }

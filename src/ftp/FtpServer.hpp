@@ -60,6 +60,7 @@ namespace ftp
         bool loggedIn;
         ::std::string username;
         ::std::string currentpath;
+        char mode; // FileTransferType
     };
 
     class FtpServer
@@ -91,7 +92,7 @@ namespace ftp
          * @brief Link worker methods
          */
         void setWork_checkUserCredentials(::std::function<bool(const ::std::string, const ::std::string)> work);
-        void setWork_checkAccessible(::std::function<bool(const ::std::string)> work);
+        void setWork_checkAccessible(::std::function<bool(const ::std::string, const ::std::string)> work);
         void setWork_listDirectory(::std::function<::std::valarray<Item>(const ::std::string)> work);
         void setWork_readFile(::std::function<::std::ifstream(const ::std::string)> work);
 
@@ -152,10 +153,10 @@ namespace ftp
         ::std::mutex session_m{};           // Mutex for session
 
         // Pointer to functions on incoming message
-        ::std::function<bool(const ::std::string, const ::std::string)> work_checkUserCredentials; // Check user credentials: Name, password
-        ::std::function<bool(const ::std::string)> work_checkAccessible;                           // Check if path is accessible (directory or file)
-        ::std::function<::std::valarray<Item>(const ::std::string)> work_listDirectory;            // List directory content
-        ::std::function<::std::ifstream(const ::std::string)> work_readFile;                       // Read file content
+        ::std::function<bool(const ::std::string, const ::std::string)> work_checkUserCredentials; // Check user credentials: name, password
+        ::std::function<bool(const ::std::string, const ::std::string)> work_checkAccessible;      // Check if path is accessible (directory or file) for user: username, path
+        ::std::function<::std::valarray<Item>(const ::std::string)> work_listDirectory;            // List directory content: path
+        ::std::function<::std::ifstream(const ::std::string)> work_readFile;                       // Read file content: path
 
         //////////////////////////////////////////////////
         // Worker mehods on incoming messages
@@ -192,8 +193,11 @@ namespace ftp
         OK = 200,
         SUCCESS_WELCOME = 220,
         SUCCESS_LOGIN = 230,
+        SUCCESS_ACTION = 250,
+        CURRENT_PATH = 257,
         CONTINUE_PASSWORD_REQUIRED = 331,
         FAILED_LOGIN = 430,
+        FAILED_FILENOTACCESSIBLE = 450,
         FAILED_UNKNOWN_ERROR = 451,
         ERROR_SYNTAX_COMMAND = 500,
         ERROR_SYNTAX_ARGUMENT = 501,
