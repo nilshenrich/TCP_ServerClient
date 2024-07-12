@@ -112,7 +112,7 @@ namespace ftp
          */
         static constexpr uint32_t hashCommand(const char *const command)
         {
-            size_t len{::std::strlen(command)};
+            size_t len{::std::min<size_t>(::std::strlen(command), 4)};
 
             uint32_t id{0};
             for (size_t i = 0; i < len; i += 1)
