@@ -441,48 +441,69 @@ void FtpServer::on_msg_modePassive(const int clientId, const uint32_t command, c
     }
 
     // Type of passive mode
-    string modename;
-    string myIp{tcpControl.getServerIp(clientId)};
-    switch (command)
+    if (command != ENUM_CLASS_VALUE(Request::MODE_PASSIVE_ALL) && command != ENUM_CLASS_VALUE(Request::MODE_PASSIVE_SHORT) && command != ENUM_CLASS_VALUE(Request::MODE_PASSIVE_LONG))
     {
-    case ENUM_CLASS_VALUE(Request::MODE_PASSIVE_ALL):
-        modename = "Extended";
-        break;
-    case ENUM_CLASS_VALUE(Request::MODE_PASSIVE_SHORT):
-        modename = "";
-        break;
-    case ENUM_CLASS_VALUE(Request::MODE_PASSIVE_LONG):
-        modename = "Long";
-        break;
-    default:
         tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_ARGUMENT_NOTSUPPORTED)) + " Unsupported mode.");
         return;
     }
 
     // Get server IP address the client is connected to
-    string serverIp{tcpControl.getServerIp(clientId)};
+    string myIp{tcpControl.getServerIp(clientId)};
 
     // Check IP type matches command
     // IPv4: [\d\.]+
     // IPv6: [0-9a-f:]+
-    if (serverIp.find_first_not_of("0123456789.") == string::npos && command == ENUM_CLASS_VALUE(Request::MODE_PASSIVE_LONG))
+    if (myIp.find_first_not_of("0123456789.") == string::npos && command == ENUM_CLASS_VALUE(Request::MODE_PASSIVE_LONG))
     {
-        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_ARGUMENT_NOTSUPPORTED)) + " " + modename + " mode not supported for IPv4.");
+        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_ARGUMENT_NOTSUPPORTED)) + " Extended mode not supported for IPv4.");
         return;
     }
-    if (serverIp.find_first_not_of("0123456789abcdef:") == string::npos && command == ENUM_CLASS_VALUE(Request::MODE_PASSIVE_SHORT))
+    if (myIp.find_first_not_of("0123456789abcdef:") == string::npos && command == ENUM_CLASS_VALUE(Request::MODE_PASSIVE_SHORT))
     {
-        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_ARGUMENT_NOTSUPPORTED)) + " " + modename + " mode not supported for IPv6.");
+        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_ARGUMENT_NOTSUPPORTED)) + " Short mode not supported for IPv6.");
         return;
     }
 
     // Open data server on free port within range
-    int port{getFreePort()};
-    if (port == -1)
+    int port;
+    unique_ptr<TcpServer> dataServer;
     {
-        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::FAILED_OPEN_DATACONN)) + " No free port.");
-        return;
+        lock_guard<mutex> lck{tcpPort_m};
+        port = getFreePort();
+        if (port == -1)
+        {
+            tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::FAILED_OPEN_DATACONN)) + " No free port.");
+            return;
+        }
+
+        // Create new data server and start listening on free port
+        // Each session could have multiple data connections open at the same time (For transferring multiple files in parallel)
+        dataServer.reset(new TcpServer()); // Continuous mode
+        if (dataServer->start(port) != SERVER_START_OK)
+        {
+            tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::FAILED_OPEN_DATACONN)) + " Failed to open data connection.");
+            return;
+        }
     }
 
-    // TODO: Create new data server on port and tell client about it
+    // Add data server to session and inform client
+    {
+        lock_guard<mutex> lck{session_m};
+        session[clientId].tcpData.push_back(move(dataServer));
+    }
+    string msg;
+    switch (command)
+    {
+    case ENUM_CLASS_VALUE(Request::MODE_PASSIVE_ALL):
+        algorithms::replace_allC(myIp, '.', ',');
+        msg = "Entering Passive Mode (" + myIp + "," + to_string(port / 256) + "," + to_string(port % 256) + ").";
+        break;
+    case ENUM_CLASS_VALUE(Request::MODE_PASSIVE_SHORT):
+        break;
+    case ENUM_CLASS_VALUE(Request::MODE_PASSIVE_LONG):
+        break;
+    default:
+        break; // Code never comes here
+    }
+    // TODO: Inform client
 }

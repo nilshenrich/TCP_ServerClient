@@ -17,11 +17,13 @@
 #include <cstring>
 #include <map>
 #include <mutex>
+#include <memory>
 #include <stdlib.h>
 #include <time.h>
 
 #include "../basic/TcpServer.hpp"
 #include "../basic/TlsServer.hpp"
+#include "../basic/algorithms.hpp"
 
 // Define getting enum class value as underlying type
 #define ENUM_CLASS_VALUE(x) static_cast<::std::underlying_type_t<decltype(x)>>(x)
@@ -63,6 +65,7 @@ namespace ftp
         ::std::string username;
         ::std::string currentpath;
         char mode; // FileTransferType
+        ::std::vector<::std::unique_ptr<::tcp::TcpServer>> tcpData;
     };
 
     class FtpServer
@@ -156,12 +159,15 @@ namespace ftp
         const int PORT_CONTROL{21};
         const int PORT_RANGE_DATA[2]{1024, 65535};
 
-        // Underlying TCP server
+        // Underlying TCP server. Control and data
         ::tcp::TcpServer tcpControl; // Fragmented
 
         // Active user sessions. Key is client ID, value is username
         ::std::map<int, Session> session{}; // Open sessions
-        ::std::mutex session_m{};           // Mutex for session
+
+        // Thread safety
+        ::std::mutex session_m{}; // Mutex for session
+        ::std::mutex tcpPort_m{}; // Mutex for TCP port availability
 
         // Pointer to functions on incoming message
         ::std::function<bool(const ::std::string, const ::std::string)> work_checkUserCredentials; // Check user credentials: name, password
