@@ -14,6 +14,9 @@ FtpServer::FtpServer() : tcpControl{'\n', MAXIMUM_MESSAGE_LENGTH},
                          work_readFile{[](const string) -> ifstream
                                        { return ifstream{}; }} // Default: Return null-stream
 {
+    // Initialize random number generator
+    srand((unsigned int)time(nullptr));
+
     // Link TCP server worker methods to provide FTP server functionality
     tcpControl.setWorkOnEstablished(bind(&FtpServer::on_newClient, this, placeholders::_1));
     tcpControl.setWorkOnMessage(bind(&FtpServer::on_msg, this, placeholders::_1, placeholders::_2));
@@ -57,6 +60,40 @@ Reqp FtpServer::parseRequest(const string &msg) const
         args[i] = msg.substr(posSpaces[i] + 1, posSpaces[i + 1] - posSpaces[i] - 1);
     }
     return Reqp{hashCommand(msg.substr(0, posSpaces[0]).c_str()), args};
+}
+
+int FtpServer::getFreePort() const
+{
+    // First get rabdom number inside port range
+    // Then check if port is in use
+    //     -> If not, use it
+    //     -> If yes, try next number
+
+    int port{rand() % (PORT_RANGE_DATA[1] - PORT_RANGE_DATA[0]) + PORT_RANGE_DATA[0]};
+    for (int i{0}; i <= PORT_RANGE_DATA[1] - PORT_RANGE_DATA[0]; i += 1)
+    {
+        port += 1;
+        if (port > PORT_RANGE_DATA[1])
+            port = PORT_RANGE_DATA[0];
+
+        int sock{socket(AF_INET, SOCK_STREAM, 0)};
+        if (-1 == sock)
+            return -1;
+
+        struct sockaddr_in sin;
+        sin.sin_family = AF_INET;
+        sin.sin_addr.s_addr = INADDR_ANY;
+        sin.sin_port = htons(port);
+
+        if (!bind(sock, (struct sockaddr *)&sin, sizeof(sin)))
+        {
+            close(sock);
+            return port;
+        }
+    }
+
+    // If we get here, no free port was found. Return -1.
+    return -1;
 }
 
 void FtpServer::on_newClient(const int clientId)
@@ -367,4 +404,85 @@ void FtpServer::on_msg_fileTransferType(const int clientId, const uint32_t comma
         session[clientId].mode = args[0][0];
     }
     tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::OK)) + " Switching to " + modename + " mode.");
+}
+
+void FtpServer::on_msg_modePassive(const int clientId, const uint32_t command, const valarray<string> &args)
+{
+    // Check if session exists
+    bool connected;
+    {
+        lock_guard<mutex> lck{session_m};
+        connected = session.find(clientId) != session.end();
+    }
+    if (!connected)
+    {
+        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::FAILED_UNKNOWN_ERROR)) + " Session not found.");
+        return;
+    }
+
+    // Check if user is logged in
+    bool loggedIn;
+    {
+        lock_guard<mutex> lck{session_m};
+        loggedIn = session[clientId].loggedIn;
+    }
+    if (!loggedIn)
+    {
+        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_WRONG_ORDER)) + " User not logged in.");
+        return;
+    }
+
+    // Check num of arguments
+    size_t numArgs{args.size()};
+    if (numArgs != 0)
+    {
+        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_SYNTAX_ARGUMENT)) + " 0 arguments expected, but " + to_string(numArgs) + " given.");
+        return;
+    }
+
+    // Type of passive mode
+    string modename;
+    string myIp{tcpControl.getServerIp(clientId)};
+    switch (command)
+    {
+    case ENUM_CLASS_VALUE(Request::MODE_PASSIVE_ALL):
+        modename = "Extended";
+        break;
+    case ENUM_CLASS_VALUE(Request::MODE_PASSIVE_SHORT):
+        modename = "";
+        break;
+    case ENUM_CLASS_VALUE(Request::MODE_PASSIVE_LONG):
+        modename = "Long";
+        break;
+    default:
+        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_ARGUMENT_NOTSUPPORTED)) + " Unsupported mode.");
+        return;
+    }
+
+    // Get server IP address the client is connected to
+    string serverIp{tcpControl.getServerIp(clientId)};
+
+    // Check IP type matches command
+    // IPv4: [\d\.]+
+    // IPv6: [0-9a-f:]+
+    if (serverIp.find_first_not_of("0123456789.") == string::npos && command == ENUM_CLASS_VALUE(Request::MODE_PASSIVE_LONG))
+    {
+        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_ARGUMENT_NOTSUPPORTED)) + " " + modename + " mode not supported for IPv4.");
+        return;
+    }
+    if (serverIp.find_first_not_of("0123456789abcdef:") == string::npos && command == ENUM_CLASS_VALUE(Request::MODE_PASSIVE_SHORT))
+    {
+        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_ARGUMENT_NOTSUPPORTED)) + " " + modename + " mode not supported for IPv6.");
+        return;
+    }
+
+    // Open data server on free port within range
+    int port{getFreePort()};
+    if (port == -1)
+    {
+        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::FAILED_OPEN_DATACONN)) + " No free port.");
+        return;
+    }
+
+    // TODO: Create new data server on port and tell client about it
 }

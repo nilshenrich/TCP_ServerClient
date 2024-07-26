@@ -17,6 +17,8 @@
 #include <cstring>
 #include <map>
 #include <mutex>
+#include <stdlib.h>
+#include <time.h>
 
 #include "../basic/TcpServer.hpp"
 #include "../basic/TlsServer.hpp"
@@ -141,9 +143,18 @@ namespace ftp
          */
         Reqp parseRequest(const ::std::string &msg) const;
 
+        /**
+         * @brief Get free random TCP port for data within range
+         *        Return -1 if no free port found
+         *
+         * @return int
+         */
+        int getFreePort() const;
+
         // Constants
         const size_t MAXIMUM_MESSAGE_LENGTH{4096};
         const int PORT_CONTROL{21};
+        const int PORT_RANGE_DATA[2]{1024, 65535};
 
         // Underlying TCP server
         ::tcp::TcpServer tcpControl; // Fragmented
@@ -196,6 +207,7 @@ namespace ftp
         SUCCESS_ACTION = 250,
         CURRENT_PATH = 257,
         CONTINUE_PASSWORD_REQUIRED = 331,
+        FAILED_OPEN_DATACONN = 425,
         FAILED_LOGIN = 430,
         FAILED_FILENOTACCESSIBLE = 450,
         FAILED_UNKNOWN_ERROR = 451,

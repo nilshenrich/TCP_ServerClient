@@ -206,6 +206,14 @@ namespace tcp
         ::std::string getClientIp(const int clientId) const;
 
         /**
+         * @brief Get server IP address the client sicket is connected to (Identified by its TCP ID).
+         *
+         * @param clientId
+         * @return string
+         */
+        ::std::string getServerIp(const int clientId) const;
+
+        /**
          * @brief Return if server is running
          *
          * @return bool (true if running, false if not)
@@ -543,7 +551,7 @@ namespace tcp
     }
 
     template <class SocketType, class SocketDeleter>
-    std::string Server<SocketType, SocketDeleter>::getClientIp(const int clientId) const
+    ::std::string Server<SocketType, SocketDeleter>::getClientIp(const int clientId) const
     {
         struct sockaddr_in addr;
         socklen_t addrSize = sizeof(struct sockaddr_in);
@@ -551,6 +559,24 @@ namespace tcp
         {
 #ifdef DEVELOP
             ::std::cerr << typeid(this).name() << "::" << __func__ << ": Error reading client " << clientId << "'s IP address" << ::std::endl;
+#endif // DEVELOP
+
+            return "Failed Read!";
+        }
+
+        // Convert the IP address to a string and return it
+        return ::std::string{inet_ntoa(addr.sin_addr)};
+    }
+
+    template <class SocketType, class SocketDeleter>
+    ::std::string Server<SocketType, SocketDeleter>::getServerIp(const int clientId) const
+    {
+        struct sockaddr_in addr;
+        socklen_t addrSize = sizeof(struct sockaddr_in);
+        if (getsockname(clientId, (struct sockaddr *)&addr, &addrSize))
+        {
+#ifdef DEVELOP
+            ::std::cerr << typeid(this).name() << "::" << __func__ << ": Error reading server 's IP address the client" << clientId << " is connected to" << ::std::endl;
 #endif // DEVELOP
 
             return "Failed Read!";
