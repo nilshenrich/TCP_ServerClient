@@ -19,8 +19,8 @@
 #include <mutex>
 #include <memory>
 #include <iomanip>
-#include <stdlib.h>
-#include <time.h>
+#include <cstdlib>
+#include <ctime>
 
 #include "../basic/TcpServer.hpp"
 #include "../basic/TlsServer.hpp"
@@ -77,13 +77,22 @@ namespace ftp
                 os << (p & 1 ? "x" : "-"); // execute
             }
 
-            // Number of links, owner, group, size, modification time, name
+            // Number of links, owner, group, size
             os.fill(0x20);
             os << ' ' << ::std::setw(4) << i.nLinks;
             os << ' ' << ::std::setw(4) << i.uid;
             os << ' ' << ::std::setw(4) << i.gid;
             os << ' ' << ::std::setw(12) << i.size;
-            os << ' ' << i.mtime; // TODO: Proper format
+
+            // Modification time using format: yyyy mmm dd hh:mm
+            os.fill('0');
+            ::std::time_t time{i.mtime};
+            size_t tSize{::std::size("yyyy mmm dd hh:mm")};
+            char tBuffer[tSize];
+            ::std::strftime(tBuffer, tSize, "%Y %b %d %H:%M", ::std::localtime(&time));
+            os << ' ' << tBuffer;
+
+            // Item name
             os << ' ' << i.name;
 
             return os;
