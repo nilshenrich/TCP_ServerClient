@@ -569,4 +569,15 @@ void FtpServer::on_msg_listDirectory(const int clientId, const uint32_t command,
     {
         msg << items[i] << endl;
     }
+
+    // Wait here for data server to accept connection
+    // FIXME: Not ideal performance
+    vector<int> dataClients;
+    while ((dataClients = dataServer->getAllClientIds()).empty())
+        this_thread::sleep_for(chrono::milliseconds(10));
+
+    // Send directory list to client
+    tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DATA_OPEN)) + " Here comes the directory listing.");
+    dataServer->sendMsg(dataClients[0], msg.str());
+    tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DATA_CLOSE)) + " Directory send OK.");
 }

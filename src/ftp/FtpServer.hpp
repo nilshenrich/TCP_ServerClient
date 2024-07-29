@@ -83,7 +83,7 @@ namespace ftp
             os << ' ' << ::std::setw(4) << i.uid;
             os << ' ' << ::std::setw(4) << i.gid;
             os << ' ' << ::std::setw(12) << i.size;
-            os << ' ' << ::std::setw(5) << i.mtime;
+            os << ' ' << i.mtime; // TODO: Proper format
             os << ' ' << i.name;
 
             return os;
