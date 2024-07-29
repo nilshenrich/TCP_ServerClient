@@ -96,7 +96,7 @@ namespace tcp
       bool writeMsg(const int clientId, const ::std::string &msg) override final
       {
 #ifdef DEVELOP
-         ::std::cout << typeid(this).name() << "::" << __func__ << ": Send to client " << clientId << ": " << msg << ::std::endl;
+         ::std::cout << DEBUGINFO << ": Send to client " << clientId << ": " << msg << ::std::endl;
 #endif // DEVELOP
 
          const size_t lenMsg{msg.size()};
