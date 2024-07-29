@@ -23,7 +23,6 @@
 
 #include "../basic/TcpServer.hpp"
 #include "../basic/TlsServer.hpp"
-#include "../basic/algorithms.hpp"
 
 // Define getting enum class value as underlying type
 #define ENUM_CLASS_VALUE(x) static_cast<::std::underlying_type_t<decltype(x)>>(x)
@@ -176,7 +175,7 @@ namespace ftp
         ::std::function<::std::ifstream(const ::std::string)> work_readFile;                       // Read file content: path
 
         //////////////////////////////////////////////////
-        // Worker mehods on incoming messages
+        // Worker methods on incoming messages
         //////////////////////////////////////////////////
 
         void on_msg_username(const int clientId, const uint32_t command, const ::std::valarray<::std::string> &args);
@@ -209,6 +208,9 @@ namespace ftp
     {
         OK = 200,
         SUCCESS_WELCOME = 220,
+        SUCCESS_PASSIVE_ALL = 229,
+        SUCCESS_PASSIVE_SHORT = 227,
+        SUCCESS_PASSIVE_LONG = 228,
         SUCCESS_LOGIN = 230,
         SUCCESS_ACTION = 250,
         CURRENT_PATH = 257,

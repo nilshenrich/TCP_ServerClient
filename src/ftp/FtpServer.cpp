@@ -1,4 +1,5 @@
 #include "FtpServer.hpp"
+#include "../basic/algorithms.hpp"
 
 using namespace ::std;
 using namespace ::tcp;
@@ -479,6 +480,7 @@ void FtpServer::on_msg_modePassive(const int clientId, const uint32_t command, c
         // Create new data server and start listening on free port
         // Each session could have multiple data connections open at the same time (For transferring multiple files in parallel)
         dataServer.reset(new TcpServer()); // Continuous mode
+        // TODO: Create forward stream
         if (dataServer->start(port) != SERVER_START_OK)
         {
             tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::FAILED_OPEN_DATACONN)) + " Failed to open data connection.");
@@ -492,18 +494,26 @@ void FtpServer::on_msg_modePassive(const int clientId, const uint32_t command, c
         session[clientId].tcpData.push_back(move(dataServer));
     }
     string msg;
+    Response responseCode;
     switch (command)
     {
     case ENUM_CLASS_VALUE(Request::MODE_PASSIVE_ALL):
+        responseCode = Response::SUCCESS_PASSIVE_ALL;
+        msg = "Entering Extended Passive Mode (|||" + to_string(port) + "|).";
+        break;
+    case ENUM_CLASS_VALUE(Request::MODE_PASSIVE_SHORT):
+        responseCode = Response::SUCCESS_PASSIVE_SHORT;
         algorithms::replace_allC(myIp, '.', ',');
         msg = "Entering Passive Mode (" + myIp + "," + to_string(port / 256) + "," + to_string(port % 256) + ").";
         break;
-    case ENUM_CLASS_VALUE(Request::MODE_PASSIVE_SHORT):
-        break;
     case ENUM_CLASS_VALUE(Request::MODE_PASSIVE_LONG):
+        responseCode = Response::SUCCESS_PASSIVE_LONG;
+        msg = "Entering Long Passive Mode (" + myIp + ", " + to_string(port) + ").";
         break;
     default:
         break; // Code never comes here
     }
-    // TODO: Inform client
+
+    // Inform client of new data server
+    tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(responseCode)) + " " + msg);
 }
