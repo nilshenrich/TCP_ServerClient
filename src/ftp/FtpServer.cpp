@@ -1,3 +1,9 @@
+#ifdef DEVELOP
+#include <iostream>
+#endif // DEVELOP
+
+#include <sstream>
+
 #include "FtpServer.hpp"
 #include "../basic/algorithms.hpp"
 
@@ -133,9 +139,9 @@ void FtpServer::on_msg(const int clientId, const string &msg)
     case ENUM_CLASS_VALUE(Request::MODE_PASSIVE_LONG):  // Always enter passive mode
         on_msg_modePassive(clientId, request.command, request.args);
         break;
-    case ENUM_CLASS_VALUE(Request::FILE_DOWNLOAD):
-        on_msg_fileDownload(clientId, request.command, request.args);
-        break;
+    // case ENUM_CLASS_VALUE(Request::FILE_DOWNLOAD):
+    //     on_msg_fileDownload(clientId, request.command, request.args);
+    //     break;
     default:
         tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_NOTIMPLEMENTED)) + " Command not implemented.");
         break;
@@ -480,7 +486,6 @@ void FtpServer::on_msg_modePassive(const int clientId, const uint32_t command, c
         // Create new data server and start listening on free port
         // Each session could have multiple data connections open at the same time (For transferring multiple files in parallel)
         dataServer.reset(new TcpServer()); // Continuous mode
-        // TODO: Create forward stream
         if (dataServer->start(port) != SERVER_START_OK)
         {
             tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::FAILED_OPEN_DATACONN)) + " Failed to open data connection.");
@@ -491,7 +496,7 @@ void FtpServer::on_msg_modePassive(const int clientId, const uint32_t command, c
     // Add data server to session and inform client
     {
         lock_guard<mutex> lck{session_m};
-        session[clientId].tcpData.push_back(move(dataServer));
+        session[clientId].tcpData = move(dataServer);
     }
     string msg;
     Response responseCode;
@@ -516,4 +521,52 @@ void FtpServer::on_msg_modePassive(const int clientId, const uint32_t command, c
 
     // Inform client of new data server
     tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(responseCode)) + " " + msg);
+}
+
+void FtpServer::on_msg_listDirectory(const int clientId, const uint32_t command, const ::std::valarray<::std::string> &args)
+{
+    // Check if session exists
+    bool connected;
+    {
+        lock_guard<mutex> lck{session_m};
+        connected = session.find(clientId) != session.end();
+    }
+    if (!connected)
+    {
+        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::FAILED_UNKNOWN_ERROR)) + " Session not found.");
+        return;
+    }
+
+    // Check if user is logged in and get data server
+    bool loggedIn;
+    string username;
+    unique_ptr<TcpServer> dataServer;
+    {
+        lock_guard<mutex> lck{session_m};
+        loggedIn = session[clientId].loggedIn;
+        username = session[clientId].username;
+        dataServer = move(session[clientId].tcpData); // Remove data server from session as should be closed after this action
+    }
+    if (!loggedIn)
+    {
+        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_WRONG_ORDER)) + " User not logged in.");
+        return;
+    }
+
+    // Check num of arguments
+    size_t numArgs{args.size()};
+    if (numArgs != 0)
+    {
+        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_SYNTAX_ARGUMENT)) + " 0 arguments expected, but " + to_string(numArgs) + " given.");
+        return;
+    }
+
+    // Get directory list into string
+    ostringstream msg;
+    valarray<Item> items = work_listDirectory(username);
+    size_t numItems{items.size()};
+    for (size_t i{0}; i < numItems; i += 1)
+    {
+        msg << items[i] << endl;
+    }
 }

@@ -18,6 +18,7 @@
 #include <map>
 #include <mutex>
 #include <memory>
+#include <iomanip>
 #include <stdlib.h>
 #include <time.h>
 
@@ -48,6 +49,45 @@ namespace ftp
         int gid;             // group id
         int size;            // [file] size in bytes | [directory] number of items
         int mtime;           // modification time in UNIX seconds
+
+        // Overload operator<<
+        friend ::std::ostream &operator<<(::std::ostream &os, const Item &i)
+        {
+            // Item type
+            switch (i.type)
+            {
+            case ItemType::directory:
+                os << "d";
+                break;
+            case ItemType::link:
+                os << "l";
+                break;
+            case ItemType::file:
+            default:
+                os << "-";
+                break;
+            }
+
+            // Item permissions (user, group, other)
+            for (int pi{0}; pi < 3; pi += 1)
+            {
+                const char &p{i.permissions[pi]};
+                os << (p & 4 ? "r" : "-"); // read
+                os << (p & 2 ? "w" : "-"); // write
+                os << (p & 1 ? "x" : "-"); // execute
+            }
+
+            // Number of links, owner, group, size, modification time, name
+            os.fill(0x20);
+            os << ' ' << ::std::setw(4) << i.nLinks;
+            os << ' ' << ::std::setw(4) << i.uid;
+            os << ' ' << ::std::setw(4) << i.gid;
+            os << ' ' << ::std::setw(12) << i.size;
+            os << ' ' << ::std::setw(5) << i.mtime;
+            os << ' ' << i.name;
+
+            return os;
+        }
     };
 
     // Request properties
@@ -64,7 +104,7 @@ namespace ftp
         ::std::string username;
         ::std::string currentpath;
         char mode; // FileTransferType
-        ::std::vector<::std::unique_ptr<::tcp::TcpServer>> tcpData;
+        ::std::unique_ptr<::tcp::TcpServer> tcpData;
     };
 
     class FtpServer
@@ -206,8 +246,10 @@ namespace ftp
     // Response codes
     enum class Response : int
     {
+        SUCCESS_DATA_OPEN = 150,
         OK = 200,
         SUCCESS_WELCOME = 220,
+        SUCCESS_DATA_CLOSE = 226,
         SUCCESS_PASSIVE_ALL = 229,
         SUCCESS_PASSIVE_SHORT = 227,
         SUCCESS_PASSIVE_LONG = 228,
