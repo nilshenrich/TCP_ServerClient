@@ -330,6 +330,13 @@ void FtpServer::on_msg_changeDirectory(const int clientId, const uint32_t comman
         path_req = args[0];
     }
 
+    // Remove all illegal characters from path, including:
+    // Line breaks: \n, \r
+    char illegalChars[]{'\n', '\r'};
+    path_req.erase(remove_if(path_req.begin(), path_req.end(), [illegalChars](const char &c)
+                             { return find(begin(illegalChars), end(illegalChars), c) != end(illegalChars); }),
+                   path_req.end());
+
     // Check if path is accessible
     if (!work_checkAccessible(username, path_req))
     {
