@@ -431,7 +431,7 @@ void FtpServer::on_msg_modePassive(const int clientId, const uint32_t command, c
     // BUG[performance]: Session could be deleted since existence check in on_messageIn
     {
         lock_guard<mutex> lck{session_m};
-        session[clientId].tcpData = move(dataServer);
+        session[clientId].tcpData = move(dataServer); // FIXME: Unqualified move
     }
     string msg;
     Response responseCode;
@@ -470,7 +470,7 @@ void FtpServer::on_msg_listDirectory(const int clientId, const uint32_t command,
         lock_guard<mutex> lck{session_m};
         username = session[clientId].username;
         path = session[clientId].currentpath;
-        dataServer = move(session[clientId].tcpData); // Remove data server from session as should be closed after this action
+        dataServer = move(session[clientId].tcpData); // Remove data server from session as should be closed after this action // FIXME: Unqualified move
     }
 
     // Get directory list into string

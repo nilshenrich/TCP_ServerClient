@@ -335,7 +335,7 @@ namespace ftp
         ASCII = 'A',
         BINARY = 'I',
         UNICODE = 'U',
-        INVALID = 0,
+        INVALID = 0, // TODO: Check for invalid whenever used and throw error
     };
 }
 
