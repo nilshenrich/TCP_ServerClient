@@ -1,4 +1,11 @@
+#include <gtest/gtest.h>
+#include <chrono>
+#include <thread>
+#include <vector>
+#include <string>
+
 #include "fragmentation/TlsServer_Test_Send.h"
+#include "HelperFunctions.h"
 
 using namespace std;
 using namespace Test;

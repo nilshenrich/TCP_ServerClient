@@ -1,4 +1,12 @@
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <vector>
+#include <mutex>
+#include <functional>
+
 #include "TcpClientApi.h"
+#include "TestDefines.h"
 
 using namespace std;
 using namespace TestApi;

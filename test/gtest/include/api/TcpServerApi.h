@@ -1,12 +1,6 @@
 #ifndef TCP_SERVER_API_H_
 #define TCP_SERVER_API_H_
 
-#include <iostream>
-#include <sstream>
-#include <string>
-#include <vector>
-#include <mutex>
-
 #include "TcpServer.hpp"
 #include "TestDefines.h"
 

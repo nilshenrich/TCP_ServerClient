@@ -1,12 +1,6 @@
 #ifndef TCP_CLIENT_API_H_
 #define TCP_CLIENT_API_H_
 
-#include <iostream>
-#include <sstream>
-#include <string>
-#include <vector>
-#include <mutex>
-
 #include "TcpClient.hpp"
 #include "TestDefines.h"
 

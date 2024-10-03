@@ -1,4 +1,11 @@
+#include <gtest/gtest.h>
+#include <thread>
+#include <map>
+#include <memory>
+#include <string>
+
 #include "fragmentation/TlsServer_Test_ManyClients.h"
+#include "HelperFunctions.h"
 
 using namespace std;
 using namespace Test;

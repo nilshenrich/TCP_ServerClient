@@ -1,4 +1,9 @@
+#include <gtest/gtest.h>
+#include <chrono>
+#include <thread>
+
 #include "general/TcpClient_Test_Start.h"
+#include "HelperFunctions.h"
 
 using namespace std;
 using namespace Test;

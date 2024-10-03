@@ -1,15 +1,8 @@
 #ifndef CONTINUOUS_TCP_SERVER_TEST_MANYCLIENTS_H_
 #define CONTINUOUS_TCP_SERVER_TEST_MANYCLIENTS_H_
 
-#include <gtest/gtest.h>
-#include <thread>
-#include <map>
-#include <memory>
-#include <string>
-
 #include "TcpServerApi.h"
 #include "TcpClientApi.h"
-#include "HelperFunctions.h"
 
 namespace Test
 {

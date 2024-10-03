@@ -1,12 +1,6 @@
 #ifndef TLS_CLIENT_API_H_
 #define TLS_CLIENT_API_H_
 
-#include <iostream>
-#include <sstream>
-#include <string>
-#include <vector>
-#include <mutex>
-
 #include "TlsClient.hpp"
 #include "TestDefines.h"
 
