@@ -443,8 +443,9 @@ void FtpServer::on_msg_modePassive(const int clientId, const uint32_t command, c
         responseCode = Response::SUCCESS_PASSIVE_LONG;
         msg = "Entering Long Passive Mode (" + myIp + ", " + to_string(port) + ").";
         break;
-    default:
-        break; // Code never comes here
+    default: // Code never comes here
+        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_ARGUMENT_NOTSUPPORTED)) + " Unsupported passive mode.");
+        return;
     }
 
     // Inform client of new data server
