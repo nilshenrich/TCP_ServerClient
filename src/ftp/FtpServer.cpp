@@ -69,6 +69,32 @@ Reqp FtpServer::parseRequest(const string &msg) const
     return Reqp{hashCommand(msg.substr(0, posSpaces[0]).c_str()), args};
 }
 
+string FtpServer::sanitizeRequest(const string &request) const
+{
+    // Illegale characters
+    valarray<char> illegalChars{'\n', '\r'};
+    char *iBegin{begin(illegalChars)};
+    char *iEnd{end(illegalChars)};
+
+    size_t lenMsg{request.size()};
+
+    // Remove leading and trailing spaces and illegal characters
+    string sReturn;
+    sReturn.reserve(lenMsg);
+    for (size_t i{0}; i < lenMsg; i += 1)
+    {
+        if ((i == 0 || i == lenMsg - 1) && request[i] == ' ')
+            continue;
+
+        if (find(iBegin, iEnd, request[i]) != iEnd)
+            continue;
+
+        sReturn += request[i];
+    }
+
+    return sReturn;
+}
+
 int FtpServer::getFreePort() const
 {
     // First get rabdom number inside port range
@@ -113,7 +139,7 @@ void FtpServer::on_newClient(const int clientId)
 }
 void FtpServer::on_msg(const int clientId, const string &msg)
 {
-    Reqp request{parseRequest(msg)};
+    Reqp request{parseRequest(sanitizeRequest(msg))};
     switch (request.command)
     {
     case ENUM_CLASS_VALUE(Request::USERNAME):
@@ -329,13 +355,6 @@ void FtpServer::on_msg_changeDirectory(const int clientId, const uint32_t comman
     {
         path_req = args[0];
     }
-
-    // Remove all illegal characters from path, including:
-    // Line breaks: \n, \r
-    char illegalChars[]{'\n', '\r'};
-    path_req.erase(remove_if(path_req.begin(), path_req.end(), [illegalChars](const char &c)
-                             { return find(begin(illegalChars), end(illegalChars), c) != end(illegalChars); }),
-                   path_req.end());
 
     // Check if path is accessible
     if (!work_checkAccessible(username, path_req))

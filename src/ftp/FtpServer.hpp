@@ -195,6 +195,17 @@ namespace ftp
         Reqp parseRequest(const ::std::string &msg) const;
 
         /**
+         * @brief Remove illegal characters from a request string
+         *        - \n
+         *        - \r
+         *        - \t
+         *
+         * @param request
+         * @return string
+         */
+        ::std::string sanitizeRequest(const ::std::string &request) const;
+
+        /**
          * @brief Get free random TCP port for data within range
          *        Return -1 if no free port found
          *
