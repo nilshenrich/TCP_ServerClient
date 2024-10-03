@@ -140,7 +140,7 @@ void FtpServer::on_newClient(const int clientId)
 {
     {
         lock_guard<mutex> lck{session_m};
-        session[clientId] = Session{false, "", ""}; // Create new session. Not logged in
+        session[clientId] = Session{}; // Create new session. Not logged in
     }
     tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_WELCOME)) + " Welcome"s);
 }
@@ -261,7 +261,7 @@ void FtpServer::on_msg_password(const int clientId, const uint32_t command, cons
     {
         {
             lock_guard<mutex> lck{session_m};
-            session[clientId] = Session{false, "", ""}; // Clear session
+            session[clientId] = Session{}; // Clear session
         }
         tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::FAILED_LOGIN)) + " Login failed."s);
         return;
@@ -270,7 +270,7 @@ void FtpServer::on_msg_password(const int clientId, const uint32_t command, cons
     // Login success
     {
         lock_guard<mutex> lck{session_m};
-        session[clientId] = Session{true, move(username), "/"};
+        session[clientId] = Session{true, username, "/"};
     }
     tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_LOGIN)) + " Login successful."s);
     return;

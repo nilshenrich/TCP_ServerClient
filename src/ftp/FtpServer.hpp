@@ -108,6 +108,29 @@ namespace ftp
         ::std::string currentpath;
         char mode; // FileTransferType
         ::std::unique_ptr<::tcp::TcpServer> tcpData;
+
+        // Constructors
+
+        // Default: Not logged in
+        Session() : loggedIn{false},
+                    username{},
+                    currentpath{},
+                    mode{0},
+                    tcpData{nullptr} {}
+
+        // Given logged in, username and current path
+        Session(bool loggedIn, const ::std::string &username, const ::std::string &currentpath) : loggedIn{loggedIn},
+                                                                                                  username{username},
+                                                                                                  currentpath{currentpath},
+                                                                                                  mode{0},
+                                                                                                  tcpData{nullptr} {}
+
+        // Overload operator<<
+        friend ::std::ostream &operator<<(::std::ostream &os, const Session &s)
+        {
+            os << "{loggedIn: " << s.loggedIn << ", username: " << s.username << ", currentpath: " << s.currentpath << ", mode: " << s.mode << ", has tcpData: " << (s.tcpData ? "yes" : "no") << "}";
+            return os;
+        }
     };
 
     class FtpServer
@@ -312,6 +335,7 @@ namespace ftp
         ASCII = 'A',
         BINARY = 'I',
         UNICODE = 'U',
+        INVALID = 0,
     };
 }
 
