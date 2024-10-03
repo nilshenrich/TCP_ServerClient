@@ -293,6 +293,7 @@ void FtpServer::on_msg_getSystemType(const int clientId, const uint32_t command,
 void FtpServer::on_msg_getDirectory(const int clientId, const uint32_t command, const valarray<string> &args)
 {
     // Get current directory from session
+    // BUG[performance]: Session could be deleted since existence check in on_messageIn
     string path;
     {
         lock_guard<mutex> lck{session_m};
@@ -307,6 +308,7 @@ void FtpServer::on_msg_getDirectory(const int clientId, const uint32_t command, 
 void FtpServer::on_msg_changeDirectory(const int clientId, const uint32_t command, const valarray<string> &args)
 {
     // Get user and current directory from session
+    // BUG[performance]: Session could be deleted since existence check in on_messageIn
     string username;
     string path;
     {
@@ -419,6 +421,7 @@ void FtpServer::on_msg_modePassive(const int clientId, const uint32_t command, c
     }
 
     // Add data server to session and inform client
+    // BUG[performance]: Session could be deleted since existence check in on_messageIn
     {
         lock_guard<mutex> lck{session_m};
         session[clientId].tcpData = move(dataServer);
@@ -451,6 +454,7 @@ void FtpServer::on_msg_modePassive(const int clientId, const uint32_t command, c
 void FtpServer::on_msg_listDirectory(const int clientId, const uint32_t command, const valarray<string> &args)
 {
     // Get user, current directory and data server from session
+    // BUG[performance]: Session could be deleted since existence check in on_messageIn
     string username;
     string path;
     unique_ptr<TcpServer> dataServer;
