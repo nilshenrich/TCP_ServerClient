@@ -379,13 +379,6 @@ void FtpServer::on_msg_fileTransferType(const int clientId, const uint32_t comma
 
 void FtpServer::on_msg_modePassive(const int clientId, const uint32_t command, const valarray<string> &args)
 {
-    // Type of passive mode
-    if (command != ENUM_CLASS_VALUE(Request::MODE_PASSIVE_ALL) && command != ENUM_CLASS_VALUE(Request::MODE_PASSIVE_SHORT) && command != ENUM_CLASS_VALUE(Request::MODE_PASSIVE_LONG))
-    {
-        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_ARGUMENT_NOTSUPPORTED)) + " Unsupported mode.");
-        return;
-    }
-
     // Get server IP address the client is connected to
     string myIp{tcpControl.getServerIp(clientId)};
 
