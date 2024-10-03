@@ -148,6 +148,9 @@ void FtpServer::on_msg(const int clientId, const string &msg)
     case ENUM_CLASS_VALUE(Request::PASSWORD):
         on_messageIn(clientId, request.command, request.args, 1, &FtpServer::on_msg_password, false);
         break;
+    case ENUM_CLASS_VALUE(Request::SYSTEMTYPE):
+        on_messageIn(clientId, request.command, request.args, 0, &FtpServer::on_msg_getSystemType);
+        break;
     case ENUM_CLASS_VALUE(Request::LIST_DIR):
         on_messageIn(clientId, request.command, request.args, 0, &FtpServer::on_msg_listDirectory);
         break;
@@ -264,6 +267,27 @@ void FtpServer::on_msg_password(const int clientId, const uint32_t command, cons
     }
     tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_LOGIN)) + " Login successful.");
     return;
+}
+
+void FtpServer::on_msg_getSystemType(const int clientId, const uint32_t command, const valarray<string> &args)
+{
+#ifdef _WIN32
+    string sysType{"WIN32"};
+#elif _WIN64
+    string sysType{"WINDOWS-NT"};
+#elif __linux__
+    string sysType{"LINUX"};
+#elif __APPLE__ || __MACH__
+    string sysType{"MACOS"};
+#elif __FreeBSD__
+    string sysType{"FREEBSD"};
+#elif __unix__ || __unix
+    string sysType{"UNIX"};
+#else
+    string sysType{"UNKNOWN"};
+#endif
+
+    tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_SYSTEMTYPE)) + " " + sysType);
 }
 
 void FtpServer::on_msg_getDirectory(const int clientId, const uint32_t command, const valarray<string> &args)

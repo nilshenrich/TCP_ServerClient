@@ -260,6 +260,7 @@ namespace ftp
         // Worker methods
         void on_msg_username(const int clientId, const uint32_t command, const ::std::valarray<::std::string> &args);
         void on_msg_password(const int clientId, const uint32_t command, const ::std::valarray<::std::string> &args);
+        void on_msg_getSystemType(const int clientId, const uint32_t command, const ::std::valarray<::std::string> &args);
         void on_msg_listDirectory(const int clientId, const uint32_t command, const ::std::valarray<::std::string> &args);
         void on_msg_changeDirectory(const int clientId, const uint32_t command, const ::std::valarray<::std::string> &args);
         void on_msg_getDirectory(const int clientId, const uint32_t command, const ::std::valarray<::std::string> &args);
@@ -271,6 +272,7 @@ namespace ftp
     // Hashed request keywords
     enum class Request : uint32_t
     {
+        SYSTEMTYPE = FtpServer::hashCommand("SYST"),
         USERNAME = FtpServer::hashCommand("USER"),
         PASSWORD = FtpServer::hashCommand("PASS"),
         LIST_DIR = FtpServer::hashCommand("LIST"),
@@ -288,6 +290,7 @@ namespace ftp
     {
         SUCCESS_DATA_OPEN = 150,
         OK = 200,
+        SUCCESS_SYSTEMTYPE = 215,
         SUCCESS_WELCOME = 220,
         SUCCESS_DATA_CLOSE = 226,
         SUCCESS_PASSIVE_ALL = 229,
