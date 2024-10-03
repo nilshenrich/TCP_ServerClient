@@ -11,16 +11,10 @@
 #ifndef FTPSERVER_HPP_
 #define FTPSERVER_HPP_
 
-#include <functional>
+#include <string>
 #include <valarray>
-#include <fstream>
-#include <cstring>
 #include <map>
-#include <mutex>
-#include <memory>
 #include <iomanip>
-#include <cstdlib>
-#include <ctime>
 
 #include "../basic/TcpServer.hpp"
 #include "../basic/TlsServer.hpp"
