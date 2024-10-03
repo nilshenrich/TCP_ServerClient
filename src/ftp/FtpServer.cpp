@@ -135,7 +135,7 @@ void FtpServer::on_newClient(const int clientId)
         lock_guard<mutex> lck{session_m};
         session[clientId] = Session{false, "", ""}; // Create new session. Not logged in
     }
-    tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_WELCOME)) + " Welcome");
+    tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_WELCOME)) + " Welcome"s);
 }
 void FtpServer::on_msg(const int clientId, const string &msg)
 {
@@ -172,7 +172,7 @@ void FtpServer::on_msg(const int clientId, const string &msg)
     //     on_messageIn(clientId, request.command, request.args, &FtpServer::on_msg_fileDownload);
     //     break;
     default:
-        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_NOTIMPLEMENTED)) + " Command not implemented.");
+        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_NOTIMPLEMENTED)) + " Command not implemented."s);
         break;
     }
 }
@@ -200,7 +200,7 @@ void FtpServer::on_messageIn(const int clientId, const uint32_t command, const v
     }
     if (!connected)
     {
-        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::FAILED_UNKNOWN_ERROR)) + " Session not found.");
+        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::FAILED_UNKNOWN_ERROR)) + " Session not found."s);
         return;
     }
 
@@ -214,7 +214,7 @@ void FtpServer::on_messageIn(const int clientId, const uint32_t command, const v
     }
     if (mustLoggedIn != loggedIn)
     {
-        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_WRONG_ORDER)) + (mustLoggedIn ? " User not logged in." : " User already logged in."));
+        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_WRONG_ORDER)) + (mustLoggedIn ? " User not logged in."s : " User already logged in."s));
         return;
     }
 
@@ -222,7 +222,7 @@ void FtpServer::on_messageIn(const int clientId, const uint32_t command, const v
     size_t numArgs{args.size()};
     if (numArgsExp != numArgs)
     {
-        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_SYNTAX_ARGUMENT)) + " " + to_string(numArgsExp) + " arguments expected, but " + to_string(numArgs) + " given.");
+        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_SYNTAX_ARGUMENT)) + " "s + to_string(numArgsExp) + " arguments expected, but "s + to_string(numArgs) + " given."s);
         return;
     }
 
@@ -238,7 +238,7 @@ void FtpServer::on_msg_username(const int clientId, const uint32_t command, cons
         session[clientId] = Session{false, args[0], "/"}; // Set username but not logged in
     }
     // Request fine, require password
-    tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::CONTINUE_PASSWORD_REQUIRED)) + " Password required for user " + args[0] + ".");
+    tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::CONTINUE_PASSWORD_REQUIRED)) + " Password required for user "s + args[0] + "."s);
     return;
 }
 
@@ -256,7 +256,7 @@ void FtpServer::on_msg_password(const int clientId, const uint32_t command, cons
             lock_guard<mutex> lck{session_m};
             session[clientId] = Session{false, "", ""}; // Clear session
         }
-        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::FAILED_LOGIN)) + " Login failed.");
+        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::FAILED_LOGIN)) + " Login failed."s);
         return;
     }
 
@@ -265,7 +265,7 @@ void FtpServer::on_msg_password(const int clientId, const uint32_t command, cons
         lock_guard<mutex> lck{session_m};
         session[clientId] = Session{true, move(username), "/"};
     }
-    tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_LOGIN)) + " Login successful.");
+    tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_LOGIN)) + " Login successful."s);
     return;
 }
 
@@ -287,7 +287,7 @@ void FtpServer::on_msg_getSystemType(const int clientId, const uint32_t command,
     string sysType{"UNKNOWN"};
 #endif
 
-    tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_SYSTEMTYPE)) + " " + sysType);
+    tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_SYSTEMTYPE)) + " "s + sysType);
 }
 
 void FtpServer::on_msg_getDirectory(const int clientId, const uint32_t command, const valarray<string> &args)
@@ -301,7 +301,7 @@ void FtpServer::on_msg_getDirectory(const int clientId, const uint32_t command, 
     }
 
     // Send current directory path to client
-    tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::CURRENT_PATH)) + " \"" + path + "\" is current directory.");
+    tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::CURRENT_PATH)) + " \""s + path + "\" is current directory."s);
     return;
 }
 
@@ -321,7 +321,7 @@ void FtpServer::on_msg_changeDirectory(const int clientId, const uint32_t comman
     string path_req;
     if (args[0].empty() || args[0][0] != '/') // Relative path
     {
-        path_req = path + "/" + args[0];
+        path_req = path + "/"s + args[0];
     }
     else // Absolute path
     {
@@ -331,7 +331,7 @@ void FtpServer::on_msg_changeDirectory(const int clientId, const uint32_t comman
     // Check if path is accessible
     if (!work_checkAccessible(username, path_req))
     {
-        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::FAILED_FILENOTACCESSIBLE)) + " Requested directory is not accessible.");
+        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::FAILED_FILENOTACCESSIBLE)) + " Requested directory is not accessible."s);
         return;
     }
 
@@ -344,7 +344,7 @@ void FtpServer::on_msg_changeDirectory(const int clientId, const uint32_t comman
         }
         session[clientId].currentpath = path_req;
     }
-    tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_ACTION)) + " Directory successfully changed.");
+    tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_ACTION)) + " Directory successfully changed."s);
     return;
 }
 
@@ -364,7 +364,7 @@ void FtpServer::on_msg_fileTransferType(const int clientId, const uint32_t comma
         modename = "UTF-8";
         break;
     default:
-        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_ARGUMENT_NOTSUPPORTED)) + " Unsupported file transfer type.");
+        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_ARGUMENT_NOTSUPPORTED)) + " Unsupported file transfer type."s);
         return;
     }
 
@@ -376,7 +376,7 @@ void FtpServer::on_msg_fileTransferType(const int clientId, const uint32_t comma
         }
         session[clientId].mode = args[0][0];
     }
-    tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::OK)) + " Switching to " + modename + " mode.");
+    tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::OK)) + " Switching to "s + modename + " mode."s);
 }
 
 void FtpServer::on_msg_modePassive(const int clientId, const uint32_t command, const valarray<string> &args)
@@ -389,12 +389,12 @@ void FtpServer::on_msg_modePassive(const int clientId, const uint32_t command, c
     // IPv6: [0-9a-f:]+
     if (myIp.find_first_not_of("0123456789.") == string::npos && command == ENUM_CLASS_VALUE(Request::MODE_PASSIVE_LONG))
     {
-        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_ARGUMENT_NOTSUPPORTED)) + " Extended mode not supported for IPv4.");
+        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_ARGUMENT_NOTSUPPORTED)) + " Extended mode not supported for IPv4."s);
         return;
     }
     if (myIp.find_first_not_of("0123456789abcdef:") == string::npos && command == ENUM_CLASS_VALUE(Request::MODE_PASSIVE_SHORT))
     {
-        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_ARGUMENT_NOTSUPPORTED)) + " Short mode not supported for IPv6.");
+        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_ARGUMENT_NOTSUPPORTED)) + " Short mode not supported for IPv6."s);
         return;
     }
 
@@ -406,7 +406,7 @@ void FtpServer::on_msg_modePassive(const int clientId, const uint32_t command, c
         port = getFreePort();
         if (port == -1)
         {
-            tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::FAILED_OPEN_DATACONN)) + " No free port.");
+            tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::FAILED_OPEN_DATACONN)) + " No free port."s);
             return;
         }
 
@@ -415,7 +415,7 @@ void FtpServer::on_msg_modePassive(const int clientId, const uint32_t command, c
         dataServer.reset(new TcpServer()); // Continuous mode
         if (dataServer->start(port) != SERVER_START_OK)
         {
-            tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::FAILED_OPEN_DATACONN)) + " Failed to open data connection.");
+            tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::FAILED_OPEN_DATACONN)) + " Failed to open data connection."s);
             return;
         }
     }
@@ -432,24 +432,24 @@ void FtpServer::on_msg_modePassive(const int clientId, const uint32_t command, c
     {
     case ENUM_CLASS_VALUE(Request::MODE_PASSIVE_ALL):
         responseCode = Response::SUCCESS_PASSIVE_ALL;
-        msg = "Entering Extended Passive Mode (|||" + to_string(port) + "|).";
+        msg = "Entering Extended Passive Mode (|||"s + to_string(port) + "|)."s;
         break;
     case ENUM_CLASS_VALUE(Request::MODE_PASSIVE_SHORT):
         responseCode = Response::SUCCESS_PASSIVE_SHORT;
         algorithms::replace_allC(myIp, '.', ',');
-        msg = "Entering Passive Mode (" + myIp + "," + to_string(port / 256) + "," + to_string(port % 256) + ").";
+        msg = "Entering Passive Mode ("s + myIp + ","s + to_string(port / 256) + ","s + to_string(port % 256) + ")."s;
         break;
     case ENUM_CLASS_VALUE(Request::MODE_PASSIVE_LONG):
         responseCode = Response::SUCCESS_PASSIVE_LONG;
-        msg = "Entering Long Passive Mode (" + myIp + ", " + to_string(port) + ").";
+        msg = "Entering Long Passive Mode ("s + myIp + ", "s + to_string(port) + ")."s;
         break;
     default: // Code never comes here
-        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_ARGUMENT_NOTSUPPORTED)) + " Unsupported passive mode.");
+        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_ARGUMENT_NOTSUPPORTED)) + " Unsupported passive mode."s);
         return;
     }
 
     // Inform client of new data server
-    tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(responseCode)) + " " + msg);
+    tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(responseCode)) + " "s + msg);
 }
 
 void FtpServer::on_msg_listDirectory(const int clientId, const uint32_t command, const valarray<string> &args)
@@ -482,7 +482,7 @@ void FtpServer::on_msg_listDirectory(const int clientId, const uint32_t command,
         this_thread::sleep_for(chrono::milliseconds(10));
 
     // Send directory list to client
-    tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DATA_OPEN)) + " Here comes the directory listing.");
+    tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DATA_OPEN)) + " Here comes the directory listing."s);
     dataServer->sendMsg(dataClients[0], msg.str());
-    tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DATA_CLOSE)) + " Directory send OK.");
+    tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DATA_CLOSE)) + " Directory send OK."s);
 }
