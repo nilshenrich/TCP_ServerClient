@@ -4,7 +4,7 @@
  * @brief Base framework for all classes that build a network server based on TCP.
  * This class contains no functionality, but serves as a base framework for the creation of stable servers based on TCP.
  * When compiling with the -DDEBUG flag, the class will print out all received messages to the console.
- * @version 3.0.0
+ * @version 3.1.0
  * @date 2021-12-27
  *
  * @copyright Copyright (c) 2021
@@ -118,6 +118,8 @@ namespace tcp
          * @brief Constructor for continuous stream forwarding
          */
         Server() : DELIMITER_FOR_FRAGMENTATION{0},
+                   APPEND_STRING_FOR_FRAGMENTATION{0},
+                   APPEND_STRING_FOR_FRAGMENTATION_LENGTH{0},
                    MAXIMUM_MESSAGE_LENGTH_FOR_FRAGMENTATION{0},
                    MESSAGE_FRAGMENTATION_ENABLED{false} {}
 
@@ -125,11 +127,14 @@ namespace tcp
          * @brief Constructor for fragmented messages
          *
          * @param delimiter     Character to split messages on
-         * @param messageMaxLen Maximum message length
+         * @param messageAppend String to append to the end of each fragmented message (before the delimiter)
+         * @param messageMaxLen Maximum message length (actual message + length of append string)
          */
-        Server(char delimiter, size_t messageMaxLen) : DELIMITER_FOR_FRAGMENTATION{delimiter},
-                                                       MAXIMUM_MESSAGE_LENGTH_FOR_FRAGMENTATION{messageMaxLen},
-                                                       MESSAGE_FRAGMENTATION_ENABLED{true} {}
+        Server(char delimiter, const ::std::string &messageAppend, size_t messageMaxLen) : DELIMITER_FOR_FRAGMENTATION{delimiter},
+                                                                                           APPEND_STRING_FOR_FRAGMENTATION{messageAppend},
+                                                                                           APPEND_STRING_FOR_FRAGMENTATION_LENGTH{messageAppend.size()},
+                                                                                           MAXIMUM_MESSAGE_LENGTH_FOR_FRAGMENTATION{messageMaxLen},
+                                                                                           MESSAGE_FRAGMENTATION_ENABLED{true} {} // TODO: Add check if messageAppend is too long (more than messageMaxLen bytes)
 
         /**
          * @brief Destructor
@@ -329,10 +334,14 @@ namespace tcp
         ::std::function<void(const int)> workOnEstablished{nullptr};
         ::std::function<void(const int)> workOnClosed{nullptr};
 
-        // Delimiter for the message framing (incoming and outgoing) (default is '\n')
+        // Delimiter for the message framing (incoming and outgoing)
         const char DELIMITER_FOR_FRAGMENTATION;
 
-        // Maximum message length (incoming and outgoing) (default is 2³² - 2 = 4294967294)
+        // Append this string to the end of each outgoing fragmented message
+        const ::std::string APPEND_STRING_FOR_FRAGMENTATION;
+        const size_t APPEND_STRING_FOR_FRAGMENTATION_LENGTH;
+
+        // Maximum message length (incoming and outgoing)
         const size_t MAXIMUM_MESSAGE_LENGTH_FOR_FRAGMENTATION;
 
         // Flag if messages shall be fragmented
@@ -500,7 +509,7 @@ namespace tcp
             }
 
             // Check if message is too long
-            if (msg.length() > MAXIMUM_MESSAGE_LENGTH_FOR_FRAGMENTATION)
+            if (msg.length() > MAXIMUM_MESSAGE_LENGTH_FOR_FRAGMENTATION + APPEND_STRING_FOR_FRAGMENTATION_LENGTH)
             {
 #ifdef DEVELOP
                 ::std::cerr << DEBUGINFO << ": Message is too long" << ::std::endl;
@@ -513,7 +522,7 @@ namespace tcp
         // Extend message with start and end characters and send it
         ::std::lock_guard<::std::mutex> lck{activeConnections_m};
         if (activeConnections.find(clientId) != activeConnections.end())
-            return writeMsg(clientId, MESSAGE_FRAGMENTATION_ENABLED ? msg + ::std::string{DELIMITER_FOR_FRAGMENTATION} : msg);
+            return writeMsg(clientId, MESSAGE_FRAGMENTATION_ENABLED ? msg + APPEND_STRING_FOR_FRAGMENTATION + ::std::string{DELIMITER_FOR_FRAGMENTATION} : msg);
 
 #ifdef DEVELOP
         ::std::cerr << DEBUGINFO << ": Client " << clientId << " is not connected" << ::std::endl;

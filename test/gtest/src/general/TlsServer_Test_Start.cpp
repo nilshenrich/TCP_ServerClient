@@ -1,4 +1,7 @@
+#include <gtest/gtest.h>
+
 #include "general/TlsServer_Test_Start.h"
+#include "HelperFunctions.h"
 
 using namespace std;
 using namespace Test;

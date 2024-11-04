@@ -1,11 +1,7 @@
 #ifndef TCP_CLIENT_API_H_
 #define TCP_CLIENT_API_H_
 
-#include <iostream>
-#include <sstream>
 #include <string>
-#include <vector>
-#include <mutex>
 
 #include "TcpClient.hpp"
 #include "TestDefines.h"
@@ -15,7 +11,10 @@ namespace TestApi
     class TcpClientApi_fragmentation
     {
     public:
-        TcpClientApi_fragmentation(size_t messageMaxLen = TestConstants::MAXLEN_MSG_B);
+        TcpClientApi_fragmentation();
+        TcpClientApi_fragmentation(const ::std::string &messageAppend);
+        TcpClientApi_fragmentation(size_t messageMaxLen);
+        TcpClientApi_fragmentation(const ::std::string &messageAppend, size_t messageMaxLen);
         virtual ~TcpClientApi_fragmentation();
 
         /**
@@ -99,11 +98,11 @@ namespace TestApi
         ::std::string getBufferedMsg();
 
     private:
-        // TCP client
-        ::tcp::TcpClient tcpClient;
-
         // Buffered message
         ::std::ostringstream bufferedMsg_os{::std::ios_base::ate};
+
+        // TCP client
+        ::tcp::TcpClient tcpClient;
     };
 
 } // namespace TestApi

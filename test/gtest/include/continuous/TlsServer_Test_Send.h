@@ -1,15 +1,8 @@
 #ifndef CONTINUOUS_TLS_SERVER_TEST_SEND_H_
 #define CONTINUOUS_TLS_SERVER_TEST_SEND_H_
 
-#include <gtest/gtest.h>
-#include <chrono>
-#include <thread>
-#include <vector>
-#include <string>
-
 #include "TlsServerApi.h"
 #include "TlsClientApi.h"
-#include "HelperFunctions.h"
 
 namespace Test
 {

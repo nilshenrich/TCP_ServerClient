@@ -1,15 +1,8 @@
 #ifndef CONTINUOUS_TCP_CLIENT_TEST_SEND_H_
 #define CONTINUOUS_TCP_CLIENT_TEST_SEND_H_
 
-#include <gtest/gtest.h>
-#include <chrono>
-#include <thread>
-#include <vector>
-#include <string>
-
 #include "TcpServerApi.h"
 #include "TcpClientApi.h"
-#include "HelperFunctions.h"
 
 namespace Test
 {

@@ -1,4 +1,11 @@
+#include <gtest/gtest.h>
+#include <chrono>
+#include <thread>
+#include <vector>
+#include <string>
+
 #include "continuous/TlsConnection_Test_MsgTransfer.h"
+#include "HelperFunctions.h"
 
 using namespace std;
 using namespace Test;

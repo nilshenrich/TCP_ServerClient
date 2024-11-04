@@ -1,11 +1,7 @@
 #ifndef TLS_CLIENT_API_H_
 #define TLS_CLIENT_API_H_
 
-#include <iostream>
-#include <sstream>
 #include <string>
-#include <vector>
-#include <mutex>
 
 #include "TlsClient.hpp"
 #include "TestDefines.h"
@@ -15,7 +11,10 @@ namespace TestApi
     class TlsClientApi_fragmentation
     {
     public:
-        TlsClientApi_fragmentation(size_t messageMaxLen = TestConstants::MAXLEN_MSG_B);
+        TlsClientApi_fragmentation();
+        TlsClientApi_fragmentation(const ::std::string &messageAppend);
+        TlsClientApi_fragmentation(size_t messageMaxLen);
+        TlsClientApi_fragmentation(const ::std::string &messageAppend, size_t messageMaxLen);
         virtual ~TlsClientApi_fragmentation();
 
         /**
@@ -98,11 +97,11 @@ namespace TestApi
         ::std::string getBufferedMsg();
 
     private:
-        // TCP client
-        ::tcp::TlsClient tlsClient;
-
         // Buffered messages
         ::std::ostringstream bufferedMsg_os{::std::ios_base::ate};
+
+        // TCP client
+        ::tcp::TlsClient tlsClient;
     };
 
 } // namespace TestApi

@@ -2,7 +2,7 @@
  * @file TcpClient.hpp
  * @author Nils Henrich
  * @brief TCP client for unencrypted data transfer without authentication.
- * @version 3.0.0
+ * @version 3.1.0
  * @date 2021-12-27
  *
  * @copyright Copyright (c) 2021
@@ -24,17 +24,18 @@ namespace tcp
         /**
          * @brief Constructor for continuous stream forwarding
          *
-         * @param os                                Stream to forward incoming stream to
+         * @param os    Stream to forward incoming stream to
          */
         TcpClient(::std::ostream &os = ::std::cout) : Client(os) {}
 
         /**
          * @brief Constructor for fragmented messages
          *
-         * @param delimiter                         Character to split messages on
-         * @param messageMaxLen                     Maximum message length
+         * @param delimiter     Character to split messages on
+         * @param messageAppend String to append to the end of each fragmented message (before the delimiter)
+         * @param messageMaxLen Maximum message length (actual message + length of append string) (default is 2³² - 2 = 4294967294)
          */
-        TcpClient(char delimiter, size_t messageMaxLen = ::std::numeric_limits<size_t>::max() - 1) : Client(delimiter, messageMaxLen) {}
+        TcpClient(char delimiter, const ::std::string &messageAppend = "", size_t messageMaxLen = ::std::numeric_limits<size_t>::max() - 1) : Client(delimiter, messageAppend, messageMaxLen) {}
 
         /**
          * @brief Destructor
