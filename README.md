@@ -193,6 +193,7 @@ The following examples are done for a TCP server, but they can be used for a TLS
 ```cpp
 TcpServer server; // Constructor with no arguments gives a server in continuous mode
 TcpServer server{'|'}; // Constructor with delimiter argument gives a server in fragmented mode
+TcpServer server{'|', "--message end--"}; // In fragmented mode, a custom text (string) can be defined that is appended at the end of each outgoing message
 TcpServer server{'|', 4096}; // In fragmented mode, the maximum message length (for sending and receiving) can be set
 ```
 
@@ -390,6 +391,7 @@ myStream ofstream("MyFile.txt");
 TcpClient client; // Constructor with no arguments gives a client in continuous mode forwarding to stdout
 TcpClient client{myStream}; // Constructor with stream argument gives a client in continuous mode forwarding to a file
 TcpClient client{'|'}; // Constructor with delimiter argument gives a client in fragmented mode
+TcpClient client{'|', "--message end--"}; // In fragmented mode, a custom text (string) can be defined that is appended at the end of each outgoing message
 TcpClient client{'|', 4096}; // In fragmented mode, the maximum message length (for sending and receiving) can be set
 ```
 
