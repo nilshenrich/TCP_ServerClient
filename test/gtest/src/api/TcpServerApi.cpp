@@ -12,7 +12,7 @@ using namespace std;
 using namespace TestApi;
 using namespace tcp;
 
-TcpServerApi_fragmentation::TcpServerApi_fragmentation(size_t messageMaxLen) : tcpServer{'\x00', messageMaxLen}
+TcpServerApi_fragmentation::TcpServerApi_fragmentation(size_t messageMaxLen) : tcpServer{'\x00', "", messageMaxLen}
 {
     tcpServer.setWorkOnMessage(bind(&TcpServerApi_fragmentation::workOnMessage, this, placeholders::_1, placeholders::_2));
     tcpServer.setWorkOnEstablished(bind(&TcpServerApi_fragmentation::workOnEstablished, this, placeholders::_1));

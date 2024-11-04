@@ -12,7 +12,7 @@ using namespace std;
 using namespace TestApi;
 using namespace tcp;
 
-TlsServerApi_fragmentation::TlsServerApi_fragmentation(size_t messageMaxLen) : tlsServer{'\x00', messageMaxLen}
+TlsServerApi_fragmentation::TlsServerApi_fragmentation(size_t messageMaxLen) : tlsServer{'\x00', "", messageMaxLen}
 {
     tlsServer.setWorkOnMessage(bind(&TlsServerApi_fragmentation::workOnMessage, this, placeholders::_1, placeholders::_2));
     tlsServer.setWorkOnEstablished(bind(&TlsServerApi_fragmentation::workOnEstablished, this, placeholders::_1));

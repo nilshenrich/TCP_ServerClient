@@ -93,11 +93,11 @@ namespace TestApi
         ::std::string getBufferedMsg();
 
     private:
-        // TCP client
-        ::tcp::TcpClient tcpClient;
-
         // Buffered message
         ::std::ostringstream bufferedMsg_os{::std::ios_base::ate};
+
+        // TCP client
+        ::tcp::TcpClient tcpClient;
     };
 
 } // namespace TestApi
