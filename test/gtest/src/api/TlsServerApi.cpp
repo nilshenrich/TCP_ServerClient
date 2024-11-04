@@ -12,7 +12,25 @@ using namespace std;
 using namespace TestApi;
 using namespace tcp;
 
+TlsServerApi_fragmentation::TlsServerApi_fragmentation() : tlsServer{'\x00', "", TestConstants::MAXLEN_MSG_B}
+{
+    tlsServer.setWorkOnMessage(bind(&TlsServerApi_fragmentation::workOnMessage, this, placeholders::_1, placeholders::_2));
+    tlsServer.setWorkOnEstablished(bind(&TlsServerApi_fragmentation::workOnEstablished, this, placeholders::_1));
+    tlsServer.setWorkOnClosed(bind(&TlsServerApi_fragmentation::workOnClosed, this, placeholders::_1));
+}
+TlsServerApi_fragmentation::TlsServerApi_fragmentation(const string &messageAppend) : tlsServer{'\x00', messageAppend, TestConstants::MAXLEN_MSG_B}
+{
+    tlsServer.setWorkOnMessage(bind(&TlsServerApi_fragmentation::workOnMessage, this, placeholders::_1, placeholders::_2));
+    tlsServer.setWorkOnEstablished(bind(&TlsServerApi_fragmentation::workOnEstablished, this, placeholders::_1));
+    tlsServer.setWorkOnClosed(bind(&TlsServerApi_fragmentation::workOnClosed, this, placeholders::_1));
+}
 TlsServerApi_fragmentation::TlsServerApi_fragmentation(size_t messageMaxLen) : tlsServer{'\x00', "", messageMaxLen}
+{
+    tlsServer.setWorkOnMessage(bind(&TlsServerApi_fragmentation::workOnMessage, this, placeholders::_1, placeholders::_2));
+    tlsServer.setWorkOnEstablished(bind(&TlsServerApi_fragmentation::workOnEstablished, this, placeholders::_1));
+    tlsServer.setWorkOnClosed(bind(&TlsServerApi_fragmentation::workOnClosed, this, placeholders::_1));
+}
+TlsServerApi_fragmentation::TlsServerApi_fragmentation(const string &messageAppend, size_t messageMaxLen) : tlsServer{'\x00', messageAppend, messageMaxLen}
 {
     tlsServer.setWorkOnMessage(bind(&TlsServerApi_fragmentation::workOnMessage, this, placeholders::_1, placeholders::_2));
     tlsServer.setWorkOnEstablished(bind(&TlsServerApi_fragmentation::workOnEstablished, this, placeholders::_1));

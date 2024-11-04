@@ -1,6 +1,8 @@
 #ifndef TCP_CLIENT_API_H_
 #define TCP_CLIENT_API_H_
 
+#include <string>
+
 #include "TcpClient.hpp"
 #include "TestDefines.h"
 
@@ -9,7 +11,10 @@ namespace TestApi
     class TcpClientApi_fragmentation
     {
     public:
-        TcpClientApi_fragmentation(size_t messageMaxLen = TestConstants::MAXLEN_MSG_B);
+        TcpClientApi_fragmentation();
+        TcpClientApi_fragmentation(const ::std::string &messageAppend);
+        TcpClientApi_fragmentation(size_t messageMaxLen);
+        TcpClientApi_fragmentation(const ::std::string &messageAppend, size_t messageMaxLen);
         virtual ~TcpClientApi_fragmentation();
 
         /**

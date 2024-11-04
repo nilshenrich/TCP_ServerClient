@@ -1,6 +1,8 @@
 #ifndef TLS_CLIENT_API_H_
 #define TLS_CLIENT_API_H_
 
+#include <string>
+
 #include "TlsClient.hpp"
 #include "TestDefines.h"
 
@@ -9,7 +11,10 @@ namespace TestApi
     class TlsClientApi_fragmentation
     {
     public:
-        TlsClientApi_fragmentation(size_t messageMaxLen = TestConstants::MAXLEN_MSG_B);
+        TlsClientApi_fragmentation();
+        TlsClientApi_fragmentation(const ::std::string &messageAppend);
+        TlsClientApi_fragmentation(size_t messageMaxLen);
+        TlsClientApi_fragmentation(const ::std::string &messageAppend, size_t messageMaxLen);
         virtual ~TlsClientApi_fragmentation();
 
         /**
