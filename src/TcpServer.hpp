@@ -30,9 +30,10 @@ namespace tcp
        * @brief Constructor for fragmented messages
        *
        * @param delimiter     Character to split messages on
-       * @param messageMaxLen Maximum message length
+       * @param messageAppend String to append to the end of each fragmented message (before the delimiter)
+       * @param messageMaxLen Maximum message length (actual message + length of append string) (default is 2³² - 2 = 4294967294)
        */
-      TcpServer(char delimiter, size_t messageMaxLen = ::std::numeric_limits<size_t>::max() - 1) : Server{delimiter, messageMaxLen} {}
+      TcpServer(char delimiter, const ::std::string &messageAppend = "", size_t messageMaxLen = ::std::numeric_limits<size_t>::max() - 1) : Server{delimiter, messageAppend, messageMaxLen} {}
 
       /**
        * @brief Destructor
@@ -90,8 +91,7 @@ namespace tcp
        *
        * @param clientId
        * @param msg
-       * @return true
-       * @return false
+       * @return bool (true on success, false on failure)
        */
       bool writeMsg(const int clientId, const ::std::string &msg) override final
       {

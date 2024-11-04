@@ -12,7 +12,25 @@ using namespace std;
 using namespace TestApi;
 using namespace tcp;
 
-TcpServerApi_fragmentation::TcpServerApi_fragmentation(size_t messageMaxLen) : tcpServer{'\x00', messageMaxLen}
+TcpServerApi_fragmentation::TcpServerApi_fragmentation() : tcpServer{'\x00', "", TestConstants::MAXLEN_MSG_B}
+{
+    tcpServer.setWorkOnMessage(bind(&TcpServerApi_fragmentation::workOnMessage, this, placeholders::_1, placeholders::_2));
+    tcpServer.setWorkOnEstablished(bind(&TcpServerApi_fragmentation::workOnEstablished, this, placeholders::_1));
+    tcpServer.setWorkOnClosed(bind(&TcpServerApi_fragmentation::workOnClosed, this, placeholders::_1));
+}
+TcpServerApi_fragmentation::TcpServerApi_fragmentation(const string &messageAppend) : tcpServer{'\x00', messageAppend, TestConstants::MAXLEN_MSG_B}
+{
+    tcpServer.setWorkOnMessage(bind(&TcpServerApi_fragmentation::workOnMessage, this, placeholders::_1, placeholders::_2));
+    tcpServer.setWorkOnEstablished(bind(&TcpServerApi_fragmentation::workOnEstablished, this, placeholders::_1));
+    tcpServer.setWorkOnClosed(bind(&TcpServerApi_fragmentation::workOnClosed, this, placeholders::_1));
+}
+TcpServerApi_fragmentation::TcpServerApi_fragmentation(size_t messageMaxLen) : tcpServer{'\x00', "", messageMaxLen}
+{
+    tcpServer.setWorkOnMessage(bind(&TcpServerApi_fragmentation::workOnMessage, this, placeholders::_1, placeholders::_2));
+    tcpServer.setWorkOnEstablished(bind(&TcpServerApi_fragmentation::workOnEstablished, this, placeholders::_1));
+    tcpServer.setWorkOnClosed(bind(&TcpServerApi_fragmentation::workOnClosed, this, placeholders::_1));
+}
+TcpServerApi_fragmentation::TcpServerApi_fragmentation(const string &messageAppend, size_t messageMaxLen) : tcpServer{'\x00', messageAppend, messageMaxLen}
 {
     tcpServer.setWorkOnMessage(bind(&TcpServerApi_fragmentation::workOnMessage, this, placeholders::_1, placeholders::_2));
     tcpServer.setWorkOnEstablished(bind(&TcpServerApi_fragmentation::workOnEstablished, this, placeholders::_1));

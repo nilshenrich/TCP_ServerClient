@@ -12,7 +12,19 @@ using namespace std;
 using namespace TestApi;
 using namespace tcp;
 
-TcpClientApi_fragmentation::TcpClientApi_fragmentation(size_t messageMaxLen) : tcpClient{'\x00', messageMaxLen}
+TcpClientApi_fragmentation::TcpClientApi_fragmentation() : tcpClient{'\x00', "", TestConstants::MAXLEN_MSG_B}
+{
+    tcpClient.setWorkOnMessage(bind(&TcpClientApi_fragmentation::workOnMessage, this, placeholders::_1));
+}
+TcpClientApi_fragmentation::TcpClientApi_fragmentation(const string &messageAppend) : tcpClient{'\x00', messageAppend, TestConstants::MAXLEN_MSG_B}
+{
+    tcpClient.setWorkOnMessage(bind(&TcpClientApi_fragmentation::workOnMessage, this, placeholders::_1));
+}
+TcpClientApi_fragmentation::TcpClientApi_fragmentation(size_t messageMaxLen) : tcpClient{'\x00', "", messageMaxLen}
+{
+    tcpClient.setWorkOnMessage(bind(&TcpClientApi_fragmentation::workOnMessage, this, placeholders::_1));
+}
+TcpClientApi_fragmentation::TcpClientApi_fragmentation(const string &messageAppend, size_t messageMaxLen) : tcpClient{'\x00', messageAppend, messageMaxLen}
 {
     tcpClient.setWorkOnMessage(bind(&TcpClientApi_fragmentation::workOnMessage, this, placeholders::_1));
 }
