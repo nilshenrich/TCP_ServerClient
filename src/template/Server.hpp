@@ -321,7 +321,7 @@ namespace tcp
         ::std::function<void(const int)> workOnEstablished{nullptr};
         ::std::function<void(const int)> workOnClosed{nullptr};
 
-        // Delimiter for the message framing (incoming and outgoing) (default is '\n')
+        // Delimiter for the message framing (incoming and outgoing)
         const char DELIMITER_FOR_FRAGMENTATION;
 
         // Maximum message length (incoming and outgoing) (default is 2³² - 2 = 4294967294)

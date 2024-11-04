@@ -30,7 +30,7 @@ namespace tcp
        * @brief Constructor for fragmented messages
        *
        * @param delimiter     Character to split messages on
-       * @param messageMaxLen Maximum message length
+       * @param messageMaxLen Maximum message length (default is 2³² - 2 = 4294967294)
        */
       TcpServer(char delimiter, size_t messageMaxLen = ::std::numeric_limits<size_t>::max() - 1) : Server{delimiter, messageMaxLen} {}
 
@@ -90,8 +90,7 @@ namespace tcp
        *
        * @param clientId
        * @param msg
-       * @return true
-       * @return false
+       * @return bool (true on success, false on failure)
        */
       bool writeMsg(const int clientId, const ::std::string &msg) override final
       {
