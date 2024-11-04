@@ -1,4 +1,11 @@
+#include <gtest/gtest.h>
+#include <chrono>
+#include <thread>
+#include <vector>
+#include <string>
+
 #include "continuous/TlsServer_Test_Send.h"
+#include "HelperFunctions.h"
 
 using namespace std;
 using namespace Test;
@@ -63,7 +70,6 @@ TEST_F(Continuous_TlsServer_Test_Send, NegTest_ClientDisconnectedBefore)
 {
     // Disconnect client
     tlsClient.stop();
-    this_thread::sleep_for(TestConstants::DISCONNECTION_TIMEOUT);
 
     // Send message to client that is disconnected immediately before
     EXPECT_FALSE(tlsServer.sendMsg(clientId, "Test message"));

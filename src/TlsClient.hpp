@@ -2,7 +2,7 @@
  * @file TlsClient.hpp
  * @author Nils Henrich
  * @brief TLS client for encrypted data transfer with authentication.
- * @version 3.0.0
+ * @version 3.1.0
  * @date 2021-12-27
  *
  * @copyright Copyright (c) 2021
@@ -40,17 +40,18 @@ namespace tcp
         /**
          * @brief Constructor for continuous stream forwarding
          *
-         * @param os                                Stream to forward incoming stream to
+         * @param os    Stream to forward incoming stream to
          */
         TlsClient(::std::ostream &os = ::std::cout) : Client(os) {}
 
         /**
          * @brief Constructor for fragmented messages
          *
-         * @param delimiter                         Character to split messages on
-         * @param messageMaxLen                     Maximum message length
+         * @param delimiter     Character to split messages on
+         * @param messageAppend String to append to the end of each fragmented message (before the delimiter)
+         * @param messageMaxLen Maximum message length (actual message + length of append string) (default is 2³² - 2 = 4294967294)
          */
-        TlsClient(char delimiter, size_t messageMaxLen = ::std::numeric_limits<size_t>::max() - 1) : Client(delimiter, messageMaxLen) {}
+        TlsClient(char delimiter, const ::std::string &messageAppend = "", size_t messageMaxLen = ::std::numeric_limits<size_t>::max() - 1) : Client(delimiter, messageAppend, messageMaxLen) {}
 
         /**
          * @brief Destructor
@@ -79,7 +80,7 @@ namespace tcp
             if (!clientContext.get())
             {
 #ifdef DEVELOP
-                ::std::cerr << typeid(this).name() << "::" << __func__ << ": Error when setting encryption method to latest client side TLS version" << ::std::endl;
+                ::std::cerr << DEBUGINFO << ": Error when setting encryption method to latest client side TLS version" << ::std::endl;
 #endif // DEVELOP
 
                 stop();
@@ -90,7 +91,7 @@ namespace tcp
             if (access(pathToCaCert, F_OK))
             {
 #ifdef DEVELOP
-                ::std::cerr << typeid(this).name() << "::" << __func__ << ": CA certificate file does not exist" << ::std::endl;
+                ::std::cerr << DEBUGINFO << ": CA certificate file does not exist" << ::std::endl;
 #endif // DEVELOP
 
                 stop();
@@ -101,7 +102,7 @@ namespace tcp
             if (access(pathToCert, F_OK))
             {
 #ifdef DEVELOP
-                ::std::cerr << typeid(this).name() << "::" << __func__ << ": Client certificate file does not exist" << ::std::endl;
+                ::std::cerr << DEBUGINFO << ": Client certificate file does not exist" << ::std::endl;
 #endif // DEVELOP
 
                 stop();
@@ -112,7 +113,7 @@ namespace tcp
             if (access(pathToPrivKey, F_OK))
             {
 #ifdef DEVELOP
-                ::std::cerr << typeid(this).name() << "::" << __func__ << ": Client private key file does not exist" << ::std::endl;
+                ::std::cerr << DEBUGINFO << ": Client private key file does not exist" << ::std::endl;
 #endif // DEVELOP
 
                 stop();
@@ -123,7 +124,7 @@ namespace tcp
             if (1 != SSL_CTX_load_verify_locations(clientContext.get(), pathToCaCert, nullptr))
             {
 #ifdef DEVELOP
-                ::std::cerr << typeid(this).name() << "::" << __func__ << ": Error when loading the CA certificate the client should trust: " << pathToCaCert << ::std::endl;
+                ::std::cerr << DEBUGINFO << ": Error when loading the CA certificate the client should trust: " << pathToCaCert << ::std::endl;
 #endif // DEVELOP
 
                 stop();
@@ -134,7 +135,7 @@ namespace tcp
             if (1 != SSL_CTX_use_certificate_file(clientContext.get(), pathToCert, SSL_FILETYPE_PEM))
             {
 #ifdef DEVELOP
-                ::std::cerr << typeid(this).name() << "::" << __func__ << ": Error when loading the client certificate: " << pathToCert << ::std::endl;
+                ::std::cerr << DEBUGINFO << ": Error when loading the client certificate: " << pathToCert << ::std::endl;
 #endif // DEVELOP
 
                 stop();
@@ -145,7 +146,7 @@ namespace tcp
             if (1 != SSL_CTX_use_PrivateKey_file(clientContext.get(), pathToPrivKey, SSL_FILETYPE_PEM))
             {
 #ifdef DEVELOP
-                ::std::cerr << typeid(this).name() << "::" << __func__ << ": Error when loading the client private key: " << pathToPrivKey << ::std::endl;
+                ::std::cerr << DEBUGINFO << ": Error when loading the client private key: " << pathToPrivKey << ::std::endl;
 #endif // DEVELOP
 
                 stop();
@@ -180,7 +181,7 @@ namespace tcp
             if (!SSL_CTX_set_ciphersuites(clientContext.get(), "TLS_AES_256_GCM_SHA384"))
             {
 #ifdef DEVELOP
-                ::std::cerr << typeid(this).name() << "::" << __func__ << ": Error when setting cipher suites" << ::std::endl;
+                ::std::cerr << DEBUGINFO << ": Error when setting cipher suites" << ::std::endl;
 #endif // DEVELOP
 
                 return nullptr;
@@ -191,7 +192,7 @@ namespace tcp
             if (!tlsSocket)
             {
 #ifdef DEVELOP
-                ::std::cerr << typeid(this).name() << "::" << __func__ << ": Error when creating new TLS channel" << ::std::endl;
+                ::std::cerr << DEBUGINFO << ": Error when creating new TLS channel" << ::std::endl;
 #endif // DEVELOP
 
                 return nullptr;
@@ -201,7 +202,7 @@ namespace tcp
             if (!SSL_set_fd(tlsSocket, tcpSocket))
             {
 #ifdef DEVELOP
-                ::std::cerr << typeid(this).name() << "::" << __func__ << ": Error when binding the TLS channel to the TCP socket" << ::std::endl;
+                ::std::cerr << DEBUGINFO << ": Error when binding the TLS channel to the TCP socket" << ::std::endl;
 #endif // DEVELOP
 
                 SSL_free(tlsSocket);
@@ -213,7 +214,7 @@ namespace tcp
             if (1 != SSL_connect(tlsSocket))
             {
 #ifdef DEVELOP
-                ::std::cerr << typeid(this).name() << "::" << __func__ << ": Error when doing TLS handshake" << ::std::endl;
+                ::std::cerr << DEBUGINFO << ": Error when doing TLS handshake" << ::std::endl;
 #endif // DEVELOP
 
                 SSL_free(tlsSocket);
@@ -222,7 +223,7 @@ namespace tcp
             }
 
 #ifdef DEVELOP
-            ::std::cout << typeid(this).name() << "::" << __func__ << ": Encrypted connection to server established" << ::std::endl;
+            ::std::cout << DEBUGINFO << ": Encrypted connection to server established" << ::std::endl;
 #endif // DEVELOP
 
             return tlsSocket;
@@ -267,7 +268,7 @@ namespace tcp
         bool writeMsg(const ::std::string &msg) override final
         {
 #ifdef DEVELOP
-            ::std::cout << typeid(this).name() << "::" << __func__ << ": Send to server: " << msg << ::std::endl;
+            ::std::cout << DEBUGINFO << ": Send to server: " << msg << ::std::endl;
 #endif // DEVELOP
 
             // Get size of message to send

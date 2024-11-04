@@ -1,13 +1,8 @@
 #ifndef GENERAL_TLS_CONNECTION_TEST_CONNECT_H_
 #define GENERAL_TLS_CONNECTION_TEST_CONNECT_H_
 
-#include <gtest/gtest.h>
-#include <chrono>
-#include <thread>
-
 #include "TlsServerApi.h"
 #include "TlsClientApi.h"
-#include "HelperFunctions.h"
 
 namespace Test
 {

@@ -1,4 +1,11 @@
+#include <gtest/gtest.h>
+#include <chrono>
+#include <thread>
+#include <vector>
+#include <string>
+
 #include "continuous/TcpClient_Test_Send.h"
+#include "HelperFunctions.h"
 
 using namespace std;
 using namespace Test;
@@ -41,7 +48,6 @@ TEST_F(Continuous_TcpClient_Test_Send, NegTest_ServerNotRunning)
 {
     // Stop TCP server
     tcpServer.stop();
-    this_thread::sleep_for(TestConstants::DISCONNECTION_TIMEOUT);
 
     // Send message to server that has stopped running immediately before
     EXPECT_FALSE(tcpClient.sendMsg("Test message"));

@@ -1,10 +1,30 @@
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <vector>
+#include <mutex>
+#include <functional>
+
 #include "TlsClientApi.h"
+#include "TestDefines.h"
 
 using namespace std;
 using namespace TestApi;
 using namespace tcp;
 
-TlsClientApi_fragmentation::TlsClientApi_fragmentation(size_t messageMaxLen) : tlsClient{'\x00', messageMaxLen}
+TlsClientApi_fragmentation::TlsClientApi_fragmentation() : tlsClient{'\x00', "", TestConstants::MAXLEN_MSG_B}
+{
+    tlsClient.setWorkOnMessage(bind(&TlsClientApi_fragmentation::workOnMessage, this, placeholders::_1));
+}
+TlsClientApi_fragmentation::TlsClientApi_fragmentation(const string &messageAppend) : tlsClient{'\x00', messageAppend, TestConstants::MAXLEN_MSG_B}
+{
+    tlsClient.setWorkOnMessage(bind(&TlsClientApi_fragmentation::workOnMessage, this, placeholders::_1));
+}
+TlsClientApi_fragmentation::TlsClientApi_fragmentation(size_t messageMaxLen) : tlsClient{'\x00', "", messageMaxLen}
+{
+    tlsClient.setWorkOnMessage(bind(&TlsClientApi_fragmentation::workOnMessage, this, placeholders::_1));
+}
+TlsClientApi_fragmentation::TlsClientApi_fragmentation(const string &messageAppend, size_t messageMaxLen) : tlsClient{'\x00', messageAppend, messageMaxLen}
 {
     tlsClient.setWorkOnMessage(bind(&TlsClientApi_fragmentation::workOnMessage, this, placeholders::_1));
 }
@@ -22,6 +42,7 @@ int TlsClientApi_fragmentation::start(const string &ip, const int port, string p
 void TlsClientApi_fragmentation::stop()
 {
     tlsClient.stop();
+    this_thread::sleep_for(TestConstants::WAITFOR_DISCONNECT_TLS);
     return;
 }
 
@@ -53,6 +74,7 @@ int TlsClientApi_continuous::start(const string &ip, const int port, string path
 void TlsClientApi_continuous::stop()
 {
     tlsClient.stop();
+    this_thread::sleep_for(TestConstants::WAITFOR_DISCONNECT_TLS);
     return;
 }
 

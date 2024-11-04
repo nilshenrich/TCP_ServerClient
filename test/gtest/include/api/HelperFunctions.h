@@ -1,10 +1,6 @@
 #ifndef HELPERFUNCTIONS_H_
 #define HELPERFUNCTIONS_H_
 
-#include <unistd.h>
-#include <netinet/in.h>
-#include <iostream>
-
 class HelperFunctions
 {
 public:
