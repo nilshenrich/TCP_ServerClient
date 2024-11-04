@@ -2,7 +2,7 @@
  * @file TlsServer.hpp
  * @author Nils Henrich
  * @brief TLS server for encrypted data transfer with authentication.
- * @version 3.0.0
+ * @version 3.1.0
  * @date 2021-12-27
  *
  * @copyright Copyright (c) 2021
