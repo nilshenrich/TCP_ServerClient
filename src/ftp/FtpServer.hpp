@@ -16,6 +16,7 @@
 #include <valarray>
 #include <map>
 #include <iomanip>
+#include <istream>
 
 #include "../basic/TcpServer.hpp"
 #include "../basic/TlsServer.hpp"
@@ -106,8 +107,8 @@ namespace ftp
     {
         bool loggedIn;
         ::std::string username;
-        ::std::string currentpath;
-        char mode; // FileTransferType
+        ::std::string currentpath; // Always absolute from user home
+        char mode;                 // FileTransferType
         ::std::unique_ptr<::tcp::TcpServer> tcpData;
 
         // Constructors
@@ -165,7 +166,7 @@ namespace ftp
         void setWork_checkUserCredentials(::std::function<bool(const ::std::string, const ::std::string)> work);
         void setWork_checkAccessible(::std::function<bool(const ::std::string, const ::std::string)> work);
         void setWork_listDirectory(::std::function<::std::valarray<Item>(const ::std::string)> work);
-        void setWork_readFile(::std::function<::std::ifstream(const ::std::string)> work);
+        void setWork_readFile(::std::function<::std::istream *(const ::std::string)> work);
 
         /**
          * @brief Return if the FTP server is running (means if underlying TCP server is running)
@@ -250,7 +251,7 @@ namespace ftp
         ::std::function<bool(const ::std::string, const ::std::string)> work_checkUserCredentials; // Check user credentials: name, password
         ::std::function<bool(const ::std::string, const ::std::string)> work_checkAccessible;      // Check if path is accessible (directory or file) for user: username, path
         ::std::function<::std::valarray<Item>(const ::std::string)> work_listDirectory;            // List directory content: path
-        ::std::function<::std::ifstream(const ::std::string)> work_readFile;                       // Read file content: path
+        ::std::function<::std::istream *(const ::std::string)> work_readFile;                      // Read file content: path
 
         //////////////////////////////////////////////////
         // Worker methods on incoming messages
@@ -336,7 +337,7 @@ namespace ftp
         ASCII = 'A',
         BINARY = 'I',
         UNICODE = 'U',
-        INVALID = 0, // TODO: Check for invalid whenever used and throw error
+        INVALID = 0, // TODO: Check for invalid whenever used for file transfer and throw error
     };
 }
 

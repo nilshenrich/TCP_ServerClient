@@ -25,8 +25,8 @@ FtpServer::FtpServer() : tcpControl{'\n', "\r", MAXIMUM_MESSAGE_LENGTH},
                                               { return false; }}, // Default: Refuse all paths
                          work_listDirectory{[](const string) -> valarray<Item>
                                             { return valarray<Item>{}; }}, // Default: Return empty directory
-                         work_readFile{[](const string) -> ifstream
-                                       { return ifstream{}; }} // Default: Return null-stream
+                         work_readFile{[](const string) -> istream *
+                                       { return nullptr; }} // Default: Return null-stream
 {
     // Initialize random number generator
     srand((unsigned int)time(nullptr));
@@ -44,7 +44,7 @@ void FtpServer::stop() { tcpControl.stop(); }
 void FtpServer::setWork_checkUserCredentials(function<bool(const string, const string)> worker) { work_checkUserCredentials = worker; }
 void FtpServer::setWork_checkAccessible(function<bool(const string, const string)> worker) { work_checkAccessible = worker; }
 void FtpServer::setWork_listDirectory(function<valarray<Item>(const string)> worker) { work_listDirectory = worker; }
-void FtpServer::setWork_readFile(function<ifstream(const string)> worker) { work_readFile = worker; }
+void FtpServer::setWork_readFile(function<istream *(const string)> worker) { work_readFile = worker; }
 
 bool FtpServer::isRunning() const { return tcpControl.isRunning(); }
 
@@ -175,9 +175,9 @@ void FtpServer::on_msg(const int clientId, const string &msg)
     case ENUM_CLASS_VALUE(Request::MODE_PASSIVE_LONG):  // Always enter passive mode
         on_messageIn(clientId, request.command, request.args, 0, &FtpServer::on_msg_modePassive);
         break;
-    // case ENUM_CLASS_VALUE(Request::FILE_DOWNLOAD):
-    //     on_messageIn(clientId, request.command, request.args, &FtpServer::on_msg_fileDownload);
-    //     break;
+    case ENUM_CLASS_VALUE(Request::FILE_DOWNLOAD):
+        on_messageIn(clientId, request.command, request.args, 1, &FtpServer::on_msg_fileDownload);
+        break;
     default:
         tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_NOTIMPLEMENTED)) + " Command not implemented."s);
         break;
@@ -484,12 +484,51 @@ void FtpServer::on_msg_listDirectory(const int clientId, const uint32_t command,
 
     // Wait here for data server to accept connection
     // FIXME: Not ideal performance
+    // FIXME: Works just if no other data connections are open
+    // FIXME: Add timeout
     vector<int> dataClients;
     while ((dataClients = dataServer->getAllClientIds()).empty())
         this_thread::sleep_for(chrono::milliseconds(10));
 
     // Send directory list to client
+    // TODO: Send in chunks while retrieving, not all at once
     tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DATA_OPEN)) + " Here comes the directory listing."s);
     dataServer->sendMsg(dataClients[0], msg.str());
     tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DATA_CLOSE)) + " Directory send OK."s);
+}
+
+void FtpServer::on_msg_fileDownload(const int clientId, const uint32_t command, const valarray<string> &args)
+{
+    // Get user, current directory and data server from session
+    // BUG[performance]: Session could be deleted since existence check in on_messageIn
+    string username;
+    string path;
+    unique_ptr<TcpServer> dataServer;
+    {
+        lock_guard<mutex> lck{session_m};
+        username = session[clientId].username;
+        path = session[clientId].currentpath;
+        dataServer = move(session[clientId].tcpData); // Remove data server from session as should be closed after this action // FIXME: Unqualified move
+    }
+
+    // Get stream to file that should be downloaded
+    path += "/"s + args[0];
+    istream *is{work_readFile(path)};
+
+    // Wait here for data server to accept connection
+    // FIXME: Not ideal performance
+    // FIXME: Works just if no other data connections are open
+    // FIXME: Add timeout
+    vector<int> dataClients;
+    while ((dataClients = dataServer->getAllClientIds()).empty())
+        this_thread::sleep_for(chrono::milliseconds(10));
+
+    // Send file content to client
+    // TODO: Send in chunks while retrieving, not all at once
+    tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DATA_OPEN)) + " Here comes the content of file "s + args[0] + "."s);
+    string chunk;
+    chunk.reserve(1024); // TODO: Define chunk size globally
+    while (is->read(chunk.data(), 1024))
+        dataServer->sendMsg(dataClients[0], chunk); // BUG: Not sent for some reason
+    tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DATA_CLOSE)) + " File send OK."s);
 }
