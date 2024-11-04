@@ -18,7 +18,7 @@ using namespace ::std;
 using namespace ::tcp;
 using namespace ::ftp;
 
-FtpServer::FtpServer() : tcpControl{'\n', MAXIMUM_MESSAGE_LENGTH},
+FtpServer::FtpServer() : tcpControl{'\n', "\r", MAXIMUM_MESSAGE_LENGTH},
                          work_checkUserCredentials{[](const string, const string) -> bool
                                                    { return false; }}, // Default: Refuse all user credentials
                          work_checkAccessible{[](const string, const string) -> bool
