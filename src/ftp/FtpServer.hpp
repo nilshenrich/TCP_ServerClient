@@ -2,6 +2,7 @@
  * @file FtpServer.hpp
  * @author Nils Henrich
  * @brief FTP server for unencrypted and encrypted data transfer based on TCP/TLS server.
+ * @details https://datatracker.ietf.org/doc/html/rfc959
  * @version 3.0.0
  * @date 2024-06-26
  *
