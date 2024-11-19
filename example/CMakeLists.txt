@@ -13,8 +13,8 @@ add_executable(client client.cpp)
 target_compile_options(server PRIVATE -fexceptions -Wall $<$<NOT:$<CONFIG:DEBUG>>: -O3> $<$<CONFIG:DEBUG>: -g -Og -DDEVELOP>)
 target_compile_options(client PRIVATE -fexceptions -Wall $<$<NOT:$<CONFIG:DEBUG>>: -O3> $<$<CONFIG:DEBUG>: -g -Og -DDEVELOP>)
 
-target_link_libraries(server -lcrypto -lcrypt -lssl -pthread)
-target_link_libraries(client -lcrypto -lcrypt -lssl -pthread)
+target_link_libraries(server -lssl)
+target_link_libraries(client -lssl)
 
 # Message build type
 if ("${CMAKE_BUILD_TYPE}" STREQUAL "DEBUG")

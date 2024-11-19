@@ -162,15 +162,9 @@ using namespace std;
 using namespace tcp; // The entire library is in the namespace tcp
 ```
 
-The following linker flags are mandatory to be set to tell the system what libraries to use:
+The following linker flags are mandatory to be set depending on what sub-features are used:
 
-* **-ltcpserver**   if the TCP server is used
-* **-ltcpclient**   if the TCP client is used
-* **-ltlsserver**   if the TLS server is used
-* **-ltlsclient**   if the TLS client is used
-* **-lcrypto**      if the TLS encryption is used
-* **-lssl**         if the TLS encryption is used
-* **-pthread**      always needed
+* **-lssl**     if the TLS encryption is used
 
 ### Message modes
 

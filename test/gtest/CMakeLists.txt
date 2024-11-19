@@ -19,11 +19,7 @@ add_executable(test ${sourcefiles})
 target_compile_options(test PRIVATE -fexceptions -Wall -O0 $<$<CONFIG:DEBUG>: -g -DDEVELOP>)
 
 # Add libraries
-target_link_libraries(test
-    -pthread
-    -lgtest
-    -lcrypto
-    -lssl)
+target_link_libraries(test -lgtest -lssl)
 
 # Use C++17 standard
 set_target_properties(test PROPERTIES
