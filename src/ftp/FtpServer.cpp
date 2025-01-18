@@ -251,6 +251,7 @@ void FtpServer::on_messageIn(const int clientId, const uint32_t command, const v
 
     // Call worker method
     (this->*work)(clientId, command, args);
+    return;
 }
 
 void FtpServer::on_msg_username(const int clientId, const uint32_t command, const valarray<string> &args)
@@ -311,6 +312,7 @@ void FtpServer::on_msg_getSystemType(const int clientId, const uint32_t command,
 #endif
 
     tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_SYSTEMTYPE)) + " "s + sysType);
+    return;
 }
 
 void FtpServer::on_msg_getDirectory(const int clientId, const uint32_t command, const valarray<string> &args)
@@ -400,6 +402,7 @@ void FtpServer::on_msg_fileTransferType(const int clientId, const uint32_t comma
         session[clientId].mode = args[0][0];
     }
     tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::OK)) + " Switching to "s + modename + " mode."s);
+    return;
 }
 
 void FtpServer::on_msg_modePassive(const int clientId, const uint32_t command, const valarray<string> &args)
@@ -436,7 +439,6 @@ void FtpServer::on_msg_modePassive(const int clientId, const uint32_t command, c
         // Create new data server and start listening on free port
         // Each session could have multiple data connections open at the same time (For transferring multiple files in parallel)
         dataServer.reset(new TcpServer()); // Continuous mode
-        // FIXME: Don't start here directly but on concrete data transfer request
         if (dataServer->start(port) != SERVER_START_OK)
         {
             tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::FAILED_OPEN_DATACONN)) + " Failed to open data connection."s);
@@ -474,6 +476,7 @@ void FtpServer::on_msg_modePassive(const int clientId, const uint32_t command, c
 
     // Inform client of new data server
     tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(responseCode)) + " "s + msg);
+    return;
 }
 
 void FtpServer::on_msg_listDirectory(const int clientId, const uint32_t command, const valarray<string> &args)
@@ -512,6 +515,7 @@ void FtpServer::on_msg_listDirectory(const int clientId, const uint32_t command,
     tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DATA_OPEN)) + " Here comes the directory listing."s);
     dataServer->sendMsg(dataClients[0], msg.str());
     tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DATA_CLOSE)) + " Directory send OK."s);
+    return;
 }
 
 void FtpServer::on_msg_fileDownload(const int clientId, const uint32_t command, const valarray<string> &args)
@@ -550,6 +554,7 @@ void FtpServer::on_msg_fileDownload(const int clientId, const uint32_t command, 
         dataServer->sendMsg(dataClients[0], chunk.substr(0, is->gcount()));
     }
     tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DATA_CLOSE)) + " File send OK."s);
+    return;
 }
 
 void FtpServer::on_msg_listFeatures(const int clientId, const uint32_t command, const valarray<string> &args)
@@ -623,10 +628,18 @@ void FtpServer::on_msg_fileUpload(const int clientId, const uint32_t command, co
     ostream *os{work_writeFile(path)};
 
     // Forward all received data to file writer
-    // BUG: Data server already running and might not be ready to accept data
-    dataServer->setCreateForwardStream([os](const int clientID) -> ostream *
+    dataServer->setCreateForwardStream([os](const int clientId_data) -> ostream *
                                        { return os; });
 
-    // FIXME: Block until data transfer is finished and then send success message
+    // On data server closed, close file writer and inform client
+    mutex transfer_m;
+    transfer_m.lock();
+    dataServer->setWorkOnClosed([this, clientId, &transfer_m](const int clientId_data)
+                                { tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DATA_CLOSE)) + " File upload OK."s); transfer_m.unlock(); });
+
+    // Data server is now ready to accept data
+    // TODO: Sure the client waits for the data server to be ready?
+    tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DATA_OPEN)) + " Ready to receive data."s);
+    transfer_m.lock();
     return;
 }
