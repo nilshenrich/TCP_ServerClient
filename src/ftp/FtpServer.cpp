@@ -641,8 +641,8 @@ void FtpServer::on_msg_fileUpload(const int clientId, const uint32_t command, co
                                         transfer_m.unlock(); });
 
     // Data server is now ready to accept data
-    // TODO: Sure the client waits for the data server to be ready?
-    // BUG: -> No, the client doesn't wait for the data server to be ready (Filezilla)
+    // BUG: -> The client doesn't wait for the data server to be ready (Filezilla)
+    // TODO: -> Buffer date in another way and write back
     tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DATA_OPEN)) + " Ready to receive data."s);
     transfer_m.lock();
     return;
