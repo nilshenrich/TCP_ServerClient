@@ -288,9 +288,16 @@ namespace ftp
         void on_msg_modePassive(const int clientId, const uint32_t command, const ::std::valarray<::std::string> &args);
         void on_msg_fileDownload(const int clientId, const uint32_t command, const ::std::valarray<::std::string> &args);
 
-        // Features
+        //////////////////////////////////////////////////
+        // Constants
+        //////////////////////////////////////////////////
+
+        // Features the server supports
         // To be responded to client as feature list
         const ::std::valarray<::std::string> features{"PASV"};
+
+        // Chunk size for file transfer in bytes
+        const size_t FILETRANSFER_CHUNKSIZE{65536};
     };
 
     // Hashed request keywords

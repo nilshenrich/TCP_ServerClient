@@ -529,11 +529,10 @@ void FtpServer::on_msg_fileDownload(const int clientId, const uint32_t command, 
     // Send file content to client
     // TODO: Send in chunks while retrieving, not all at once
     tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DATA_OPEN)) + " Here comes the content of file "s + args[0] + "."s);
-    size_t CHUNKSIZE{4}; // TODO: Define chunk size globally
-    string chunk{string(CHUNKSIZE, 0)};
+    string chunk{string(FILETRANSFER_CHUNKSIZE, 0)};
     while (!is->eof())
     {
-        is->read(chunk.data(), CHUNKSIZE);
+        is->read(chunk.data(), FILETRANSFER_CHUNKSIZE);
         dataServer->sendMsg(dataClients[0], chunk.substr(0, is->gcount()));
     }
     tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DATA_CLOSE)) + " File send OK."s);
