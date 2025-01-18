@@ -284,9 +284,11 @@ namespace ftp
         void on_msg_listDirectory(const int clientId, const uint32_t command, const ::std::valarray<::std::string> &args);
         void on_msg_changeDirectory(const int clientId, const uint32_t command, const ::std::valarray<::std::string> &args);
         void on_msg_getDirectory(const int clientId, const uint32_t command, const ::std::valarray<::std::string> &args);
+        void on_msg_createDirectory(const int clientId, const uint32_t command, const ::std::valarray<::std::string> &args);
         void on_msg_fileTransferType(const int clientId, const uint32_t command, const ::std::valarray<::std::string> &args);
         void on_msg_modePassive(const int clientId, const uint32_t command, const ::std::valarray<::std::string> &args);
         void on_msg_fileDownload(const int clientId, const uint32_t command, const ::std::valarray<::std::string> &args);
+        void on_msg_fileUpload(const int clientId, const uint32_t command, const ::std::valarray<::std::string> &args);
 
         //////////////////////////////////////////////////
         // Constants
@@ -303,18 +305,20 @@ namespace ftp
     // Hashed request keywords
     enum class Request : uint32_t
     {
-        SYSTEMTYPE = FtpServer::hashCommand("SYST"),
-        USERNAME = FtpServer::hashCommand("USER"),
-        PASSWORD = FtpServer::hashCommand("PASS"),
-        LIST_FEATURES = FtpServer::hashCommand("FEAT"),
-        LIST_DIR = FtpServer::hashCommand("LIST"),
-        CHANGE_DIR = FtpServer::hashCommand("CWD"),
-        GET_DIR = FtpServer::hashCommand("PWD"),
-        FILE_TRANSFER_TYPE = FtpServer::hashCommand("TYPE"),
-        MODE_PASSIVE_ALL = FtpServer::hashCommand("EPSV"),   // For both IPv4 and IPv6
-        MODE_PASSIVE_SHORT = FtpServer::hashCommand("PASV"), // Only for IPv4
-        MODE_PASSIVE_LONG = FtpServer::hashCommand("LPSV"),  // Only for IPv6
-        FILE_DOWNLOAD = FtpServer::hashCommand("RETR"),
+        SYSTEMTYPE = FtpServer::hashCommand("SYST"),          // System type of server (e.g. UNIX Type: L8)
+        USERNAME = FtpServer::hashCommand("USER"),            // Username for login
+        PASSWORD = FtpServer::hashCommand("PASS"),            // Password for login
+        DIRECTORY_GETCURRENT = FtpServer::hashCommand("PWD"), // Get current directory path
+        FEATURES_LIST = FtpServer::hashCommand("FEAT"),       // List of features supported by server
+        DIRECTORY_LIST = FtpServer::hashCommand("LIST"),      // List directory content
+        DIRECTORY_CHANGE = FtpServer::hashCommand("CWD"),     // Change directory
+        DIRECTORY_CREATE = FtpServer::hashCommand("MKD"),     // Create directory
+        FILE_TRANSFER_TYPE = FtpServer::hashCommand("TYPE"),  // Set file transfer type
+        MODE_PASSIVE_ALL = FtpServer::hashCommand("EPSV"),    // Enter passive mode (For both IPv4 and IPv6)
+        MODE_PASSIVE_SHORT = FtpServer::hashCommand("PASV"),  // Enter passive mode (For IPv4 only)
+        MODE_PASSIVE_LONG = FtpServer::hashCommand("LPSV"),   // Enter passive mode (For IPv6 only)
+        FILE_DOWNLOAD = FtpServer::hashCommand("RETR"),       // Download file
+        FILE_UPLOAD = FtpServer::hashCommand("STOR"),         // Upload file
     };
 
     // Response codes

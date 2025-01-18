@@ -158,17 +158,20 @@ void FtpServer::on_msg(const int clientId, const string &msg)
     case ENUM_CLASS_VALUE(Request::SYSTEMTYPE):
         on_messageIn(clientId, request.command, request.args, 0, &FtpServer::on_msg_getSystemType);
         break;
-    case ENUM_CLASS_VALUE(Request::LIST_FEATURES):
+    case ENUM_CLASS_VALUE(Request::FEATURES_LIST):
         on_messageIn(clientId, request.command, request.args, 0, &FtpServer::on_msg_listFeatures);
         break;
-    case ENUM_CLASS_VALUE(Request::LIST_DIR):
+    case ENUM_CLASS_VALUE(Request::DIRECTORY_LIST):
         on_messageIn(clientId, request.command, request.args, 0, &FtpServer::on_msg_listDirectory);
         break;
-    case ENUM_CLASS_VALUE(Request::CHANGE_DIR):
+    case ENUM_CLASS_VALUE(Request::DIRECTORY_CHANGE):
         on_messageIn(clientId, request.command, request.args, 1, &FtpServer::on_msg_changeDirectory);
         break;
-    case ENUM_CLASS_VALUE(Request::GET_DIR):
+    case ENUM_CLASS_VALUE(Request::DIRECTORY_GETCURRENT):
         on_messageIn(clientId, request.command, request.args, 0, &FtpServer::on_msg_getDirectory);
+        break;
+    case ENUM_CLASS_VALUE(Request::DIRECTORY_CREATE):
+        on_messageIn(clientId, request.command, request.args, 1, &FtpServer::on_msg_createDirectory);
         break;
     case ENUM_CLASS_VALUE(Request::FILE_TRANSFER_TYPE):
         on_messageIn(clientId, request.command, request.args, 1, &FtpServer::on_msg_fileTransferType);
@@ -180,6 +183,9 @@ void FtpServer::on_msg(const int clientId, const string &msg)
         break;
     case ENUM_CLASS_VALUE(Request::FILE_DOWNLOAD):
         on_messageIn(clientId, request.command, request.args, 1, &FtpServer::on_msg_fileDownload);
+        break;
+    case ENUM_CLASS_VALUE(Request::FILE_UPLOAD):
+        on_messageIn(clientId, request.command, request.args, 1, &FtpServer::on_msg_fileUpload);
         break;
     default:
         tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_NOTIMPLEMENTED)) + " Command not implemented."s);
