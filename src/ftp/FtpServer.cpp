@@ -628,17 +628,22 @@ void FtpServer::on_msg_fileUpload(const int clientId, const uint32_t command, co
     ostream *os{work_writeFile(path)};
 
     // Forward all received data to file writer
-    dataServer->setCreateForwardStream([os](const int clientId_data) -> ostream *
+    // BUG: Programm crash on method end using this (free(): invalid pointer)
+    dataServer->setCreateForwardStream([os](const int) -> ostream *
                                        { return os; });
 
     // On data server closed, close file writer and inform client
     mutex transfer_m;
     transfer_m.lock();
-    dataServer->setWorkOnClosed([this, clientId, &transfer_m](const int clientId_data)
-                                { tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DATA_CLOSE)) + " File upload OK."s); transfer_m.unlock(); });
+    dataServer->setWorkOnClosed([this, clientId, &dataServer, &transfer_m](const int)
+                                {
+                                    tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DATA_CLOSE)) + " File upload OK."s);
+                                    if(dataServer->getAllClientIds().empty())
+                                        transfer_m.unlock(); });
 
     // Data server is now ready to accept data
     // TODO: Sure the client waits for the data server to be ready?
+    // BUG: -> No, the client doesn't wait for the data server to be ready (Filezilla)
     tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DATA_OPEN)) + " Ready to receive data."s);
     transfer_m.lock();
     return;

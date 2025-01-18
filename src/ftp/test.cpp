@@ -29,6 +29,7 @@ int main()
                             { return &iFile; });
     server.setWork_writeFile([](const string) -> ostream *
                              { return &cout; });
-    server.start();
+    if (server.start())
+        return -1;
     this_thread::sleep_for(5min);
 }
