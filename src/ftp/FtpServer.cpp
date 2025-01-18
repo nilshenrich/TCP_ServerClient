@@ -628,7 +628,6 @@ void FtpServer::on_msg_fileUpload(const int clientId, const uint32_t command, co
     ostream *os{work_writeFile(path)};
 
     // Forward all received data to file writer
-    // BUG: Programm crash on method end using this (free(): invalid pointer)
     dataServer->setCreateForwardStream([os](const int) -> ostream *
                                        { return os; });
 
