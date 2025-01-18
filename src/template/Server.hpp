@@ -718,7 +718,6 @@ namespace tcp
                     it.join();
 
                 // Remove continuous stream
-                // BUG: Crash with "free(): invalid pointer" if an out stream is declared
                 if (forwardStreams.find(clientId) != forwardStreams.end())
                     forwardStreams.erase(clientId);
 
