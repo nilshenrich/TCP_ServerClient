@@ -166,7 +166,9 @@ namespace ftp
         void setWork_checkUserCredentials(::std::function<bool(const ::std::string, const ::std::string)> work);
         void setWork_checkAccessible(::std::function<bool(const ::std::string, const ::std::string)> work);
         void setWork_listDirectory(::std::function<::std::valarray<Item>(const ::std::string)> work);
+        void setWork_createDirectory(::std::function<bool(const ::std::string)> work);
         void setWork_readFile(::std::function<::std::istream *(const ::std::string)> work);
+        void setWork_writeFile(::std::function<::std::ostream *(const ::std::string)> work);
 
         /**
          * @brief Return if the FTP server is running (means if underlying TCP server is running)
@@ -251,7 +253,9 @@ namespace ftp
         ::std::function<bool(const ::std::string, const ::std::string)> work_checkUserCredentials; // Check user credentials: name, password
         ::std::function<bool(const ::std::string, const ::std::string)> work_checkAccessible;      // Check if path is accessible (directory or file) for user: username, path
         ::std::function<::std::valarray<Item>(const ::std::string)> work_listDirectory;            // List directory content: path
+        ::std::function<bool(const ::std::string)> work_createDirectory;                           // Create directory: path
         ::std::function<::std::istream *(const ::std::string)> work_readFile;                      // Read file content: path
+        ::std::function<::std::ostream *(const ::std::string)> work_writeFile;                     // Create/Change file: path, content
 
         //////////////////////////////////////////////////
         // Worker methods on incoming messages
@@ -335,7 +339,7 @@ namespace ftp
         SUCCESS_PASSIVE_LONG = 228,
         SUCCESS_LOGIN = 230,
         SUCCESS_ACTION = 250,
-        CURRENT_PATH = 257,
+        SUCCESS_DIRECTORY = 257,
         CONTINUE_PASSWORD_REQUIRED = 331,
         FAILED_OPEN_DATACONN = 425,
         FAILED_LOGIN = 430,

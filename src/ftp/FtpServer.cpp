@@ -17,6 +17,7 @@
 using namespace ::std;
 using namespace ::tcp;
 using namespace ::ftp;
+namespace fs = ::std::filesystem;
 
 FtpServer::FtpServer() : tcpControl{'\n', "\r", MAXIMUM_MESSAGE_LENGTH},
                          work_checkUserCredentials{[](const string, const string) -> bool
@@ -25,8 +26,12 @@ FtpServer::FtpServer() : tcpControl{'\n', "\r", MAXIMUM_MESSAGE_LENGTH},
                                               { return false; }}, // Default: Refuse all paths
                          work_listDirectory{[](const string) -> valarray<Item>
                                             { return valarray<Item>{}; }}, // Default: Return empty directory
+                         work_createDirectory{[](const string) -> bool
+                                              { return false; }}, // Default: Refuse all directory creations
                          work_readFile{[](const string) -> istream *
-                                       { return nullptr; }} // Default: Return null-stream
+                                       { return nullptr; }}, // Default: Return null-stream
+                         work_writeFile{[](const string) -> ostream *
+                                        { return nullptr; }} // Default: Return null-stream
 {
     // Initialize random number generator
     srand((unsigned int)time(nullptr));
@@ -44,7 +49,9 @@ void FtpServer::stop() { tcpControl.stop(); }
 void FtpServer::setWork_checkUserCredentials(function<bool(const string, const string)> worker) { work_checkUserCredentials = worker; }
 void FtpServer::setWork_checkAccessible(function<bool(const string, const string)> worker) { work_checkAccessible = worker; }
 void FtpServer::setWork_listDirectory(function<valarray<Item>(const string)> worker) { work_listDirectory = worker; }
+void FtpServer::setWork_createDirectory(function<bool(const string)> worker) { work_createDirectory = worker; }
 void FtpServer::setWork_readFile(function<istream *(const string)> worker) { work_readFile = worker; }
+void FtpServer::setWork_writeFile(function<ostream *(const string)> worker) { work_writeFile = worker; }
 
 bool FtpServer::isRunning() const { return tcpControl.isRunning(); }
 
@@ -317,7 +324,7 @@ void FtpServer::on_msg_getDirectory(const int clientId, const uint32_t command, 
     }
 
     // Send current directory path to client
-    tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::CURRENT_PATH)) + " \""s + path + "\" is current directory."s);
+    tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DIRECTORY)) + " \""s + path + "\" is current directory."s);
     return;
 }
 
@@ -333,7 +340,7 @@ void FtpServer::on_msg_changeDirectory(const int clientId, const uint32_t comman
         path = session[clientId].currentpath;
     }
 
-    // Determine requeted absolute path
+    // Determine requested absolute path
     string path_req;
     if (args[0].empty() || args[0][0] != '/') // Relative path
     {
@@ -429,6 +436,7 @@ void FtpServer::on_msg_modePassive(const int clientId, const uint32_t command, c
         // Create new data server and start listening on free port
         // Each session could have multiple data connections open at the same time (For transferring multiple files in parallel)
         dataServer.reset(new TcpServer()); // Continuous mode
+        // FIXME: Don't start here directly but on concrete data transfer request
         if (dataServer->start(port) != SERVER_START_OK)
         {
             tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::FAILED_OPEN_DATACONN)) + " Failed to open data connection."s);
@@ -553,5 +561,72 @@ void FtpServer::on_msg_listFeatures(const int clientId, const uint32_t command, 
         tcpControl.sendMsg(clientId, " "s + feature);
     }
     tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_STATUS)) + " End of features."s);
+    return;
+}
+
+void FtpServer::on_msg_createDirectory(const int clientId, const uint32_t command, const valarray<string> &args)
+{
+    // Get user and current directory from session
+    // BUG[performance]: Session could be deleted since existence check in on_messageIn
+    string username;
+    string path;
+    {
+        lock_guard<mutex> lck{session_m};
+        username = session[clientId].username;
+        path = session[clientId].currentpath;
+    }
+
+    // Determine requested absolute path
+    string path_req;
+    if (args[0].empty() || args[0][0] != '/') // Relative path
+    {
+        path_req = path + "/"s + args[0];
+    }
+    else // Absolute path
+    {
+        path_req = args[0];
+    }
+
+    // Check if path is accessible
+    if (!work_checkAccessible(username, path_req))
+    {
+        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::FAILED_FILENOTACCESSIBLE)) + " Requested directory is not accessible."s);
+        return;
+    }
+
+    // Create directory and send positive feedback
+    if (!work_createDirectory(path_req))
+    {
+        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::FAILED_FILENOTACCESSIBLE)) + " Failed to create directory."s);
+        return;
+    }
+    tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DIRECTORY)) + " \""s + path_req + "\" created."s);
+    return;
+}
+
+void FtpServer::on_msg_fileUpload(const int clientId, const uint32_t command, const valarray<string> &args)
+{
+    // Get user, current directory and data server from session
+    // BUG[performance]: Session could be deleted since existence check in on_messageIn
+    string username;
+    string path;
+    unique_ptr<TcpServer> dataServer;
+    {
+        lock_guard<mutex> lck{session_m};
+        username = session[clientId].username;
+        path = session[clientId].currentpath;
+        dataServer = move(session[clientId].tcpData); // Remove data server from session as should be closed after this action // FIXME: Unqualified move
+    }
+
+    // Get stream to file that should be uploaded
+    path += "/"s + args[0];
+    ostream *os{work_writeFile(path)};
+
+    // Forward all received data to file writer
+    // BUG: Data server already running and might not be ready to accept data
+    dataServer->setCreateForwardStream([os](const int clientID) -> ostream *
+                                       { return os; });
+
+    // FIXME: Block until data transfer is finished and then send success message
     return;
 }

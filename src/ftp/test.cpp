@@ -2,6 +2,7 @@
 
 #include <thread>
 #include <sstream>
+#include <iostream>
 
 #include "FtpServer.hpp"
 
@@ -22,8 +23,12 @@ int main()
                                  { return valarray<Item>{Item{ItemType::directory, "MyDir", {6, 4, 4}, 0, 10, 11, 4096, 1722164144},
                                                          Item{ItemType::directory, "MyDir2", {6, 4, 4}, 0, 10, 11, 4096000, 1722164144},
                                                          Item{ItemType::file, "MyFile", {6, 4, 4}, 0, 10, 11, 4096, 1722164144}}; });
+    server.setWork_createDirectory([](const string) -> bool
+                                   { return true; });
     server.setWork_readFile([&iFile](const string) -> istringstream *
                             { return &iFile; });
+    server.setWork_writeFile([](const string) -> ostream *
+                             { return &cout; });
     server.start();
     this_thread::sleep_for(5min);
 }
