@@ -28,7 +28,7 @@ int main()
     server.setWork_readFile([&iFile](const string) -> istringstream *
                             { return &iFile; });
     server.setWork_writeFile([](const string) -> ostream *
-                             { return new ostringstream; });
+                             { return &cout; });
     if (server.start())
         return -1;
     this_thread::sleep_for(5min);
