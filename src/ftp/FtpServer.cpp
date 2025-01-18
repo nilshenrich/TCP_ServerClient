@@ -158,6 +158,9 @@ void FtpServer::on_msg(const int clientId, const string &msg)
     case ENUM_CLASS_VALUE(Request::SYSTEMTYPE):
         on_messageIn(clientId, request.command, request.args, 0, &FtpServer::on_msg_getSystemType);
         break;
+    case ENUM_CLASS_VALUE(Request::LIST_FEATURES):
+        on_messageIn(clientId, request.command, request.args, 0, &FtpServer::on_msg_listFeatures);
+        break;
     case ENUM_CLASS_VALUE(Request::LIST_DIR):
         on_messageIn(clientId, request.command, request.args, 0, &FtpServer::on_msg_listDirectory);
         break;
@@ -531,4 +534,16 @@ void FtpServer::on_msg_fileDownload(const int clientId, const uint32_t command, 
     while (is->read(chunk.data(), 1024))
         dataServer->sendMsg(dataClients[0], chunk); // BUG: Not sent for some reason
     tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DATA_CLOSE)) + " File send OK."s);
+}
+
+void FtpServer::on_msg_listFeatures(const int clientId, const uint32_t command, const valarray<string> &args)
+{
+    // Send feature list to client
+    tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_STATUS)) + "-Features:"s);
+    for (const string &feature : features)
+    {
+        tcpControl.sendMsg(clientId, " "s + feature);
+    }
+    tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_STATUS)) + " End of features."s);
+    return;
 }

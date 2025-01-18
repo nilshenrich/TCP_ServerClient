@@ -280,12 +280,17 @@ namespace ftp
         void on_msg_username(const int clientId, const uint32_t command, const ::std::valarray<::std::string> &args);
         void on_msg_password(const int clientId, const uint32_t command, const ::std::valarray<::std::string> &args);
         void on_msg_getSystemType(const int clientId, const uint32_t command, const ::std::valarray<::std::string> &args);
+        void on_msg_listFeatures(const int clientId, const uint32_t command, const ::std::valarray<::std::string> &args);
         void on_msg_listDirectory(const int clientId, const uint32_t command, const ::std::valarray<::std::string> &args);
         void on_msg_changeDirectory(const int clientId, const uint32_t command, const ::std::valarray<::std::string> &args);
         void on_msg_getDirectory(const int clientId, const uint32_t command, const ::std::valarray<::std::string> &args);
         void on_msg_fileTransferType(const int clientId, const uint32_t command, const ::std::valarray<::std::string> &args);
         void on_msg_modePassive(const int clientId, const uint32_t command, const ::std::valarray<::std::string> &args);
         void on_msg_fileDownload(const int clientId, const uint32_t command, const ::std::valarray<::std::string> &args);
+
+        // Features
+        // To be responded to client as feature list
+        const ::std::valarray<::std::string> features{"PASV"};
     };
 
     // Hashed request keywords
@@ -294,6 +299,7 @@ namespace ftp
         SYSTEMTYPE = FtpServer::hashCommand("SYST"),
         USERNAME = FtpServer::hashCommand("USER"),
         PASSWORD = FtpServer::hashCommand("PASS"),
+        LIST_FEATURES = FtpServer::hashCommand("FEAT"),
         LIST_DIR = FtpServer::hashCommand("LIST"),
         CHANGE_DIR = FtpServer::hashCommand("CWD"),
         GET_DIR = FtpServer::hashCommand("PWD"),
@@ -309,6 +315,7 @@ namespace ftp
     {
         SUCCESS_DATA_OPEN = 150,
         OK = 200,
+        SUCCESS_STATUS = 211,
         SUCCESS_SYSTEMTYPE = 215,
         SUCCESS_WELCOME = 220,
         SUCCESS_DATA_CLOSE = 226,
