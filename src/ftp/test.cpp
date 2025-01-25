@@ -11,15 +11,15 @@ using namespace ::tcp;
 using namespace ::ftp;
 using namespace ::std::chrono_literals;
 
-class MyOstream : private streambuf, public ostream
+class MyTempOstream : private streambuf, public ostream
 {
 public:
-    MyOstream() : ostream(this) {}
+    MyTempOstream() : ostream(this) {}
 
 private:
     int overflow(int c) override
     {
-        cout << "MyOstream says '";
+        cout << "MyTempOstream says '";
         cout.put(c);
         cout << "'" << endl;
         return c;
@@ -41,8 +41,11 @@ int main()
                                    { return true; });
     server.setWork_readFile([](const string path) -> istringstream *
                             { return new istringstream{"My file content for file '"s + path + "'"s}; });
-    server.setWork_writeFile([](const string path) -> MyOstream *
-                             { return new MyOstream; });
+    server.setWork_writeTempFile([]() -> MyTempOstream *
+                                 { return new MyTempOstream; });
+    server.setWork_moveTempFile([](const string path)
+                                { cout << "Move temp file to " << path << endl; });
+
     if (server.start())
         return -1;
     this_thread::sleep_for(5min);

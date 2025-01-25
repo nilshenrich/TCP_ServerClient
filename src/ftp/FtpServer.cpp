@@ -30,8 +30,10 @@ FtpServer::FtpServer() : tcpControl{'\n', "\r", MAXIMUM_MESSAGE_LENGTH},
                                               { return false; }}, // Default: Refuse all directory creations
                          work_readFile{[](const string) -> istream *
                                        { return nullptr; }}, // Default: Return null-stream
-                         work_writeFile{[](const string) -> ostream *
-                                        { return nullptr; }} // Default: Return null-stream
+                         work_writeTempFile{[]() -> ostream *
+                                            { return nullptr; }}, // Default: Return null-stream
+                         work_moveTempFile{[](const string)
+                                           { return; }} // Default: Do nothing
 {
     // Initialize random number generator
     srand((unsigned int)time(nullptr));
@@ -51,7 +53,8 @@ void FtpServer::setWork_checkAccessible(function<bool(const string, const string
 void FtpServer::setWork_listDirectory(function<valarray<Item>(const string)> worker) { work_listDirectory = worker; }
 void FtpServer::setWork_createDirectory(function<bool(const string)> worker) { work_createDirectory = worker; }
 void FtpServer::setWork_readFile(function<istream *(const string)> worker) { work_readFile = worker; }
-void FtpServer::setWork_writeFile(function<ostream *(const string)> worker) { work_writeFile = worker; }
+void FtpServer::setWork_writeTempFile(function<ostream *()> worker) { work_writeTempFile = worker; }
+void FtpServer::setWork_moveTempFile(function<void(const string)> worker) { work_moveTempFile = worker; }
 
 bool FtpServer::isRunning() const { return tcpControl.isRunning(); }
 
@@ -437,8 +440,11 @@ void FtpServer::on_msg_modePassive(const int clientId, const uint32_t command, c
         }
 
         // Create new data server and start listening on free port
+        // All incoming data is forwarded to stream to temporary buffer
         // Each session could have multiple data connections open at the same time (For transferring multiple files in parallel)
         dataServer.reset(new TcpServer()); // Continuous mode
+        dataServer->setCreateForwardStream([this](const int dataClientId)
+                                           { return work_writeTempFile(); }); // Cant create outside lock guard to avoid memory leak in case of exception
         if (dataServer->start(port) != SERVER_START_OK)
         {
             tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::FAILED_OPEN_DATACONN)) + " Failed to open data connection."s);
@@ -623,27 +629,24 @@ void FtpServer::on_msg_fileUpload(const int clientId, const uint32_t command, co
         dataServer = move(session[clientId].tcpData); // Remove data server from session as should be closed after this action
     }
 
-    // Get stream to file that should be uploaded
-    path += "/"s + args[0];
-    ostream *os{work_writeFile(path)};
-
-    // Forward all received data to file writer
-    dataServer->setCreateForwardStream([os](const int) -> ostream *
-                                       { return os; });
-
     // On data server closed, close file writer and inform client
+    // BUG[performance]: Set work on closed could be called after data server connection is closed
     mutex transfer_m;
     transfer_m.lock();
-    dataServer->setWorkOnClosed([this, clientId, &dataServer, &transfer_m](const int)
+    dataServer->setWorkOnClosed([&dataServer, &transfer_m](const int)
                                 {
-                                    tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DATA_CLOSE)) + " File upload OK."s);
-                                    if(dataServer->getAllClientIds().empty())
+                                    if(dataServer->getAllClientIds().empty()) // Only continue on all data sessions closed (Handle multiple data connections)
                                         transfer_m.unlock(); });
 
     // Data server is now ready to accept data
     // BUG: -> The client doesn't wait for the data server to be ready (Filezilla)
-    // TODO: -> Buffer date in another way and write back
+    // TODO: -> Buffer data in temporary file and write it back here
     tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DATA_OPEN)) + " Ready to receive data."s);
     transfer_m.lock();
+
+    // Client has disconnected from data server when reaching this point
+    tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DATA_CLOSE)) + " File upload OK."s);
+    work_moveTempFile(path + "/"s + args[0]);
+
     return;
 }
