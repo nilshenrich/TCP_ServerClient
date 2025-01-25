@@ -62,16 +62,17 @@ For the hardware I'm not giving any limitations. It is usable on low level hardw
 
 ## Installation
 
-The following steps can be applied for the entire project if you want to install both, the server and the client part and it can be applied for each part separately.
+The project has no pre-compilable parts. The server and client parts are header-only libraries.\
+To use the library in your project, just include the header files.\
+To install the library on your system, follow these steps:
 
 1. Install necessary third party software
 
     ```console
-    sudo apt install build-essential cmake libssl-dev
+    sudo apt install build-essential libssl-dev
     ```
 
     * **build-essential** contains the GNU C++ compiler as well as the GNU C++ standard library.
-    * **cmake** is used to create a makefile from the more general CMakeLists.txt.
     * **libssl-dev** contains additional C++ libraries for SSL/TLS encryption.
 
     For creating self-signed certificates and running the tests or examples, the **openssl** tool is required:
@@ -80,41 +81,11 @@ The following steps can be applied for the entire project if you want to install
     sudo apt install openssl
     ```
 
-2. Create a build directory and move to it
-   
-    ```console
-    mkdir build
-    cd build
-    ```
+2. Install the library on your system
 
-3. Build the library
-
-    ```console
-    cmake ..
-    make
-    ```
-
-4. Install the library
-   
     ```console
     sudo make install
     ```
-
-5. [optional] Fix shared library dependencies
-
-    If you get the following error message when running an application:
-
-    ```console
-    error while loading shared libraries: libTcpServer.so.x: cannot open shared object file: No such file or directory
-    ```
-
-    running the following command can solve it:
-
-    ```console
-    sudo /sbin/ldconfig
-    ```
-
-    [see details](https://itsfoss.com/solve-open-shared-object-file-quick-tip/)
 
 ## Usage
 
@@ -149,7 +120,7 @@ To see a basic example that shows you all functionality, please build and run th
 
 ### Include in custom projects
 
-Compiling the project installs the library on your system.\
+Installing the project copies the library headers on your system.\
 To use it in your project, include the header files from the sub-folder **tcp**:
 
 ```cpp
