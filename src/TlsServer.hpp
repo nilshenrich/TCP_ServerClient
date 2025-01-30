@@ -39,12 +39,17 @@ namespace tcp
 
       /**
        * @brief Constructor for fragmented messages
+       *        Default authentication: No self certificates but expect client authentication -> Foreign-authentication
        *
        * @param delimiter     Character to split messages on
        * @param messageAppend String to append to the end of each fragmented message (before the delimiter)
        * @param messageMaxLen Maximum message length (actual message + length of append string) (default is 2³² - 2 = 4294967294)
        */
-      TlsServer(char delimiter, const ::std::string &messageAppend = "", size_t messageMaxLen = ::std::numeric_limits<size_t>::max() - 1) : Server{delimiter, messageAppend, messageMaxLen} {}
+      TlsServer(char delimiter, const ::std::string &messageAppend = "", size_t messageMaxLen = ::std::numeric_limits<size_t>::max() - 1) : Server{delimiter, messageAppend, messageMaxLen},
+                                                                                                                                            CERTIFICATEPATH_CA{},
+                                                                                                                                            CERTIFICATEPATH_CERT{},
+                                                                                                                                            CERTIFICATEPATH_KEY{},
+                                                                                                                                            CLIENT_AUTHENTICATION{true} {}
 
       /**
        * @brief Destructor
@@ -121,6 +126,36 @@ namespace tcp
          return;
       }
 
+      /**
+       * @brief Checks if the server certificate paths are valid.
+       *
+       * This function verifies that the paths for the Certificate Authority (CA),
+       * the certificate, and the key are not empty. It returns true if all paths
+       * are non-empty, indicating that the server certificates are valid.
+       *
+       * @return true if all certificate paths are non-empty, false otherwise.
+       */
+      bool certPathsValid()
+      {
+         return !(CERTIFICATEPATH_CA.empty() || CERTIFICATEPATH_CERT.empty() || CERTIFICATEPATH_KEY.empty());
+      }
+
+      /**
+       * @brief Sets the requirement for client authentication.
+       *
+       * This function enables or disables the requirement for client authentication
+       * during the TLS handshake process. By default, client authentication is required.
+       *
+       * @param clientAuth A boolean value indicating whether client authentication is required.
+       *                   If set to true, client authentication is required. If set to false,
+       *                   client authentication is not required. Default is true.
+       */
+      void requireClientAuthentication(const bool clientAuth = true)
+      {
+         CLIENT_AUTHENTICATION = clientAuth;
+         return;
+      }
+
    private:
       /**
        * @brief Initialize the server (Setup enryyption settings).
@@ -150,88 +185,95 @@ namespace tcp
             return SERVER_ERROR_START_SET_CONTEXT;
          }
 
-         // Get pointer to certificate paths for C-style usage
-         const char *const pathToCaCert_p{CERTIFICATEPATH_CA.c_str()};
-         const char *const pathToCert_p{CERTIFICATEPATH_CERT.c_str()};
-         const char *const pathToPrivKey_p{CERTIFICATEPATH_KEY.c_str()};
-
-         // Check if CA certificate file exists
-         if (access(pathToCaCert_p, F_OK))
+         // If valid certificate paths are set, load them from files
+         if (certPathsValid())
          {
+            // Get pointer to certificate paths for C-style usage
+            const char *const pathToCaCert_p{CERTIFICATEPATH_CA.c_str()};
+            const char *const pathToCert_p{CERTIFICATEPATH_CERT.c_str()};
+            const char *const pathToPrivKey_p{CERTIFICATEPATH_KEY.c_str()};
+
+            // Check if CA certificate file exists
+            if (access(pathToCaCert_p, F_OK))
+            {
 #ifdef DEVELOP
-            ::std::cerr << DEBUGINFO << ": CA certificate file does not exist" << ::std::endl;
+               ::std::cerr << DEBUGINFO << ": CA certificate file does not exist" << ::std::endl;
 #endif // DEVELOP
 
-            stop();
-            return SERVER_ERROR_START_WRONG_CA_PATH;
-         }
+               stop();
+               return SERVER_ERROR_START_WRONG_CA_PATH;
+            }
 
-         // Check if certificate file exists
-         if (access(pathToCert_p, F_OK))
-         {
+            // Check if certificate file exists
+            if (access(pathToCert_p, F_OK))
+            {
 #ifdef DEVELOP
-            ::std::cerr << DEBUGINFO << ": Server certificate file does not exist" << ::std::endl;
+               ::std::cerr << DEBUGINFO << ": Server certificate file does not exist" << ::std::endl;
 #endif // DEVELOP
 
-            stop();
-            return SERVER_ERROR_START_WRONG_CERT_PATH;
-         }
+               stop();
+               return SERVER_ERROR_START_WRONG_CERT_PATH;
+            }
 
-         // Check if private key file exists
-         if (access(pathToPrivKey_p, F_OK))
-         {
+            // Check if private key file exists
+            if (access(pathToPrivKey_p, F_OK))
+            {
 #ifdef DEVELOP
-            ::std::cerr << DEBUGINFO << ": Server private key file does not exist" << ::std::endl;
+               ::std::cerr << DEBUGINFO << ": Server private key file does not exist" << ::std::endl;
 #endif // DEVELOP
 
-            stop();
-            return SERVER_ERROR_START_WRONG_KEY_PATH;
-         }
+               stop();
+               return SERVER_ERROR_START_WRONG_KEY_PATH;
+            }
 
-         // Load CA certificate
-         // Stop server and return error if it fails
-         if (1 != SSL_CTX_load_verify_locations(serverContext.get(), pathToCaCert_p, nullptr))
-         {
+            // Load CA certificate
+            // Stop server and return error if it fails
+            if (1 != SSL_CTX_load_verify_locations(serverContext.get(), pathToCaCert_p, nullptr))
+            {
 #ifdef DEVELOP
-            ::std::cerr << DEBUGINFO << ": Error when reading CA certificate \"" << pathToCaCert << "\"" << ::std::endl;
+               ::std::cerr << DEBUGINFO << ": Error when reading CA certificate \"" << pathToCaCert_p << "\"" << ::std::endl;
 #endif // DEVELOP
 
-            stop();
-            return SERVER_ERROR_START_WRONG_CA;
-         }
+               stop();
+               return SERVER_ERROR_START_WRONG_CA;
+            }
 
-         // Set CA certificate as verification certificate to verify client certificate
-         SSL_CTX_set_client_CA_list(serverContext.get(), SSL_load_client_CA_file(pathToCaCert_p));
+            // Set CA certificate as verification certificate to verify client certificate
+            SSL_CTX_set_client_CA_list(serverContext.get(), SSL_load_client_CA_file(pathToCaCert_p));
 
-         // Load server certificate
-         // Stop server and return error if it fails
-         if (1 != SSL_CTX_use_certificate_file(serverContext.get(), pathToCert_p, SSL_FILETYPE_PEM))
-         {
+            // Load server certificate
+            // Stop server and return error if it fails
+            if (1 != SSL_CTX_use_certificate_file(serverContext.get(), pathToCert_p, SSL_FILETYPE_PEM))
+            {
 #ifdef DEVELOP
-            ::std::cerr << DEBUGINFO << ": Error when loading server certificate \"" << pathToCert << "\"" << ::std::endl;
+               ::std::cerr << DEBUGINFO << ": Error when loading server certificate \"" << pathToCert_p << "\"" << ::std::endl;
 #endif // DEVELOP
 
-            stop();
-            return SERVER_ERROR_START_WRONG_CERT;
-         }
+               stop();
+               return SERVER_ERROR_START_WRONG_CERT;
+            }
 
-         // Load server private key (Includes check with certificate)
-         // Stop server and return error if it fails
-         if (1 != SSL_CTX_use_PrivateKey_file(serverContext.get(), pathToPrivKey_p, SSL_FILETYPE_PEM))
-         {
+            // Load server private key (Includes check with certificate)
+            // Stop server and return error if it fails
+            if (1 != SSL_CTX_use_PrivateKey_file(serverContext.get(), pathToPrivKey_p, SSL_FILETYPE_PEM))
+            {
 #ifdef DEVELOP
-            ::std::cerr << DEBUGINFO << ": Error when loading server private key \"" << pathToPrivKey << "\"" << ::std::endl;
+               ::std::cerr << DEBUGINFO << ": Error when loading server private key \"" << pathToPrivKey_p << "\"" << ::std::endl;
 #endif // DEVELOP
 
-            stop();
-            return SERVER_ERROR_START_WRONG_KEY;
+               stop();
+               return SERVER_ERROR_START_WRONG_KEY;
+            }
          }
 
          // Set TLS mode (Auto retry)
          SSL_CTX_set_mode(serverContext.get(), SSL_MODE_AUTO_RETRY);
 
-         // Force client authentication
-         SSL_CTX_set_verify(serverContext.get(), SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT | SSL_VERIFY_CLIENT_ONCE, NULL);
+         // Force client authentication if defined
+         if (CLIENT_AUTHENTICATION)
+         {
+            SSL_CTX_set_verify(serverContext.get(), SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT | SSL_VERIFY_CLIENT_ONCE, NULL);
+         }
 
          // Check client certificate (CA certificate must be direct issuer)
          SSL_CTX_set_verify_depth(serverContext.get(), 1);
@@ -381,6 +423,9 @@ namespace tcp
       ::std::string CERTIFICATEPATH_CA;
       ::std::string CERTIFICATEPATH_CERT;
       ::std::string CERTIFICATEPATH_KEY;
+
+      // Require client authentication
+      bool CLIENT_AUTHENTICATION;
 
       // Disallow copy
       TlsServer(const TlsServer &) = delete;

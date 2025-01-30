@@ -45,8 +45,9 @@ TlsServerApi_continuous::TlsServerApi_continuous() : tlsServer{}
 }
 TlsServerApi_continuous::~TlsServerApi_continuous() {}
 
-int TlsServerApi_fragmentation::start(const int port, const string pathToCaCert, const string pathToServerCert, const string pathToServerKey)
+int TlsServerApi_fragmentation::start(const int port, const string pathToCaCert, const string pathToServerCert, const string pathToServerKey, const bool clientAuth)
 {
+    tlsServer.requireClientAuthentication(clientAuth);
     tlsServer.setCertificates(pathToCaCert, pathToServerCert, pathToServerKey);
     return tlsServer.start(port);
 }
@@ -82,8 +83,9 @@ void TlsServerApi_fragmentation::workOnEstablished(const int) {}
 
 void TlsServerApi_fragmentation::workOnClosed(const int) {}
 
-int TlsServerApi_continuous::start(const int port, const string pathToCaCert, const string pathToServerCert, const string pathToServerKey)
+int TlsServerApi_continuous::start(const int port, const string pathToCaCert, const string pathToServerCert, const string pathToServerKey, const bool clientAuth)
 {
+    tlsServer.requireClientAuthentication(clientAuth);
     tlsServer.setCertificates(pathToCaCert, pathToServerCert, pathToServerKey);
     return tlsServer.start(port);
 }
