@@ -49,9 +49,9 @@ namespace tcp
          *
          * @return int
          */
-        int init(const char *const,
-                 const char *const,
-                 const char *const) override final { return 0; }
+        int init(const char *const = nullptr,
+                 const char *const = nullptr,
+                 const char *const = nullptr) override final { return 0; }
 
         /**
          * @brief Initialize the connection
