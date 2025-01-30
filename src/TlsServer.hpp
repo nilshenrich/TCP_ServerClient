@@ -273,10 +273,8 @@ namespace tcp
          if (CLIENT_AUTHENTICATION)
          {
             SSL_CTX_set_verify(serverContext.get(), SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT | SSL_VERIFY_CLIENT_ONCE, NULL);
+            SSL_CTX_set_verify_depth(serverContext.get(), 1); // Client certificate must be issued directly by a trusted CA
          }
-
-         // Check client certificate (CA certificate must be direct issuer)
-         SSL_CTX_set_verify_depth(serverContext.get(), 1);
 
          return SERVER_START_OK;
       }
