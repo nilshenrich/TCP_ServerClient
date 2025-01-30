@@ -34,7 +34,8 @@ TlsClientApi_continuous::~TlsClientApi_continuous() {}
 
 int TlsClientApi_fragmentation::start(const string &ip, const int port, string pathToCaCert, string pathToClientCert, string pathToClientKey)
 {
-    int start{tlsClient.start(ip, port, pathToCaCert.c_str(), pathToClientCert.c_str(), pathToClientKey.c_str())};
+    tlsClient.setCertificates(pathToCaCert, pathToClientCert, pathToClientKey);
+    int start{tlsClient.start(ip, port)};
     this_thread::sleep_for(TestConstants::WAITFOR_CONNECT_TLS);
     return start;
 }
@@ -66,7 +67,8 @@ void TlsClientApi_fragmentation::workOnMessage(const string tlsMsgFromServer)
 
 int TlsClientApi_continuous::start(const string &ip, const int port, string pathToCaCert, string pathToClientCert, string pathToClientKey)
 {
-    int start{tlsClient.start(ip, port, pathToCaCert.c_str(), pathToClientCert.c_str(), pathToClientKey.c_str())};
+    tlsClient.setCertificates(pathToCaCert, pathToClientCert, pathToClientKey);
+    int start{tlsClient.start(ip, port)};
     this_thread::sleep_for(TestConstants::WAITFOR_CONNECT_TLS);
     return start;
 }

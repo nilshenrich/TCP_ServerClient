@@ -147,15 +147,9 @@ namespace tcp
          * If encryption should be used, the server must be started with the correct path to the CA certificate and the correct path to the certificate and key file.
          *
          * @param port
-         * @param pathToCaCert
-         * @param pathToCert
-         * @param pathToPrivKey
          * @return int (SERVER_START_OK if successful, see ServerDefines.h for other return values)
          */
-        int start(const int port,
-                  const char *const pathToCaCert = nullptr,
-                  const char *const pathToCert = nullptr,
-                  const char *const pathToPrivKey = nullptr);
+        int start(const int port);
 
         /**
          * @brief Stops the server.
@@ -227,14 +221,9 @@ namespace tcp
          * @brief Initializes the server just before starting it.
          * This method is abstract and must be implemented by derived classes.
          *
-         * @param pathToCaCert
-         * @param pathToCert
-         * @param pathToPrivKey
          * @return int
          */
-        virtual int init(const char *const pathToCaCert,
-                         const char *const pathToCert,
-                         const char *const pathToPrivKey) = 0;
+        virtual int init() = 0;
 
         /**
          * @brief Initializes a new connection just after accepting it on unencrypted TCP level.
@@ -348,11 +337,7 @@ namespace tcp
     // ====================== Must be in header file because of the template class. =======================
 
     template <class SocketType, class SocketDeleter>
-    int Server<SocketType, SocketDeleter>::start(
-        const int port,
-        const char *const pathToCaCert,
-        const char *const pathToCert,
-        const char *const pathToPrivKey)
+    int Server<SocketType, SocketDeleter>::start(const int port)
     {
         // If the server is already running, return error
         if (running)
@@ -375,7 +360,7 @@ namespace tcp
         }
 
         // Initialize the server and return error if it fails
-        int initCode{init(pathToCaCert, pathToCert, pathToPrivKey)};
+        int initCode{init()};
         if (initCode)
             return initCode;
 
