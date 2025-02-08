@@ -1,6 +1,8 @@
 #ifndef GENERAL_TLS_SERVER_TEST_START_H_
 #define GENERAL_TLS_SERVER_TEST_START_H_
 
+#include <gtest/gtest.h>
+
 #include "TlsServerApi.h"
 #include "TlsClientApi.h"
 

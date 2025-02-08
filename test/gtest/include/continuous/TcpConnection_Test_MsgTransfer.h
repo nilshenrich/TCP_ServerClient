@@ -1,6 +1,8 @@
 #ifndef CONTINUOUS_TCP_CONNECTION_TEST_MSGTRANSFER_H_
 #define CONTINUOUS_TCP_CONNECTION_TEST_MSGTRANSFER_H_
 
+#include <gtest/gtest.h>
+
 #include "TcpServerApi.h"
 #include "TcpClientApi.h"
 

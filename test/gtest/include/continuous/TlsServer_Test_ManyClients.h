@@ -1,6 +1,8 @@
 #ifndef CONTINUOUS_TLS_SERVER_TEST_MANYCLIENTS_H_
 #define CONTINUOUS_TLS_SERVER_TEST_MANYCLIENTS_H_
 
+#include <gtest/gtest.h>
+
 #include "TlsServerApi.h"
 #include "TlsClientApi.h"
 

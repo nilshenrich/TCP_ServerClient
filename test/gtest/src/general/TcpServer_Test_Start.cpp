@@ -1,5 +1,3 @@
-#include <gtest/gtest.h>
-
 #include "general/TcpServer_Test_Start.h"
 #include "HelperFunctions.h"
 

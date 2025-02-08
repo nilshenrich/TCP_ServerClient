@@ -1,6 +1,8 @@
 #ifndef FRAGMENTATION_TLS_CLIENT_TEST_SEND_H_
 #define FRAGMENTATION_TLS_CLIENT_TEST_SEND_H_
 
+#include <gtest/gtest.h>
+
 #include "TlsServerApi.h"
 #include "TlsClientApi.h"
 
