@@ -140,4 +140,7 @@ TEST_F(General_TlsConnection_Test_Connect, PosTest_NoClientCert_ca_cert_key)
     // EXPECT_EQ(tlsClient.start("localhost", port, SelfSignedKeyPaths::CaCert, SelfSignedKeyPaths::ClientCert, SelfSignedKeyPaths::ClientKey), CLIENT_START_OK); // Return CLIENT_ERROR_START_CONNECT_INIT (Error when doing TLS handshake)
     // EXPECT_EQ(tlsClient.start("localhost", port, KeyPaths::CaCert, KeyPaths::ClientCert, KeyPaths::ClientKey), CLIENT_START_OK); // Return CLIENT_START_OK (working fine)
     EXPECT_EQ(tlsServer.getClientIds().size(), 1);
+
+    // Server says: error:0A000418:SSL routines::tlsv1 alert unknown ca (167773208)
+    // Client says:error:0A000086:SSL routines::certificate verify failed (167772294)
 }

@@ -15,6 +15,10 @@
 #include <limits>
 #include <openssl/ssl.h>
 
+#ifdef DEVELOP
+#include <openssl/err.h>
+#endif // DEVELOP
+
 #include "template/Client.hpp"
 
 namespace tcp
@@ -137,6 +141,10 @@ namespace tcp
             // Initialize OpenSSL algorithms
             OpenSSL_add_ssl_algorithms();
 
+#ifdef DEVELOP
+            SSL_load_error_strings();
+#endif // DEVELOP
+
             // Set encryption method to latest client side TLS version (Stop client and return with error if failed)
             clientContext.reset(SSL_CTX_new(TLS_client_method()));
             if (!clientContext.get())
@@ -228,6 +236,7 @@ namespace tcp
             SSL_CTX_set_mode(clientContext.get(), SSL_MODE_AUTO_RETRY);
 
             // Force server authentication if defined
+            // SSL_VERIFY_NONE set automatically otherwise
             if (SERVER_AUTHENTICATION)
             {
                 SSL_CTX_set_verify(clientContext.get(), SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, NULL);
@@ -287,6 +296,13 @@ namespace tcp
             {
 #ifdef DEVELOP
                 ::std::cerr << DEBUGINFO << ": Error when doing TLS handshake" << ::std::endl;
+
+                unsigned long err;
+                while ((err = ERR_get_error()))
+                {
+                    char *err_msg = ERR_error_string(err, NULL);
+                    ::std::cerr << DEBUGINFO << ": SSL error (" << err << "): " << err_msg << ::std::endl;
+                }
 #endif // DEVELOP
 
                 SSL_free(tlsSocket);
