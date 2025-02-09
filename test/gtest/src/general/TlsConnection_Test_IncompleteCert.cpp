@@ -34,7 +34,7 @@ void General_TlsConnection_Test_IncompleteCert::TearDown()
 // ====================================================================================================================
 // Desc:       All server certificates given, but no client certificates given
 // Steps:      Connect to server without client certificate:
-//             Client: CA: nullptr, Cert: nullptr,  Key: nullptr,   Require server authentication: false (Not possible without CA)
+//             Client: CA: empty,   Cert: empty,    Key: empty,     Require server authentication: false (Not possible without CA)
 //             Server: CA: valid,   Cert: valid,    Key: valid,     Require client authentication: false
 // Exp Result: SERVER_START_OK, CLIENT_START_OK
 // ====================================================================================================================
@@ -42,5 +42,19 @@ TEST_F(General_TlsConnection_Test_IncompleteCert, PosTest_ServerAll_ClientNone)
 {
     EXPECT_EQ(tlsServer.start(port, KeyPaths::CaCert, KeyPaths::ServerCert, KeyPaths::ServerKey, false), SERVER_START_OK);
     EXPECT_EQ(tlsClient.start("localhost", port, "", "", "", false), CLIENT_START_OK);
+    EXPECT_EQ(tlsServer.getClientIds().size(), 1);
+}
+
+// ====================================================================================================================
+// Desc:       All server certificates given, but no client certificates given (only CA)
+// Steps:      Connect to server without client certificate:
+//             Client: CA: valid,   Cert: empty,    Key: empty,     Require server authentication: true
+//             Server: CA: valid,   Cert: valid,    Key: valid,     Require client authentication: false
+// Exp Result: SERVER_START_OK, CLIENT_START_OK
+// ====================================================================================================================
+TEST_F(General_TlsConnection_Test_IncompleteCert, PosTest_ServerAll_ClientCA)
+{
+    EXPECT_EQ(tlsServer.start(port, KeyPaths::CaCert, KeyPaths::ServerCert, KeyPaths::ServerKey, false), SERVER_START_OK);
+    EXPECT_EQ(tlsClient.start("localhost", port, KeyPaths::CaCert, "", "", true), CLIENT_START_OK);
     EXPECT_EQ(tlsServer.getClientIds().size(), 1);
 }

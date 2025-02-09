@@ -97,20 +97,6 @@ namespace tcp
         }
 
         /**
-         * @brief Checks if the client certificate paths are valid.
-         *
-         * This function verifies that the paths for the Certificate Authority (CA),
-         * the certificate, and the key are not empty. It returns true if all paths
-         * are non-empty, indicating that the client certificates are valid.
-         *
-         * @return true if all certificate paths are non-empty, false otherwise.
-         */
-        bool certPathsValid()
-        {
-            return !(CERTIFICATEPATH_CA.empty() || CERTIFICATEPATH_CERT.empty() || CERTIFICATEPATH_KEY.empty());
-        }
-
-        /**
          * @brief Sets the requirement for server authentication.
          *
          * This function enables or disables the requirement for server authentication
@@ -157,14 +143,16 @@ namespace tcp
                 return CLIENT_ERROR_START_SET_CONTEXT;
             }
 
-            // If valid certificate paths are set, load them from files
-            if (certPathsValid())
-            {
-                // Get pointer to certificate paths for C-style usage
-                const char *const pathToCaCert_p{CERTIFICATEPATH_CA.c_str()};
-                const char *const pathToCert_p{CERTIFICATEPATH_CERT.c_str()};
-                const char *const pathToPrivKey_p{CERTIFICATEPATH_KEY.c_str()};
+            // Get pointer to certificate paths for C-style usage
+            const char *const pathToCaCert_p{CERTIFICATEPATH_CA.c_str()};
+            const char *const pathToCert_p{CERTIFICATEPATH_CERT.c_str()};
+            const char *const pathToPrivKey_p{CERTIFICATEPATH_KEY.c_str()};
+            bool validCa{!CERTIFICATEPATH_CA.empty()};
+            bool validCert{!(CERTIFICATEPATH_CERT.empty() || CERTIFICATEPATH_KEY.empty())};
 
+            // Valid CA certificate: Load the CA certificate the client should trust. Mandatory for verifying server authentication
+            if (validCa)
+            {
                 // Check if CA certificate file exists
                 if (access(pathToCaCert_p, F_OK))
                 {
@@ -176,6 +164,21 @@ namespace tcp
                     return CLIENT_ERROR_START_WRONG_CA_PATH;
                 }
 
+                // Load the CA certificate the client should trust (Stop client and return with error if failed)
+                if (1 != SSL_CTX_load_verify_locations(clientContext.get(), pathToCaCert_p, nullptr))
+                {
+#ifdef DEVELOP
+                    ::std::cerr << DEBUGINFO << ": Error when loading the CA certificate the client should trust: " << pathToCaCert_p << ::std::endl;
+#endif // DEVELOP
+
+                    stop();
+                    return CLIENT_ERROR_START_WRONG_CA;
+                }
+            }
+
+            // Valid client certificate and private key: Load the client certificate and private key to authenticate the client
+            if (validCert)
+            {
                 // Check if certificate file exists
                 if (access(pathToCert_p, F_OK))
                 {
@@ -196,17 +199,6 @@ namespace tcp
 
                     stop();
                     return CLIENT_ERROR_START_WRONG_KEY_PATH;
-                }
-
-                // Load the CA certificate the client should trust (Stop client and return with error if failed)
-                if (1 != SSL_CTX_load_verify_locations(clientContext.get(), pathToCaCert_p, nullptr))
-                {
-#ifdef DEVELOP
-                    ::std::cerr << DEBUGINFO << ": Error when loading the CA certificate the client should trust: " << pathToCaCert_p << ::std::endl;
-#endif // DEVELOP
-
-                    stop();
-                    return CLIENT_ERROR_START_WRONG_CA;
                 }
 
                 // Load the client certificate (Stop client and return with error if failed)
