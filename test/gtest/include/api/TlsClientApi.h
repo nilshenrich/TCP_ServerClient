@@ -22,9 +22,13 @@ namespace TestApi
          *
          * @param ip IP address of TLS server
          * @param port TLS port of TLS server
+         * @param pathToCaCert Path to CA certificate. Default is proper self-signed test certificate
+         * @param pathToServerCert Path to server certificate. Default is proper self-signed test certificate
+         * @param pathToServerKey Path to server key. Default is proper self-signed test certificate
+         * @param serverAuth Flag if server authentication is required. Default is true
          * @return int TLSCLIENT_CONNECT_OK if successful, other if failed
          */
-        int start(const ::std::string &ip, const int port, const ::std::string pathToCaCert = KeyPaths::CaCert, const ::std::string pathToClientCert = KeyPaths::ClientCert, const ::std::string pathToClientKey = KeyPaths::ClientKey);
+        int start(const ::std::string &ip, const int port, const ::std::string pathToCaCert = KeyPaths::CaCert, const ::std::string pathToClientCert = KeyPaths::ClientCert, const ::std::string pathToClientKey = KeyPaths::ClientKey, const bool serverAuth = true);
 
         /**
          * @brief Disconnect from TLS server
@@ -72,9 +76,13 @@ namespace TestApi
          *
          * @param ip IP address of TLS server
          * @param port TLS port of TLS server
+         * @param pathToCaCert Path to CA certificate. Default is proper self-signed test certificate
+         * @param pathToServerCert Path to server certificate. Default is proper self-signed test certificate
+         * @param pathToServerKey Path to server key. Default is proper self-signed test certificate
+         * @param serverAuth Flag if server authentication is required. Default is true
          * @return int TLSCLIENT_CONNECT_OK if successful, other if failed
          */
-        int start(const ::std::string &ip, const int port, const ::std::string pathToCaCert = KeyPaths::CaCert, const ::std::string pathToClientCert = KeyPaths::ClientCert, const ::std::string pathToClientKey = KeyPaths::ClientKey);
+        int start(const ::std::string &ip, const int port, const ::std::string pathToCaCert = KeyPaths::CaCert, const ::std::string pathToClientCert = KeyPaths::ClientCert, const ::std::string pathToClientKey = KeyPaths::ClientKey, const bool serverAuth = true);
 
         /**
          * @brief Disconnect from TLS server

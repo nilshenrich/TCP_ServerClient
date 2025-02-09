@@ -46,9 +46,7 @@ namespace tcp
        *
        * @return int
        */
-      int init(const char *const = nullptr,
-               const char *const = nullptr,
-               const char *const = nullptr) override final { return SERVER_START_OK; }
+      int init() override final { return SERVER_START_OK; }
 
       /**
        * @brief Initialize connection to a specific client (Identified by its TCP ID) (Do nothing. Just return pointer to TCP ID).
