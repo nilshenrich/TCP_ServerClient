@@ -34,11 +34,11 @@ void General_TlsConnection_Test_IncompleteCert::TearDown()
 // ====================================================================================================================
 // Desc:       All server certificates given, but no client certificates given
 // Steps:      Connect to server without client certificate:
-//             Client: CA: empty,   Cert: empty,    Key: empty,     Require server authentication: false (Not possible without CA)
 //             Server: CA: valid,   Cert: valid,    Key: valid,     Require client authentication: false
+//             Client: CA: empty,   Cert: empty,    Key: empty,     Require server authentication: false (Not possible without CA)
 // Exp Result: SERVER_START_OK, CLIENT_START_OK
 // ====================================================================================================================
-TEST_F(General_TlsConnection_Test_IncompleteCert, PosTest_ServerAll_ClientNone)
+TEST_F(General_TlsConnection_Test_IncompleteCert, PosTest_ServerAll_ClientNone_ff)
 {
     EXPECT_EQ(tlsServer.start(port, KeyPaths::CaCert, KeyPaths::ServerCert, KeyPaths::ServerKey, false), SERVER_START_OK);
     EXPECT_EQ(tlsClient.start("localhost", port, "", "", "", false), CLIENT_START_OK);
@@ -46,13 +46,41 @@ TEST_F(General_TlsConnection_Test_IncompleteCert, PosTest_ServerAll_ClientNone)
 }
 
 // ====================================================================================================================
-// Desc:       All server certificates given, but no client certificates given (only CA)
+// Desc:       All server certificates given, but no client certificates given
 // Steps:      Connect to server without client certificate:
-//             Client: CA: valid,   Cert: empty,    Key: empty,     Require server authentication: true
 //             Server: CA: valid,   Cert: valid,    Key: valid,     Require client authentication: false
+//             Client: CA: empty,   Cert: empty,    Key: empty,     Require server authentication: true (Should be treated as false)
 // Exp Result: SERVER_START_OK, CLIENT_START_OK
 // ====================================================================================================================
-TEST_F(General_TlsConnection_Test_IncompleteCert, PosTest_ServerAll_ClientCA)
+TEST_F(General_TlsConnection_Test_IncompleteCert, PosTest_ServerAll_ClientNone_ft)
+{
+    EXPECT_EQ(tlsServer.start(port, KeyPaths::CaCert, KeyPaths::ServerCert, KeyPaths::ServerKey, false), SERVER_START_OK);
+    EXPECT_EQ(tlsClient.start("localhost", port, "", "", "", true), CLIENT_START_OK);
+    EXPECT_EQ(tlsServer.getClientIds().size(), 1);
+}
+
+// ====================================================================================================================
+// Desc:       All server certificates given, but no client certificates given (only CA)
+// Steps:      Connect to server without client certificate:
+//             Server: CA: valid,   Cert: valid,    Key: valid,     Require client authentication: false
+//             Client: CA: valid,   Cert: empty,    Key: empty,     Require server authentication: false
+// Exp Result: SERVER_START_OK, CLIENT_START_OK
+// ====================================================================================================================
+TEST_F(General_TlsConnection_Test_IncompleteCert, PosTest_ServerAll_ClientCA_ff)
+{
+    EXPECT_EQ(tlsServer.start(port, KeyPaths::CaCert, KeyPaths::ServerCert, KeyPaths::ServerKey, false), SERVER_START_OK);
+    EXPECT_EQ(tlsClient.start("localhost", port, KeyPaths::CaCert, "", "", false), CLIENT_START_OK);
+    EXPECT_EQ(tlsServer.getClientIds().size(), 1);
+}
+
+// ====================================================================================================================
+// Desc:       All server certificates given, but no client certificates given (only CA)
+// Steps:      Connect to server without client certificate:
+//             Server: CA: valid,   Cert: valid,    Key: valid,     Require client authentication: false
+//             Client: CA: valid,   Cert: empty,    Key: empty,     Require server authentication: true
+// Exp Result: SERVER_START_OK, CLIENT_START_OK
+// ====================================================================================================================
+TEST_F(General_TlsConnection_Test_IncompleteCert, PosTest_ServerAll_ClientCA_ft)
 {
     EXPECT_EQ(tlsServer.start(port, KeyPaths::CaCert, KeyPaths::ServerCert, KeyPaths::ServerKey, false), SERVER_START_OK);
     EXPECT_EQ(tlsClient.start("localhost", port, KeyPaths::CaCert, "", "", true), CLIENT_START_OK);

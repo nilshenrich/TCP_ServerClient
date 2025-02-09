@@ -229,7 +229,7 @@ namespace tcp
 
             // Force server authentication if defined
             // SSL_VERIFY_NONE set automatically otherwise
-            if (SERVER_AUTHENTICATION)
+            if (SERVER_AUTHENTICATION && validCa)
             {
                 SSL_CTX_set_verify(clientContext.get(), SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, NULL);
                 SSL_CTX_set_verify_depth(clientContext.get(), 1); // Server certificate must be issued directly by a trusted CA
