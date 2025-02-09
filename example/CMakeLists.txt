@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.10)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-project(example VERSION 3.1.0 DESCRIPTION "Example of using the TCP client and server classes")
+project(example VERSION 3.2.0 DESCRIPTION "Example of using the TCP client and server classes")
 
 add_executable(server server.cpp)
 add_executable(client client.cpp)

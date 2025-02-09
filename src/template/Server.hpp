@@ -4,7 +4,7 @@
  * @brief Base framework for all classes that build a network server based on TCP.
  * This class contains no functionality, but serves as a base framework for the creation of stable servers based on TCP.
  * When compiling with the -DDEBUG flag, the class will print out all received messages to the console.
- * @version 3.1.0
+ * @version 3.2.0
  * @date 2021-12-27
  *
  * @copyright Copyright (c) 2021
