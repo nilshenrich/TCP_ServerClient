@@ -90,15 +90,13 @@ TEST_F(General_TlsConnection_Test_IncompleteCert, PosTest_ServerAll_ClientCA_ft)
 // ====================================================================================================================
 // Desc:       No server certificates given, but all client certificates given
 // Steps:      Connect to server without server certificate:
-//             Server: CA: empty,   Cert: empty,    Key: empty,     Require client authentication: false (Not possible without CA)
+//             Server: CA: empty,   Cert: self,     Key: self,      Require client authentication: false (Not possible without CA)
 //             Client: CA: valid,   Cert: valid,    Key: valid,     Require server authentication: false
 // Exp Result: SERVER_START_OK, CLIENT_START_OK
 // ====================================================================================================================
-// FIXME: Failure with "error:0A0000C1:SSL routines::no shared cipher" (167772353)
-// -> Automatically use self-signed server cert-key-pair if not given. CA not needed.
 TEST_F(General_TlsConnection_Test_IncompleteCert, PosTest_ServerNone_ClientAll_ff)
 {
-    EXPECT_EQ(tlsServer.start(port, "", "", "", false), SERVER_START_OK);
+    EXPECT_EQ(tlsServer.start(port, "", SelfSignedKeyPaths::ServerCert, SelfSignedKeyPaths::ServerKey, false), SERVER_START_OK);
     EXPECT_EQ(tlsClient.start("localhost", port, KeyPaths::CaCert, KeyPaths::ClientCert, KeyPaths::ClientKey, false), CLIENT_START_OK);
     EXPECT_EQ(tlsServer.getClientIds().size(), 1);
 }
@@ -106,15 +104,13 @@ TEST_F(General_TlsConnection_Test_IncompleteCert, PosTest_ServerNone_ClientAll_f
 // ====================================================================================================================
 // Desc:       No server certificates given, but all client certificates given
 // Steps:      Connect to server without server certificate:
-//             Server: CA: empty,   Cert: empty,    Key: empty,     Require client authentication: true (Should be treated as false)
+//             Server: CA: empty,   Cert: self,     Key: self,      Require client authentication: true (Should be treated as false)
 //             Client: CA: valid,   Cert: valid,    Key: valid,     Require server authentication: false
 // Exp Result: SERVER_START_OK, CLIENT_START_OK
 // ====================================================================================================================
-// FIXME: Failure with "error:0A0000C1:SSL routines::no shared cipher" (167772353)
-// -> Automatically use self-signed server cert-key-pair if not given. CA not needed.
 TEST_F(General_TlsConnection_Test_IncompleteCert, PosTest_ServerNone_ClientAll_tf)
 {
-    EXPECT_EQ(tlsServer.start(port, "", "", "", true), SERVER_START_OK);
+    EXPECT_EQ(tlsServer.start(port, "", SelfSignedKeyPaths::ServerCert, SelfSignedKeyPaths::ServerKey, true), SERVER_START_OK);
     EXPECT_EQ(tlsClient.start("localhost", port, KeyPaths::CaCert, KeyPaths::ClientCert, KeyPaths::ClientKey, false), CLIENT_START_OK);
     EXPECT_EQ(tlsServer.getClientIds().size(), 1);
 }
@@ -122,15 +118,13 @@ TEST_F(General_TlsConnection_Test_IncompleteCert, PosTest_ServerNone_ClientAll_t
 // ====================================================================================================================
 // Desc:       No server certificates given, but all client certificates given (only CA)
 // Steps:      Connect to server without server certificate:
-//             Server: CA: valid,   Cert: empty,    Key: empty,     Require client authentication: false
+//             Server: CA: valid,   Cert: self,     Key: self,      Require client authentication: false
 //             Client: CA: valid,   Cert: valid,    Key: valid,     Require server authentication: false
 // Exp Result: SERVER_START_OK, CLIENT_START_OK
 // ====================================================================================================================
-// FIXME: Failure with "error:0A0000C1:SSL routines::no shared cipher" (167772353)
-// -> Automatically use self-signed server cert-key-pair if not given. CA not needed.
 TEST_F(General_TlsConnection_Test_IncompleteCert, PosTest_ServerCA_ClientAll_ff)
 {
-    EXPECT_EQ(tlsServer.start(port, KeyPaths::CaCert, "", "", false), SERVER_START_OK);
+    EXPECT_EQ(tlsServer.start(port, KeyPaths::CaCert, SelfSignedKeyPaths::ServerCert, SelfSignedKeyPaths::ServerKey, false), SERVER_START_OK);
     EXPECT_EQ(tlsClient.start("localhost", port, KeyPaths::CaCert, KeyPaths::ClientCert, KeyPaths::ClientKey, false), CLIENT_START_OK);
     EXPECT_EQ(tlsServer.getClientIds().size(), 1);
 }
@@ -138,15 +132,41 @@ TEST_F(General_TlsConnection_Test_IncompleteCert, PosTest_ServerCA_ClientAll_ff)
 // ====================================================================================================================
 // Desc:       No server certificates given, but all client certificates given (only CA)
 // Steps:      Connect to server without server certificate:
-//             Server: CA: valid,   Cert: empty,    Key: empty,     Require client authentication: true
+//             Server: CA: valid,   Cert: self,     Key: self,      Require client authentication: true
 //             Client: CA: valid,   Cert: valid,    Key: valid,     Require server authentication: false
 // Exp Result: SERVER_START_OK, CLIENT_START_OK
 // ====================================================================================================================
-// FIXME: Failure with "error:0A0000C1:SSL routines::no shared cipher" (167772353)
-// -> Automatically use self-signed server cert-key-pair if not given. CA not needed.
 TEST_F(General_TlsConnection_Test_IncompleteCert, PosTest_ServerCA_ClientAll_tf)
 {
-    EXPECT_EQ(tlsServer.start(port, KeyPaths::CaCert, "", "", true), SERVER_START_OK);
+    EXPECT_EQ(tlsServer.start(port, KeyPaths::CaCert, SelfSignedKeyPaths::ServerCert, SelfSignedKeyPaths::ServerKey, true), SERVER_START_OK);
     EXPECT_EQ(tlsClient.start("localhost", port, KeyPaths::CaCert, KeyPaths::ClientCert, KeyPaths::ClientKey, false), CLIENT_START_OK);
+    EXPECT_EQ(tlsServer.getClientIds().size(), 1);
+}
+
+// ====================================================================================================================
+// Desc:       No server certificates given, no client certificates given
+// Steps:      Connect to server without server and client certificates:
+//             Server: CA: empty,   Cert: self,     Key: self,      Require client authentication: false (Not possible without CA)
+//             Client: CA: empty,   Cert: empty,    Key: empty,     Require server authentication: false (Not possible without CA)
+// Exp Result: SERVER_START_OK, CLIENT_START_OK
+// ====================================================================================================================
+TEST_F(General_TlsConnection_Test_IncompleteCert, PosTest_ServerNone_ClientNone_ff)
+{
+    EXPECT_EQ(tlsServer.start(port, "", SelfSignedKeyPaths::ServerCert, SelfSignedKeyPaths::ServerKey, false), SERVER_START_OK);
+    EXPECT_EQ(tlsClient.start("localhost", port, "", "", "", false), CLIENT_START_OK);
+    EXPECT_EQ(tlsServer.getClientIds().size(), 1);
+}
+
+// ====================================================================================================================
+// Desc:       No server certificates given, no client certificates given
+// Steps:      Connect to server without server and client certificates:
+//             Server: CA: empty,   Cert: self,     Key: self,      Require client authentication: true (Should be treated as false)
+//             Client: CA: empty,   Cert: empty,    Key: empty,     Require server authentication: true (Should be treated as false)
+// Exp Result: SERVER_START_OK, CLIENT_START_OK
+// ====================================================================================================================
+TEST_F(General_TlsConnection_Test_IncompleteCert, PosTest_ServerNone_ClientNone_tt)
+{
+    EXPECT_EQ(tlsServer.start(port, "", SelfSignedKeyPaths::ServerCert, SelfSignedKeyPaths::ServerKey, true), SERVER_START_OK);
+    EXPECT_EQ(tlsClient.start("localhost", port, "", "", "", true), CLIENT_START_OK);
     EXPECT_EQ(tlsServer.getClientIds().size(), 1);
 }

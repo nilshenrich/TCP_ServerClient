@@ -184,7 +184,6 @@ namespace tcp
          const char *const pathToCert_p{CERTIFICATEPATH_CERT.c_str()};
          const char *const pathToPrivKey_p{CERTIFICATEPATH_KEY.c_str()};
          bool validCa{!CERTIFICATEPATH_CA.empty()};
-         bool validCert{!(CERTIFICATEPATH_CERT.empty() || CERTIFICATEPATH_KEY.empty())};
 
          // Valid CA certificate: Load the CA certificate the server should trust. Mandatory for verifying client authentication
          if (validCa)
@@ -216,54 +215,51 @@ namespace tcp
             SSL_CTX_set_client_CA_list(serverContext.get(), SSL_load_client_CA_file(pathToCaCert_p));
          }
 
-         // Valid server certificate and private key: Load the server certificate and private key to authenticate the server
-         if (validCert)
+         // The server always needs a certificate and a private key, CA certificate is optional
+         // Check if certificate file exists
+         if (access(pathToCert_p, F_OK))
          {
-            // Check if certificate file exists
-            if (access(pathToCert_p, F_OK))
-            {
 #ifdef DEVELOP
-               ::std::cerr << DEBUGINFO << ": Server certificate file does not exist" << ::std::endl;
+            ::std::cerr << DEBUGINFO << ": Server certificate file does not exist" << ::std::endl;
 #endif // DEVELOP
 
-               stop();
-               return SERVER_ERROR_START_WRONG_CERT_PATH;
-            }
+            stop();
+            return SERVER_ERROR_START_WRONG_CERT_PATH;
+         }
 
-            // Check if private key file exists
-            if (access(pathToPrivKey_p, F_OK))
-            {
+         // Check if private key file exists
+         if (access(pathToPrivKey_p, F_OK))
+         {
 #ifdef DEVELOP
-               ::std::cerr << DEBUGINFO << ": Server private key file does not exist" << ::std::endl;
+            ::std::cerr << DEBUGINFO << ": Server private key file does not exist" << ::std::endl;
 #endif // DEVELOP
 
-               stop();
-               return SERVER_ERROR_START_WRONG_KEY_PATH;
-            }
+            stop();
+            return SERVER_ERROR_START_WRONG_KEY_PATH;
+         }
 
-            // Load server certificate
-            // Stop server and return error if it fails
-            if (1 != SSL_CTX_use_certificate_file(serverContext.get(), pathToCert_p, SSL_FILETYPE_PEM))
-            {
+         // Load server certificate
+         // Stop server and return error if it fails
+         if (1 != SSL_CTX_use_certificate_file(serverContext.get(), pathToCert_p, SSL_FILETYPE_PEM))
+         {
 #ifdef DEVELOP
-               ::std::cerr << DEBUGINFO << ": Error when loading server certificate \"" << pathToCert_p << "\"" << ::std::endl;
+            ::std::cerr << DEBUGINFO << ": Error when loading server certificate \"" << pathToCert_p << "\"" << ::std::endl;
 #endif // DEVELOP
 
-               stop();
-               return SERVER_ERROR_START_WRONG_CERT;
-            }
+            stop();
+            return SERVER_ERROR_START_WRONG_CERT;
+         }
 
-            // Load server private key (Includes check with certificate)
-            // Stop server and return error if it fails
-            if (1 != SSL_CTX_use_PrivateKey_file(serverContext.get(), pathToPrivKey_p, SSL_FILETYPE_PEM))
-            {
+         // Load server private key (Includes check with certificate)
+         // Stop server and return error if it fails
+         if (1 != SSL_CTX_use_PrivateKey_file(serverContext.get(), pathToPrivKey_p, SSL_FILETYPE_PEM))
+         {
 #ifdef DEVELOP
-               ::std::cerr << DEBUGINFO << ": Error when loading server private key \"" << pathToPrivKey_p << "\"" << ::std::endl;
+            ::std::cerr << DEBUGINFO << ": Error when loading server private key \"" << pathToPrivKey_p << "\"" << ::std::endl;
 #endif // DEVELOP
 
-               stop();
-               return SERVER_ERROR_START_WRONG_KEY;
-            }
+            stop();
+            return SERVER_ERROR_START_WRONG_KEY;
          }
 
          // Set TLS mode (Auto retry)
