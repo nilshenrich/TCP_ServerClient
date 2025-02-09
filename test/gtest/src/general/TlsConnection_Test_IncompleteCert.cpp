@@ -86,3 +86,63 @@ TEST_F(General_TlsConnection_Test_IncompleteCert, PosTest_ServerAll_ClientCA_ft)
     EXPECT_EQ(tlsClient.start("localhost", port, KeyPaths::CaCert, "", "", true), CLIENT_START_OK);
     EXPECT_EQ(tlsServer.getClientIds().size(), 1);
 }
+
+// ====================================================================================================================
+// Desc:       No server certificates given, but all client certificates given
+// Steps:      Connect to server without server certificate:
+//             Server: CA: empty,   Cert: empty,    Key: empty,     Require client authentication: false (Not possible without CA)
+//             Client: CA: valid,   Cert: valid,    Key: valid,     Require server authentication: false
+// Exp Result: SERVER_START_OK, CLIENT_START_OK
+// ====================================================================================================================
+// FIXME: Failure with "error:0A0000C1:SSL routines::no shared cipher" (167772353)
+TEST_F(General_TlsConnection_Test_IncompleteCert, PosTest_ServerNone_ClientAll_ff)
+{
+    EXPECT_EQ(tlsServer.start(port, "", "", "", false), SERVER_START_OK);
+    EXPECT_EQ(tlsClient.start("localhost", port, KeyPaths::CaCert, KeyPaths::ClientCert, KeyPaths::ClientKey, false), CLIENT_START_OK);
+    EXPECT_EQ(tlsServer.getClientIds().size(), 1);
+}
+
+// ====================================================================================================================
+// Desc:       No server certificates given, but all client certificates given
+// Steps:      Connect to server without server certificate:
+//             Server: CA: empty,   Cert: empty,    Key: empty,     Require client authentication: true (Should be treated as false)
+//             Client: CA: valid,   Cert: valid,    Key: valid,     Require server authentication: false
+// Exp Result: SERVER_START_OK, CLIENT_START_OK
+// ====================================================================================================================
+// FIXME: Failure with "error:0A0000C1:SSL routines::no shared cipher" (167772353)
+TEST_F(General_TlsConnection_Test_IncompleteCert, PosTest_ServerNone_ClientAll_tf)
+{
+    EXPECT_EQ(tlsServer.start(port, "", "", "", true), SERVER_START_OK);
+    EXPECT_EQ(tlsClient.start("localhost", port, KeyPaths::CaCert, KeyPaths::ClientCert, KeyPaths::ClientKey, false), CLIENT_START_OK);
+    EXPECT_EQ(tlsServer.getClientIds().size(), 1);
+}
+
+// ====================================================================================================================
+// Desc:       No server certificates given, but all client certificates given (only CA)
+// Steps:      Connect to server without server certificate:
+//             Server: CA: valid,   Cert: empty,    Key: empty,     Require client authentication: false
+//             Client: CA: valid,   Cert: valid,    Key: valid,     Require server authentication: false
+// Exp Result: SERVER_START_OK, CLIENT_START_OK
+// ====================================================================================================================
+// FIXME: Failure with "error:0A0000C1:SSL routines::no shared cipher" (167772353)
+TEST_F(General_TlsConnection_Test_IncompleteCert, PosTest_ServerCA_ClientAll_ff)
+{
+    EXPECT_EQ(tlsServer.start(port, KeyPaths::CaCert, "", "", false), SERVER_START_OK);
+    EXPECT_EQ(tlsClient.start("localhost", port, KeyPaths::CaCert, KeyPaths::ClientCert, KeyPaths::ClientKey, false), CLIENT_START_OK);
+    EXPECT_EQ(tlsServer.getClientIds().size(), 1);
+}
+
+// ====================================================================================================================
+// Desc:       No server certificates given, but all client certificates given (only CA)
+// Steps:      Connect to server without server certificate:
+//             Server: CA: valid,   Cert: empty,    Key: empty,     Require client authentication: true
+//             Client: CA: valid,   Cert: valid,    Key: valid,     Require server authentication: false
+// Exp Result: SERVER_START_OK, CLIENT_START_OK
+// ====================================================================================================================
+// FIXME: Failure with "error:0A0000C1:SSL routines::no shared cipher" (167772353)
+TEST_F(General_TlsConnection_Test_IncompleteCert, PosTest_ServerCA_ClientAll_tf)
+{
+    EXPECT_EQ(tlsServer.start(port, KeyPaths::CaCert, "", "", true), SERVER_START_OK);
+    EXPECT_EQ(tlsClient.start("localhost", port, KeyPaths::CaCert, KeyPaths::ClientCert, KeyPaths::ClientKey, false), CLIENT_START_OK);
+    EXPECT_EQ(tlsServer.getClientIds().size(), 1);
+}

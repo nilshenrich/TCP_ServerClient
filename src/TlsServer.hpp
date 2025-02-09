@@ -131,20 +131,6 @@ namespace tcp
       }
 
       /**
-       * @brief Checks if the server certificate paths are valid.
-       *
-       * This function verifies that the paths for the Certificate Authority (CA),
-       * the certificate, and the key are not empty. It returns true if all paths
-       * are non-empty, indicating that the server certificates are valid.
-       *
-       * @return true if all certificate paths are non-empty, false otherwise.
-       */
-      bool certPathsValid()
-      {
-         return !(CERTIFICATEPATH_CA.empty() || CERTIFICATEPATH_CERT.empty() || CERTIFICATEPATH_KEY.empty());
-      }
-
-      /**
        * @brief Sets the requirement for client authentication.
        *
        * This function enables or disables the requirement for client authentication
@@ -193,14 +179,15 @@ namespace tcp
             return SERVER_ERROR_START_SET_CONTEXT;
          }
 
-         // If valid certificate paths are set, load them from files
-         if (certPathsValid())
-         {
-            // Get pointer to certificate paths for C-style usage
-            const char *const pathToCaCert_p{CERTIFICATEPATH_CA.c_str()};
-            const char *const pathToCert_p{CERTIFICATEPATH_CERT.c_str()};
-            const char *const pathToPrivKey_p{CERTIFICATEPATH_KEY.c_str()};
+         // Get pointer to certificate paths for C-style usage
+         const char *const pathToCaCert_p{CERTIFICATEPATH_CA.c_str()};
+         const char *const pathToCert_p{CERTIFICATEPATH_CERT.c_str()};
+         const char *const pathToPrivKey_p{CERTIFICATEPATH_KEY.c_str()};
+         bool validCa{!CERTIFICATEPATH_CA.empty()};
+         bool validCert{!(CERTIFICATEPATH_CERT.empty() || CERTIFICATEPATH_KEY.empty())};
 
+         if (validCa)
+         {
             // Check if CA certificate file exists
             if (access(pathToCaCert_p, F_OK))
             {
@@ -212,6 +199,24 @@ namespace tcp
                return SERVER_ERROR_START_WRONG_CA_PATH;
             }
 
+            // Load CA certificate
+            // Stop server and return error if it fails
+            if (1 != SSL_CTX_load_verify_locations(serverContext.get(), pathToCaCert_p, nullptr))
+            {
+#ifdef DEVELOP
+               ::std::cerr << DEBUGINFO << ": Error when reading CA certificate \"" << pathToCaCert_p << "\"" << ::std::endl;
+#endif // DEVELOP
+
+               stop();
+               return SERVER_ERROR_START_WRONG_CA;
+            }
+
+            // Set CA certificate as verification certificate to verify client certificate
+            SSL_CTX_set_client_CA_list(serverContext.get(), SSL_load_client_CA_file(pathToCaCert_p));
+         }
+
+         if (validCert)
+         {
             // Check if certificate file exists
             if (access(pathToCert_p, F_OK))
             {
@@ -233,21 +238,6 @@ namespace tcp
                stop();
                return SERVER_ERROR_START_WRONG_KEY_PATH;
             }
-
-            // Load CA certificate
-            // Stop server and return error if it fails
-            if (1 != SSL_CTX_load_verify_locations(serverContext.get(), pathToCaCert_p, nullptr))
-            {
-#ifdef DEVELOP
-               ::std::cerr << DEBUGINFO << ": Error when reading CA certificate \"" << pathToCaCert_p << "\"" << ::std::endl;
-#endif // DEVELOP
-
-               stop();
-               return SERVER_ERROR_START_WRONG_CA;
-            }
-
-            // Set CA certificate as verification certificate to verify client certificate
-            SSL_CTX_set_client_CA_list(serverContext.get(), SSL_load_client_CA_file(pathToCaCert_p));
 
             // Load server certificate
             // Stop server and return error if it fails
@@ -279,7 +269,7 @@ namespace tcp
 
          // Force client authentication if defined
          // SSL_VERIFY_NONE set automatically otherwise
-         if (CLIENT_AUTHENTICATION)
+         if (CLIENT_AUTHENTICATION && validCa)
          {
             SSL_CTX_set_verify(serverContext.get(), SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT | SSL_VERIFY_CLIENT_ONCE, NULL);
             SSL_CTX_set_verify_depth(serverContext.get(), 1); // Client certificate must be issued directly by a trusted CA
