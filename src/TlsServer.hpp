@@ -186,6 +186,7 @@ namespace tcp
          bool validCa{!CERTIFICATEPATH_CA.empty()};
          bool validCert{!(CERTIFICATEPATH_CERT.empty() || CERTIFICATEPATH_KEY.empty())};
 
+         // Valid CA certificate: Load the CA certificate the server should trust. Mandatory for verifying client authentication
          if (validCa)
          {
             // Check if CA certificate file exists
@@ -215,6 +216,7 @@ namespace tcp
             SSL_CTX_set_client_CA_list(serverContext.get(), SSL_load_client_CA_file(pathToCaCert_p));
          }
 
+         // Valid server certificate and private key: Load the server certificate and private key to authenticate the server
          if (validCert)
          {
             // Check if certificate file exists

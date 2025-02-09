@@ -95,6 +95,7 @@ TEST_F(General_TlsConnection_Test_IncompleteCert, PosTest_ServerAll_ClientCA_ft)
 // Exp Result: SERVER_START_OK, CLIENT_START_OK
 // ====================================================================================================================
 // FIXME: Failure with "error:0A0000C1:SSL routines::no shared cipher" (167772353)
+// -> Automatically use self-signed server cert-key-pair if not given. CA not needed.
 TEST_F(General_TlsConnection_Test_IncompleteCert, PosTest_ServerNone_ClientAll_ff)
 {
     EXPECT_EQ(tlsServer.start(port, "", "", "", false), SERVER_START_OK);
@@ -110,6 +111,7 @@ TEST_F(General_TlsConnection_Test_IncompleteCert, PosTest_ServerNone_ClientAll_f
 // Exp Result: SERVER_START_OK, CLIENT_START_OK
 // ====================================================================================================================
 // FIXME: Failure with "error:0A0000C1:SSL routines::no shared cipher" (167772353)
+// -> Automatically use self-signed server cert-key-pair if not given. CA not needed.
 TEST_F(General_TlsConnection_Test_IncompleteCert, PosTest_ServerNone_ClientAll_tf)
 {
     EXPECT_EQ(tlsServer.start(port, "", "", "", true), SERVER_START_OK);
@@ -125,6 +127,7 @@ TEST_F(General_TlsConnection_Test_IncompleteCert, PosTest_ServerNone_ClientAll_t
 // Exp Result: SERVER_START_OK, CLIENT_START_OK
 // ====================================================================================================================
 // FIXME: Failure with "error:0A0000C1:SSL routines::no shared cipher" (167772353)
+// -> Automatically use self-signed server cert-key-pair if not given. CA not needed.
 TEST_F(General_TlsConnection_Test_IncompleteCert, PosTest_ServerCA_ClientAll_ff)
 {
     EXPECT_EQ(tlsServer.start(port, KeyPaths::CaCert, "", "", false), SERVER_START_OK);
@@ -140,6 +143,7 @@ TEST_F(General_TlsConnection_Test_IncompleteCert, PosTest_ServerCA_ClientAll_ff)
 // Exp Result: SERVER_START_OK, CLIENT_START_OK
 // ====================================================================================================================
 // FIXME: Failure with "error:0A0000C1:SSL routines::no shared cipher" (167772353)
+// -> Automatically use self-signed server cert-key-pair if not given. CA not needed.
 TEST_F(General_TlsConnection_Test_IncompleteCert, PosTest_ServerCA_ClientAll_tf)
 {
     EXPECT_EQ(tlsServer.start(port, KeyPaths::CaCert, "", "", true), SERVER_START_OK);
