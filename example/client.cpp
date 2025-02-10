@@ -18,9 +18,9 @@
 
 // Define worker methods
 void tcp_fragmented_workOnMessage(::std::string msg) { ::std::cout << "Fragmented message received from TCP server: " << msg << ::std::endl; }
-::std::ofstream tcp_continuous_stream{"Message_Continuous_TCP_Server.txt"};
+::std::ofstream tcp_continuous_stream{"Message_From_Continuous_TCP_Server.txt"};
 void tls_fragmented_workOnMessage(::std::string msg) { ::std::cout << "Fragmented message received from TLS server: " << msg << ::std::endl; }
-::std::ofstream tls_continuous_stream{"Message_Continuous_TLS_Server.txt"};
+::std::ofstream tls_continuous_stream{"Message_From_Continuous_TLS_Server.txt"};
 
 int main()
 {
@@ -50,8 +50,9 @@ int main()
         case 'c':
         case 'C':
         {
+            tlsClient_continuous.setCertificates("../keys/ca/ca_cert.pem", "../keys/client/client_cert.pem", "../keys/client/client_key.pem");
             int startTcp = tcpClient_continuous.start("localhost", 8082);
-            int startTls = tlsClient_continuous.start("localhost", 8084, "../keys/ca/ca_cert.pem", "../keys/client/client_cert.pem", "../keys/client/client_key.pem");
+            int startTls = tlsClient_continuous.start("localhost", 8084);
             if (startTcp != 0 || startTls != 0)
             {
                 ::std::cout << "Error starting continuous clients." << ::std::endl
@@ -68,8 +69,9 @@ int main()
         case 'f':
         case 'F':
         {
+            tlsClient_fragmented.setCertificates("../keys/ca/ca_cert.pem", "../keys/client/client_cert.pem", "../keys/client/client_key.pem");
             int startTcp = tcpClient_fragmented.start("localhost", 8081);
-            int startTls = tlsClient_fragmented.start("localhost", 8083, "../keys/ca/ca_cert.pem", "../keys/client/client_cert.pem", "../keys/client/client_key.pem");
+            int startTls = tlsClient_fragmented.start("localhost", 8083);
             if (startTcp != 0 || startTls != 0)
             {
                 ::std::cout << "Error starting fragmented clients." << ::std::endl

@@ -1,7 +1,7 @@
 # TCP_ServerClient
 
 Installable packages for TCP based client-server communication.\
-TLS encryption with two-way authentication is supported.
+TLS encryption is supported with either server authentication, client authentication or both (two-way-authentication).
 
 <details>
 <summary>Table of contents</summary>
@@ -12,6 +12,7 @@ TLS encryption with two-way authentication is supported.
   - [System requirements](#system-requirements)
   - [Installation](#installation)
   - [Usage](#usage)
+    - [Example](#example)
     - [Include in custom projects](#include-in-custom-projects)
     - [Message modes](#message-modes)
     - [Server](#server)
@@ -22,6 +23,7 @@ TLS encryption with two-way authentication is supported.
   - [Known issues](#known-issues)
     - [Pipe error if client sends immediately after exiting start](#pipe-error-if-client-sends-immediately-after-exiting-start)
     - [Test execution gets stuck after starting TLS server](#test-execution-gets-stuck-after-starting-tls-server)
+    - [Segmentation fault on full test execution](#segmentation-fault-on-full-test-execution)
   
 </details>
 
@@ -30,7 +32,10 @@ TLS encryption with two-way authentication is supported.
 This project provides installable C++ libraries for setting up TCP based client-server communications.\
 Such a connection can be:
 1. Unencrypted plain text TCP
-1. Encrypted with TLS (TLSv1.3 and two-way authentication)
+1. Encrypted with TLS (TLSv1.3 and authentication):
+   1. Server authentication (one-way-authentication)
+   1. Client authentication (one-way-authentication)
+   1. Both, server and client authentication (two-way-authentication)
 
 Both, the server and the client can send and receive messages asynchronously. To send a message to an established connection, a send method can be called any time. To work on incoming messages, a receive method can be defined to be called immediately in a separate thread.
 
@@ -51,12 +56,12 @@ There are some size limitations for this library:
   *This limitation is only applied to a single server instance. It is possible to create an application with multiple servers with a maximum of 4096 connections each.*
 * Maximum allowed message length:\
   *This number depends on the CPU architecture and available memory you are using.\
-  For checking, just call the method `max_size()` on any variable of type string. For most modern systems, this value is such high that it can be treated as infinity.*
+  For checking, just call the method `max_size()` on any variable of type string. For most modern systems, this value is such high that it can be treated as infinity (On a regular 64bit system, this number is 2<sup>64</sup>-1).*
 
 ## System requirements
 
 This library is developed on a debian based system, so this manual is specific to it.\
-Nevertheless, it only depends on the C++17 standard and the standard library, so it should be possible to use it on other systems.
+Nevertheless, it only depends on the C++17 standard, the standard library and the OpenSSL C++ library, so it should be possible to use it on other systems.
 
 For the hardware I'm not giving any limitations. It is usable on low level hardware as well as on high performance systems.
 
@@ -89,9 +94,19 @@ To install the library on your system, follow these steps:
 
 ## Usage
 
-To see a basic example that shows you all functionality, please build and run the [example](example) project:
+To see a basic example that shows you all functionality, please build and run the [example](./example) project:
 
-1. Build both applications
+### Example
+
+1. Install cmake to compile the example
+
+    ```console
+    sudo apt install cmake
+    ```
+
+    The other third party software mentioned in [Installation](#installation) is needed as well.
+
+2. Build both applications
 
     ```console
     mkdir build
@@ -100,13 +115,9 @@ To see a basic example that shows you all functionality, please build and run th
     make
     ```
 
-2. Create self-signed certificates for TLS encryption
+    Building the example project automatically installs the library on your system and creates self-signed certificates for the TLS encryption.
 
-    ```console
-    ./CreateCerts.sh
-    ```
-
-3. Start the server and client
+3. Start the server and client and follow instructions on the console
 
     Open a terminal and start the server
     ```console
@@ -147,7 +158,7 @@ In the fragmented mode, all messages are text packages with a finite length. Whe
 
 #### Continuous
 
-In the continuous mode, a continuous stream of data is sent and received. To work on incoming data, an outgoing stream must be defined. For a client, that holds just one active connection to a server, a pointer to an outgoing stream must be defined. For a server, that holds multiple connections, a method returning a pointer to an outgoing stream must be defined based on the sending client ID.
+In the continuous mode, a continuous stream of data is sent and received. To work on incoming data, an outgoing stream must be defined. For a client, that holds just one active connection to a server, a pointer to an outgoing stream must be defined. For a server, that holds multiple connections, a method returning a pointer to an outgoing stream must be defined based on the sending client ID. Please keep in mind that returning a pointer to an existing stream will crash the program. For the server, the stream must be generated with the **new** keyword in the definition method.
 
 ### Server
 
@@ -292,9 +303,7 @@ The following methods are the same for all kinds of servers (TCP or TLS in fragm
 
     ```cpp
     TcpServer tcpServer;
-    TlsServer tlsServer;
     tcpServer.start(8081);
-    tlsServer.start(8082, "ca_cert.pem", "server_cert.pem", "server_key.pem");
     ```
 
 2. stop():
@@ -313,11 +322,39 @@ The following methods are the same for all kinds of servers (TCP or TLS in fragm
     tcpServer.sendMsg(4, "example message over TCP");
     ```
 
-4. getClientIp():
+4. TlsServer::setCertificates():
+
+    The **setCertificates**-method is only available for **TlsServer** and is used to set the certificates for the server.\
+    The first argument takes a path to the CA certificate file, used to authenticate the client as issuer in 1. place.\
+    The second and third arguments take the path to the server certificate and the server key file to authenticate itself.
+
+    ```cpp
+    tlsServer.setCertificates("ca_cert.pem", "server_cert.pem", "server_key.pem")
+    ```
+
+5. TlsServer::clearCertificates():
+
+    The **clearCertificates**-method is only available for **TlsServer** and is used to clear the certificates for the server.\
+    This method is useful when the server should run without TLS encryption.
+
+    ```cpp
+    tlsServer.clearCertificates();
+    ```
+
+6. TlsServer::requireClientAuthentication():
+
+    The **requireClientAuthentication**-method is only available for **TlsServer** and is used to require client authentication.\
+    If the passed value is **true**, the client must authenticate itself with a certificate issued by the CA, if it is **false**, the client can connect without a or self signed certificate.
+
+    ```cpp
+    tlsServer.requireClientAuthentication(true);
+    ```
+
+7. getClientIp():
 
     The **getClientIp**-method returns the IP address of a connected client (TCP or TLS) identified by its TCP ID. If no client with this ID is connected, the string **"Failed Read!"** is returned.
 
-5. TlsServer::getSubjPartFromClientCert():
+8. TlsServer::getSubjPartFromClientCert():
 
     The **getSubjPartFromClientCert**-method only exists for **TlsServer** and returns a given subject part of the client's certificate identified by its TCP ID or its tlsSocket (SSL*). If the tlsSocket parameter is*nullptr*, the client is identified by its TCP ID, otherwise it is identified by the given tlsSocket parameter.
 
@@ -338,7 +375,7 @@ The following methods are the same for all kinds of servers (TCP or TLS in fragm
 
     will return "Stuttgart" if this is the client's city name.
 
-6. isRunning():
+9. isRunning():
 
     The **isRunning**-method returns the running flag of the server.\
     **True** means: *The server is running*\
@@ -384,9 +421,7 @@ This function can be linked to client similarly to server via standalone, member
 
     ```cpp
     TcpClient tcpClient;
-    TlsClient tlsClient;
     tcpClient.start("serverHost", 8081);
-    tcpClient.start("serverHost", 8082, "ca_cert.pem", "client_cert.pem", "client_key.pem");
     ```
 
 2. stop():
@@ -397,7 +432,35 @@ This function can be linked to client similarly to server via standalone, member
     tcpClient.stop();
     ```
 
-3. sendMsg():
+3. TlsClient::setCertificates():
+   
+    The **setCertificates**-method is only available for **TlsClient** and is used to set the certificates for the client.\
+    The first argument takes a path to the CA certificate file, used to authenticate the server as issuer in 1. place.\
+    The second and third arguments take the path to the client certificate and the client key file to authenticate itself.
+
+    ```cpp
+    tlsClient.setCertificates("ca_cert.pem", "client_cert.pem", "client_key.pem")
+    ```
+
+4. TlsClient::clearCertificates():
+
+    The **clearCertificates**-method is only available for **TlsClient** and is used to clear the certificates for the client.\
+    This method is useful when the client should run without TLS encryption.
+
+    ```cpp
+    tlsClient.clearCertificates();
+    ```
+
+5. TlsClient::requireServerAuthentication():
+    
+        The **requireServerAuthentication**-method is only available for **TlsClient** and is used to require server authentication.\
+        If the passed value is **true**, the server must authenticate itself with a certificate issued by the CA, if it is **false**, the server can connect without a certificate.
+    
+        ```cpp
+        tlsClient.requireServerAuthentication(true);
+        ```
+
+6. sendMsg():
 
     The **sendMsg**-method sends a message to the server (over TCP or TLS). If the return value is **true**, the sending was successful, if it is **false**, not.
 
@@ -405,7 +468,7 @@ This function can be linked to client similarly to server via standalone, member
     tcpClient.sendMsg("example message over TCP");
     ```
 
-4. isRunning():
+7. isRunning():
 
     The **isRunning**-method returns the running flag of the client.\
     **True** means: *The client is running*\
@@ -483,4 +546,8 @@ server.start(8080);
 ### [Test execution gets stuck after starting TLS server](https://github.com/nilshenrich/TCP_ServerClient/issues/4)
 
 In some gtest executions, the runtime gets stuck right after starting TLS server, see:
-![Unittest_stuck](https://private-user-images.githubusercontent.com/57060396/341879963-e12b0e48-da9e-43e0-9079-d32dea267326.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3MTkwMDE1MzMsIm5iZiI6MTcxOTAwMTIzMywicGF0aCI6Ii81NzA2MDM5Ni8zNDE4Nzk5NjMtZTEyYjBlNDgtZGE5ZS00M2UwLTkwNzktZDMyZGVhMjY3MzI2LnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNDA2MjElMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjQwNjIxVDIwMjAzM1omWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPWE5ZWI5YzA2Nzk3NjQ0OThmZmU0MzI1NjAxMDA1Mzc1Yjc3NTdiYzU1NjMzMTZmNmM3MjNkOWM5ZDRiOGNmMmYmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0JmFjdG9yX2lkPTAma2V5X2lkPTAmcmVwb19pZD0wIn0.zeSSqdkbGsMUXunyF6BefZLOE3QxwJ7MZ9UN24vy6IM)
+![Unittest_stuck](https://private-user-images.githubusercontent.com/57060396/341879963-e12b0e48-da9e-43e0-9079-d32dea267326.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3MzkxODAzMjYsIm5iZiI6MTczOTE4MDAyNiwicGF0aCI6Ii81NzA2MDM5Ni8zNDE4Nzk5NjMtZTEyYjBlNDgtZGE5ZS00M2UwLTkwNzktZDMyZGVhMjY3MzI2LnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNTAyMTAlMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjUwMjEwVDA5MzM0NlomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTRlM2UxMzMzMGY4M2E5MDNjMGQyMGZlNjMyNDZkNzJhMWVhNjU3MDJlYmQ0ZTA2YTUwNDdjZjIzYThiZWEwNjUmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0In0.Yw1K45Afv6f0UikjsGqOqfmNKODg3yxnm3YT6cpbKBQ)
+
+### [Segmentation fault on full test execution](https://github.com/nilshenrich/TCP_ServerClient/issues/5)
+
+When the complete gtest is executed with JSON output, the runtime crashes with segmentation fault after not finding an available port in SetUp section.
