@@ -21,9 +21,13 @@ namespace TestApi
          * @brief Start TLS server
          *
          * @param port TLS port to listen on
+         * @param pathToCaCert Path to CA certificate. Default is proper self-signed test certificate
+         * @param pathToServerCert Path to server certificate. Default is proper self-signed test certificate
+         * @param pathToServerKey Path to server key. Default is proper self-signed test certificate
+         * @param clientAuth Flag if client authentication is required. Default is true
          * @return int SERVER_START_OK if successful, other if failed
          */
-        int start(const int port, const ::std::string pathToCaCert = KeyPaths::CaCert, const ::std::string pathToServerCert = KeyPaths::ServerCert, const ::std::string pathToServerKey = KeyPaths::ServerKey);
+        int start(const int port, const ::std::string pathToCaCert = KeyPaths::CaCert, const ::std::string pathToServerCert = KeyPaths::ServerCert, const ::std::string pathToServerKey = KeyPaths::ServerKey, const bool clientAuth = true);
 
         /**
          * @brief Stop TLS server
@@ -94,9 +98,13 @@ namespace TestApi
          * @brief Start TLS server
          *
          * @param port TLS port to listen on
+         * @param pathToCaCert Path to CA certificate. Default is proper self-signed test certificate
+         * @param pathToServerCert Path to server certificate. Default is proper self-signed test certificate
+         * @param pathToServerKey Path to server key. Default is proper self-signed test certificate
+         * @param clientAuth Flag if client authentication is required. Default is true
          * @return int SERVER_START_OK if successful, other if failed
          */
-        int start(const int port, const ::std::string pathToCaCert = KeyPaths::CaCert, const ::std::string pathToServerCert = KeyPaths::ServerCert, const ::std::string pathToServerKey = KeyPaths::ServerKey);
+        int start(const int port, const ::std::string pathToCaCert = KeyPaths::CaCert, const ::std::string pathToServerCert = KeyPaths::ServerCert, const ::std::string pathToServerKey = KeyPaths::ServerKey, const bool clientAuth = true);
 
         /**
          * @brief Stop TLS server

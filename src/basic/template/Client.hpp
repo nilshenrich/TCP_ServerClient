@@ -4,7 +4,7 @@
  * @brief Base framework for all classes that build a network client based on TCP.
  * This class contains no functionality, but serves a base framework for the creation of stable clients based on TCP.
  * When compiling with the -DDEBUG flag, the class will print out all received messages to the console.
- * @version 3.1.0
+ * @version 3.2.0
  * @date 2021-12-28
  *
  * @copyright Copyright (c) 2021
@@ -159,16 +159,9 @@ namespace tcp
          *
          * @param serverIp
          * @param serverPort
-         * @param pathToCaCert
-         * @param pathToCert
-         * @param pathToPrivKey
          * @return int
          */
-        int start(const ::std::string &serverIp,
-                  const int serverPort,
-                  const char *const pathToCaCert = nullptr,
-                  const char *const pathToCert = nullptr,
-                  const char *const pathToPrivKey = nullptr);
+        int start(const ::std::string &serverIp, const int serverPort);
 
         /**
          * @brief Stop the client and disconnects from the server.
@@ -203,14 +196,9 @@ namespace tcp
          * @brief Initialize the client.
          * This method is abstract and must be implemented by derived classes.
          *
-         * @param pathToCaCert
-         * @param pathToCert
-         * @param pathToPrivKey
          * @return int
          */
-        virtual int init(const char *const pathToCaCert,
-                         const char *const pathToCert,
-                         const char *const pathToPrivKey) = 0;
+        virtual int init() = 0;
 
         /**
          * @brief Initialize the connection to the server.
@@ -308,12 +296,7 @@ namespace tcp
     // ====================== Must be in header file because of the template class. =======================
 
     template <class SocketType, class SocketDeleter>
-    int Client<SocketType, SocketDeleter>::start(
-        const ::std::string &serverIp,
-        const int serverPort,
-        const char *const pathToCaCert,
-        const char *const pathToCert,
-        const char *const pathToPrivKey)
+    int Client<SocketType, SocketDeleter>::start(const ::std::string &serverIp, const int serverPort)
     {
         // Check if client is already running
         // If so, return with error
@@ -338,7 +321,7 @@ namespace tcp
 
         // Initialize the client
         // If initialization fails, return with error
-        int initCode{init(pathToCaCert, pathToCert, pathToPrivKey)};
+        int initCode{init()};
         if (initCode)
             return initCode;
 

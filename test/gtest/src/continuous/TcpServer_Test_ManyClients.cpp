@@ -1,4 +1,3 @@
-#include <gtest/gtest.h>
 #include <thread>
 #include <map>
 #include <memory>

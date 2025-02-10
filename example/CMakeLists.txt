@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.10)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-project(example VERSION 3.1.0 DESCRIPTION "Example of using the TCP client and server classes")
+project(example VERSION 3.2.0 DESCRIPTION "Example of using the TCP client and server classes")
 
 add_executable(server server.cpp)
 add_executable(client client.cpp)
@@ -13,8 +13,8 @@ add_executable(client client.cpp)
 target_compile_options(server PRIVATE -fexceptions -Wall $<$<NOT:$<CONFIG:DEBUG>>: -O3> $<$<CONFIG:DEBUG>: -g -Og -DDEVELOP>)
 target_compile_options(client PRIVATE -fexceptions -Wall $<$<NOT:$<CONFIG:DEBUG>>: -O3> $<$<CONFIG:DEBUG>: -g -Og -DDEVELOP>)
 
-target_link_libraries(server -lcrypto -lcrypt -lssl -pthread)
-target_link_libraries(client -lcrypto -lcrypt -lssl -pthread)
+target_link_libraries(server -lssl $<$<CONFIG:DEBUG>: -lcrypto>)
+target_link_libraries(client -lssl $<$<CONFIG:DEBUG>: -lcrypto>)
 
 # Message build type
 if ("${CMAKE_BUILD_TYPE}" STREQUAL "DEBUG")

@@ -1,5 +1,5 @@
-#ifndef GENERAL_TLS_CLIENT_TEST_START_H_
-#define GENERAL_TLS_CLIENT_TEST_START_H_
+#ifndef GENERAL_TLS_CONNECTION_TEST_INCOMPLETECERT_H_
+#define GENERAL_TLS_CONNECTION_TEST_INCOMPLETECERT_H_
 
 #include <gtest/gtest.h>
 
@@ -8,11 +8,11 @@
 
 namespace Test
 {
-    class General_TlsClient_Test_Start : public testing::Test
+    class General_TlsConnection_Test_IncompleteCert : public testing::Test
     {
     public:
-        General_TlsClient_Test_Start();
-        virtual ~General_TlsClient_Test_Start();
+        General_TlsConnection_Test_IncompleteCert();
+        virtual ~General_TlsConnection_Test_IncompleteCert();
 
     protected:
         void SetUp() override;
@@ -27,4 +27,4 @@ namespace Test
     };
 }
 
-#endif // GENERAL_TLS_CLIENT_TEST_START_H_
+#endif // GENERAL_TLS_CONNECTION_TEST_INCOMPLETECERT_H_

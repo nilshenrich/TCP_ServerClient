@@ -2,7 +2,7 @@
  * @file TcpClient.hpp
  * @author Nils Henrich
  * @brief TCP client for unencrypted data transfer without authentication.
- * @version 3.1.0
+ * @version 3.2.0
  * @date 2021-12-27
  *
  * @copyright Copyright (c) 2021
@@ -49,9 +49,7 @@ namespace tcp
          *
          * @return int
          */
-        int init(const char *const,
-                 const char *const,
-                 const char *const) override final { return 0; }
+        int init() override final { return 0; }
 
         /**
          * @brief Initialize the connection
