@@ -1,6 +1,8 @@
 #ifndef FRAGMENTATION_TLS_CONNECTION_TEST_MSGTRANSFER_H_
 #define FRAGMENTATION_TLS_CONNECTION_TEST_MSGTRANSFER_H_
 
+#include <gtest/gtest.h>
+
 #include "TlsServerApi.h"
 #include "TlsClientApi.h"
 

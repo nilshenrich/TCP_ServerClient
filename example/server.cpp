@@ -24,13 +24,13 @@
 void tcp_fragmented_workOnEstablished(int id) { tcpServer_fragmented.sendMsg(id, "Hello TCP client " + ::std::to_string(id) + " in fragmented mode!"); }
 void tcp_continuous_workOnEstablished(int id) { tcpServer_continuous.sendMsg(id, "Hello TCP client " + ::std::to_string(id) + " in continuous mode!"); }
 void tcp_fragmented_workOnMessage(int id, ::std::string msg) { ::std::cout << "Fragmented message received from TCP client " << id << ": " << msg << ::std::endl; }
-::std::ofstream *tcp_continuous_createStream(int id) { return new ::std::ofstream("Message_Continuous_TCP_Client-" + ::std::to_string(id) + ".txt"); }
+::std::ofstream *tcp_continuous_createStream(int id) { return new ::std::ofstream("Message_From_Continuous_TCP_Client-" + ::std::to_string(id) + ".txt"); }
 void tcp_workOnClosed(int id) { ::std::cout << "TCP client " << id << " closed connection." << ::std::endl; }
 
 void tls_fragmented_workOnEstablished(int id) { tlsServer_fragmented.sendMsg(id, "Hello TLS client " + ::std::to_string(id) + " in fragmented mode!"); }
 void tls_continuous_workOnEstablished(int id) { tlsServer_continuous.sendMsg(id, "Hello TLS client " + ::std::to_string(id) + " in continuous mode!"); }
 void tls_fragmented_workOnMessage(int id, ::std::string msg) { ::std::cout << "Fragmented message received from TLS client " << id << ": " << msg << ::std::endl; }
-::std::ofstream *tls_continuous_createStream(int id) { return new ::std::ofstream("Message_Continuous_TLS_Client-" + ::std::to_string(id) + ".txt"); }
+::std::ofstream *tls_continuous_createStream(int id) { return new ::std::ofstream("Message_From_Continuous_TLS_Client-" + ::std::to_string(id) + ".txt"); }
 void tls_workOnClosed(int id) { ::std::cout << "TLS client " << id << " closed connection." << ::std::endl; }
 
 int main()
@@ -52,11 +52,15 @@ int main()
     tlsServer_continuous.setCreateForwardStream(tls_continuous_createStream);
     tlsServer_continuous.setWorkOnClosed(tcp_workOnClosed);
 
+    // Define certificates for TLS servers
+    tlsServer_fragmented.setCertificates("../keys/ca/ca_cert.pem", "../keys/server/server_cert.pem", "../keys/server/server_key.pem");
+    tlsServer_continuous.setCertificates("../keys/ca/ca_cert.pem", "../keys/server/server_cert.pem", "../keys/server/server_key.pem");
+
     // Start servers
     int startTcp_fragmented = tcpServer_fragmented.start(8081);
     int startTcp_continuous = tcpServer_continuous.start(8082);
-    int startTls_fragmented = tlsServer_fragmented.start(8083, "../keys/ca/ca_cert.pem", "../keys/server/server_cert.pem", "../keys/server/server_key.pem");
-    int startTls_continuous = tlsServer_continuous.start(8084, "../keys/ca/ca_cert.pem", "../keys/server/server_cert.pem", "../keys/server/server_key.pem");
+    int startTls_fragmented = tlsServer_fragmented.start(8083);
+    int startTls_continuous = tlsServer_continuous.start(8084);
     if (startTcp_fragmented != 0 || startTcp_continuous != 0 || startTls_fragmented != 0 || startTls_continuous != 0)
     {
         ::std::cout << "Error starting servers." << ::std::endl

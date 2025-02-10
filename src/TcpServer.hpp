@@ -2,7 +2,7 @@
  * @file TcpServer.hpp
  * @author Nils Henrich
  * @brief TCP server for unencrypted data transfer without authentication.
- * @version 3.1.0
+ * @version 3.2.0
  * @date 2021-12-27
  *
  * @copyright Copyright (c) 2021
@@ -46,9 +46,7 @@ namespace tcp
        *
        * @return int
        */
-      int init(const char *const = nullptr,
-               const char *const = nullptr,
-               const char *const = nullptr) override final { return SERVER_START_OK; }
+      int init() override final { return SERVER_START_OK; }
 
       /**
        * @brief Initialize connection to a specific client (Identified by its TCP ID) (Do nothing. Just return pointer to TCP ID).

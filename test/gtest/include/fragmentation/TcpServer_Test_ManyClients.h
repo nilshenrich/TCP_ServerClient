@@ -1,6 +1,8 @@
 #ifndef FRAGMENTATION_TCP_SERVER_TEST_MANYCLIENTS_H_
 #define FRAGMENTATION_TCP_SERVER_TEST_MANYCLIENTS_H_
 
+#include <gtest/gtest.h>
+
 #include "TcpServerApi.h"
 #include "TcpClientApi.h"
 
