@@ -186,6 +186,7 @@ namespace tcp
 
         /**
          * @brief Get the IP address of a specific connected client (Identified by its TCP ID).
+         *        Throw Server_error if client ID is not found.
          *
          * @param clientId
          * @return string
@@ -535,7 +536,7 @@ namespace tcp
             ::std::cerr << DEBUGINFO << ": Error reading client " << clientId << "'s IP address" << ::std::endl;
 #endif // DEVELOP
 
-            return "Failed Read!";
+            throw Server_error("Error reading client's IP address");
         }
 
         // Convert the IP address to a string and return it
