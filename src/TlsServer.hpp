@@ -62,6 +62,7 @@ namespace tcp
 
       /**
        * @brief Get specific subject part as string of the certificate of a specific connected client (Identified by its TCP ID).
+       *        Throw Server_error if client ID is not found or NID is invalid.
        *
        * @param clientId
        * @param tlsSocket
@@ -82,7 +83,7 @@ namespace tcp
                ::std::cerr << DEBUGINFO << ": No connected client " << clientId << ::std::endl;
 #endif // DEVELOP
 
-               return "";
+               throw Server_error("No connected client " + ::std::to_string(clientId) + " to read certificate subject part from");
             }
 
             tlsSocket = activeConnections[clientId].get();
@@ -91,11 +92,18 @@ namespace tcp
          // Read client certificate from TLS channel
          ::std::unique_ptr<X509, void (*)(X509 *)> remoteCert{SSL_get_peer_certificate(tlsSocket), X509_free};
 
-         // Get wholw subject part from client certificate
+         // Get whole subject part from client certificate
          X509_NAME *remoteCertSubject{X509_get_subject_name(remoteCert.get())};
 
          // Get specific part from subject
-         X509_NAME_get_text_by_NID(remoteCertSubject, subjPart, buf, 256);
+         if (-1 == X509_NAME_get_text_by_NID(remoteCertSubject, subjPart, buf, 256))
+         {
+#ifdef DEVELOP
+            ::std::cerr << DEBUGINFO << ": Invalid NID " << subjPart << " for certificate subject" << ::std::endl;
+#endif // DEVELOP
+
+            throw Server_error("Invalid NID " + ::std::to_string(subjPart) + " for client certificate subject");
+         }
 
          // Return subject part as string
          return ::std::string(buf);
