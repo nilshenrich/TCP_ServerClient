@@ -21,13 +21,13 @@
 #include <thread>
 #include <mutex>
 #include <cstring>
-#include <exception>
 #include <atomic>
 #include <memory>
 #include <functional>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include "exception.hpp"
 
 // Debugging output
 #ifdef DEVELOP
@@ -53,29 +53,12 @@ namespace tcp
         SERVER_ERROR_START_BIND_PORT = 42,       // Server could not start because of TCP socket bind error
         SERVER_ERROR_START_SERVER = 43           // Server could not start because of TCP socket listen error
     };
-    /**
-     * @brief Exception class for the Server class.
-     */
-    class Server_error : public ::std::exception
+
+    // Server error
+    class Server_error : public Error
     {
     public:
-        Server_error(::std::string msg = "unexpected server error") : msg{msg} {}
-        virtual ~Server_error() {}
-
-        const char *what()
-        {
-            return msg.c_str();
-        }
-
-    private:
-        const ::std::string msg;
-
-        // Delete default constructor
-        Server_error() = delete;
-
-        // Disallow copy
-        Server_error(const Server_error &) = delete;
-        Server_error &operator=(const Server_error &) = delete;
+        Server_error(::std::string msg = "unexpected server error") : Error{msg} {}
     };
 
     /**

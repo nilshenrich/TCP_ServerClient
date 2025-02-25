@@ -20,7 +20,6 @@
 #include <cstring>
 #include <thread>
 #include <memory>
-#include <exception>
 #include <atomic>
 #include <functional>
 #include <unistd.h>
@@ -28,6 +27,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <sys/socket.h>
+#include "exception.hpp"
 
 // Debugging output
 #ifdef DEVELOP
@@ -65,29 +65,11 @@ namespace tcp
         }
     };
 
-    /**
-     * @brief Exception class for the Client class.
-     */
-    class Client_error : public ::std::exception
+    // Client error
+    class Client_error : public Error
     {
     public:
-        Client_error(::std::string msg = "unexpected client error") : msg{msg} {}
-        virtual ~Client_error() {}
-
-        const char *what()
-        {
-            return msg.c_str();
-        }
-
-    private:
-        const ::std::string msg;
-
-        // Delete default constructor
-        Client_error() = delete;
-
-        // Disallow copy
-        Client_error(const Client_error &) = delete;
-        Client_error &operator=(const Client_error &) = delete;
+        Client_error(::std::string msg = "unexpected client error") : Error{msg} {}
     };
 
     /**
