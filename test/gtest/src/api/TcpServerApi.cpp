@@ -71,6 +71,11 @@ vector<int> TcpServerApi_fragmentation::getClientIds()
     return tcpServer.getAllClientIds();
 }
 
+string TcpServerApi_fragmentation::getClientIp(const int clientId) const
+{
+    return tcpServer.getClientIp(clientId);
+}
+
 void TcpServerApi_fragmentation::workOnMessage(const int tcpClientId, const string tcpMsgFromClient)
 {
     lock_guard<mutex> lck{bufferedMsg_m};
@@ -112,6 +117,11 @@ map<int, string> TcpServerApi_continuous::getBufferedMsg()
 vector<int> TcpServerApi_continuous::getClientIds()
 {
     return tcpServer.getAllClientIds();
+}
+
+string TcpServerApi_continuous::getClientIp(const int clientId) const
+{
+    return tcpServer.getClientIp(clientId);
 }
 
 void TcpServerApi_continuous::workOnEstablished(const int) {}
