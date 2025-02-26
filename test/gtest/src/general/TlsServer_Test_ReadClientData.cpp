@@ -51,7 +51,7 @@ TEST_F(General_TlsServer_Test_ReadClientData, PosTest_ReadClientIp)
     // Read client IP
     string clientIp{tlsServer.getClientIp(clientId)};
 
-    // Check if client IP is not empty
+    // Check the client IP
     EXPECT_EQ(clientIp, "127.0.0.1");
 
     return;
@@ -59,13 +59,55 @@ TEST_F(General_TlsServer_Test_ReadClientData, PosTest_ReadClientIp)
 
 // ====================================================================================================================
 // Desc:       Read Client IP (negative)
-// Steps:      Read the IP of the connected client
+// Steps:      Read the IP of a not connected client
 // Exp Result: Exception is thrown
 // ====================================================================================================================
 TEST_F(General_TlsServer_Test_ReadClientData, NegTest_ReadClientIp_NotConnected)
 {
     // Read client IP
     EXPECT_THROW(tlsServer.getClientIp(0), Server_error); // 0 never exists as a client ID
+
+    return;
+}
+
+// ====================================================================================================================
+// Desc:       Read Client Subject Part (positive)
+// Steps:      Read the certificate subject part of the connected client
+// Exp Result: Subject part is read successfully
+// ====================================================================================================================
+TEST_F(General_TlsServer_Test_ReadClientData, PosTest_ReadClientSubjectPart)
+{
+    // Read client subject part
+    string clientSubjectPart{tlsServer.getSubjPartFromClientCert(clientId, NID_localityName)};
+
+    // Check the client subject part
+    EXPECT_EQ(clientSubjectPart, "<my city>");
+
+    return;
+}
+
+// ====================================================================================================================
+// Desc:       Read Client Subject Part (negative)
+// Steps:      Read the certificate subject part of a not connected client
+// Exp Result: Exception is thrown
+// ====================================================================================================================
+TEST_F(General_TlsServer_Test_ReadClientData, NegTest_ReadClientSubjectPart_NotConnected)
+{
+    // Read client subject part
+    EXPECT_THROW(tlsServer.getSubjPartFromClientCert(0, NID_localityName), Server_error); // 0 never exists as a client ID
+
+    return;
+}
+
+// ====================================================================================================================
+// Desc:       Read Client Subject Part (negative)
+// Steps:      Read the certificate subject part of the connected client with an invalid NID
+// Exp Result: Exception is thrown
+// ====================================================================================================================
+TEST_F(General_TlsServer_Test_ReadClientData, NegTest_ReadClientSubjectPart_InvalidNid)
+{
+    // Read client subject part
+    EXPECT_THROW(tlsServer.getSubjPartFromClientCert(clientId, NID_undef), Server_error); // NID_undef is invalid
 
     return;
 }

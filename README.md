@@ -146,7 +146,8 @@ using namespace tcp; // The entire library is in the namespace tcp
 
 The following linker flags are mandatory to be set depending on what sub-features are used:
 
-* **-lssl**     if the TLS encryption is used
+* **-lssl**     if the TLS encryption is used (General OpenSSL library)
+* **-lcrypto**  if the TLS encryption is used (OpenSSL cryptographic library)
 
 ### Message modes
 

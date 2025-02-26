@@ -62,40 +62,42 @@ namespace tcp
 
       /**
        * @brief Get specific subject part as string of the certificate of a specific connected client (Identified by its TCP ID).
+       *        Throw Server_error if client ID is not found or NID is invalid.
        *
        * @param clientId
-       * @param tlsSocket
        * @param subjPart
        * @return string
        */
-      ::std::string getSubjPartFromClientCert(const int clientId, const SSL *tlsSocket, const int subjPart)
+      ::std::string getSubjPartFromClientCert(const int clientId, const int subjPart)
       {
          char buf[256]{0};
+         ::std::lock_guard<::std::mutex> lck{activeConnections_m};
 
-         // If TLS socket is null, get socket from list of connected clients
-         if (!tlsSocket)
+         // Check if client is connected
+         if (activeConnections.find(clientId) == activeConnections.end())
          {
-            ::std::lock_guard<::std::mutex> lck{activeConnections_m};
-            if (activeConnections.find(clientId) == activeConnections.end())
-            {
 #ifdef DEVELOP
-               ::std::cerr << DEBUGINFO << ": No connected client " << clientId << ::std::endl;
+            ::std::cerr << DEBUGINFO << ": No connected client " << clientId << ::std::endl;
 #endif // DEVELOP
 
-               return "";
-            }
-
-            tlsSocket = activeConnections[clientId].get();
+            throw Server_error("No connected client " + ::std::to_string(clientId) + " to read certificate subject part from");
          }
 
          // Read client certificate from TLS channel
-         ::std::unique_ptr<X509, void (*)(X509 *)> remoteCert{SSL_get_peer_certificate(tlsSocket), X509_free};
+         ::std::unique_ptr<X509, void (*)(X509 *)> remoteCert{SSL_get_peer_certificate(activeConnections[clientId].get()), X509_free};
 
-         // Get wholw subject part from client certificate
+         // Get whole subject part from client certificate
          X509_NAME *remoteCertSubject{X509_get_subject_name(remoteCert.get())};
 
          // Get specific part from subject
-         X509_NAME_get_text_by_NID(remoteCertSubject, subjPart, buf, 256);
+         if (-1 == X509_NAME_get_text_by_NID(remoteCertSubject, subjPart, buf, 256))
+         {
+#ifdef DEVELOP
+            ::std::cerr << DEBUGINFO << ": Invalid NID " << subjPart << " for certificate subject" << ::std::endl;
+#endif // DEVELOP
+
+            throw Server_error("Invalid NID " + ::std::to_string(subjPart) + " for client certificate subject");
+         }
 
          // Return subject part as string
          return ::std::string(buf);

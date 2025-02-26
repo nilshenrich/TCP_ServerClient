@@ -78,6 +78,11 @@ string TlsServerApi_fragmentation::getClientIp(const int clientId) const
     return tlsServer.getClientIp(clientId);
 }
 
+string TlsServerApi_fragmentation::getSubjPartFromClientCert(const int clientId, const int subjPart)
+{
+    return tlsServer.getSubjPartFromClientCert(clientId, subjPart);
+}
+
 void TlsServerApi_fragmentation::workOnMessage(const int tlsClientId, const string tlsMsgFromClient)
 {
     lock_guard<mutex> lck{bufferedMsg_m};
@@ -126,6 +131,11 @@ vector<int> TlsServerApi_continuous::getClientIds()
 string TlsServerApi_continuous::getClientIp(const int clientId) const
 {
     return tlsServer.getClientIp(clientId);
+}
+
+string TlsServerApi_continuous::getSubjPartFromClientCert(const int clientId, const int subjPart)
+{
+    return tlsServer.getSubjPartFromClientCert(clientId, subjPart);
 }
 
 void TlsServerApi_continuous::workOnEstablished(const int) {}

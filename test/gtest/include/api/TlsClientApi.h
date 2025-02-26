@@ -50,6 +50,14 @@ namespace TestApi
          */
         ::std::vector<::std::string> getBufferedMsg();
 
+        /**
+         * @brief Get specific subject part as string of the certificate of the connected server
+         *
+         * @param subjPart Subject part to get
+         * @return string
+         */
+        ::std::string getSubjPartFromServerCert(const int subjPart);
+
     private:
         /**
          * @brief Buffer incoming messages
@@ -103,6 +111,14 @@ namespace TestApi
          * @return vector<string> Vector of buffered messages
          */
         ::std::string getBufferedMsg();
+
+        /**
+         * @brief Get specific subject part as string of the certificate of the connected server
+         *
+         * @param subjPart Subject part to get
+         * @return string
+         */
+        ::std::string getSubjPartFromServerCert(const int subjPart);
 
     private:
         // Buffered messages
