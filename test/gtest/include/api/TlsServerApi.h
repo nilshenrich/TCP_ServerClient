@@ -69,7 +69,8 @@ namespace TestApi
          * @brief Get specific subject part as string of the certificate of a specific connected client
          *
          * @param clientId ID of the client
-         * @param string
+         * @param subjPart Subject part to get
+         * @return string
          */
         ::std::string getSubjPartFromClientCert(const int clientId, const int subjPart);
 
@@ -162,7 +163,8 @@ namespace TestApi
          * @brief Get specific subject part as string of the certificate of a specific connected client
          *
          * @param clientId ID of the client
-         * @param string
+         * @param subjPart Subject part to get
+         * @return string
          */
         ::std::string getSubjPartFromClientCert(const int clientId, const int subjPart);
 

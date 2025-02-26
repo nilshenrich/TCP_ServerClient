@@ -66,6 +66,11 @@ void TlsClientApi_fragmentation::workOnMessage(const string tlsMsgFromServer)
     return;
 }
 
+string TlsClientApi_fragmentation::getSubjPartFromServerCert(const int subjPart)
+{
+    return tlsClient.getSubjPartFromServerCert(subjPart);
+}
+
 int TlsClientApi_continuous::start(const string &ip, const int port, string pathToCaCert, string pathToClientCert, string pathToClientKey, const bool serverAuth)
 {
     tlsClient.requireServerAuthentication(serverAuth);
@@ -90,4 +95,9 @@ bool TlsClientApi_continuous::sendMsg(const string &tlsMsg)
 string TlsClientApi_continuous::getBufferedMsg()
 {
     return bufferedMsg_os.str();
+}
+
+string TlsClientApi_continuous::getSubjPartFromServerCert(const int subjPart)
+{
+    return tlsClient.getSubjPartFromServerCert(subjPart);
 }
