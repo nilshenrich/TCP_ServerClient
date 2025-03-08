@@ -129,10 +129,11 @@ namespace tcp
          * If server was started successfully (return value SERVER_START_OK), the server can accept new connections and send and receive data.
          * If encryption should be used, the server must be started with the correct path to the CA certificate and the correct path to the certificate and key file.
          *
-         * @param port
+         * @param port           Port number to listen on
+         * @param maxConnections Maximum number of active connections to accept in parallel (0 for unlimited)
          * @return int (SERVER_START_OK if successful, see ServerDefines.h for other return values)
          */
-        int start(const int port);
+        int start(const int port, int maxConnections = 0);
 
         /**
          * @brief Stops the server.
@@ -330,7 +331,7 @@ namespace tcp
     // ====================== Must be in header file because of the template class. =======================
 
     template <class SocketType, class SocketDeleter>
-    int Server<SocketType, SocketDeleter>::start(const int port)
+    int Server<SocketType, SocketDeleter>::start(const int port, int maxConnections)
     {
         // If the server is already running, return error
         if (running)
@@ -409,7 +410,11 @@ namespace tcp
         }
 
         // Start listening on the TCP socket for the server to accept new connections.
-        if (listen(tcpSocket, SOMAXCONN))
+        if (maxConnections < 1 || maxConnections > SOMAXCONN)
+        {
+            maxConnections = SOMAXCONN;
+        }
+        if (listen(tcpSocket, maxConnections))
         {
 #ifdef DEVELOP
             ::std::cerr << DEBUGINFO << ": Error when starting listening" << ::std::endl;

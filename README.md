@@ -53,7 +53,8 @@ A connection can be established for one of the following two modes:
 
 There are some size limitations for this library:
 * Maximum allowed connections a server can handle simultaneously: 4096\
-  *This limitation is only applied to a single server instance. It is possible to create an application with multiple servers with a maximum of 4096 connections each.*
+  *This limitation is only applied to a single server instance. It is possible to create an application with multiple servers with a maximum of 4096 connections each.*\
+  *The maximum number of connections can further be limited when executing the start method, but can never be higher than the system maximum of 4096.*
 * Maximum allowed message length:\
   *This number depends on the CPU architecture and available memory you are using.\
   For checking, just call the method `max_size()` on any variable of type string. For most modern systems, this value is such high that it can be treated as infinity (On a regular 64bit system, this number is 2<sup>64</sup>-1).*
@@ -300,11 +301,13 @@ The following methods are the same for all kinds of servers (TCP or TLS in fragm
 
 1. start():
 
-    The **start**-method is used to start a TCP or TLS server. When this method returns 0, the server runs in the background. If the return value is other that 0, please see [Defines.h](Server/include/Defines.h) or [Start return codes - server](#server-1) for definition of error codes.
+    The **start**-method is used to start a TCP or TLS server. When this method returns 0, the server runs in the background. If the return value is other that 0, please see [Defines.h](Server/include/Defines.h) or [Start return codes - server](#server-1) for definition of error codes.\
+    Optionally, the maximum number of connections can be set. If the maximum number of connections is set to 0 (defalut value), the server can handle an unlimited number of connections.
 
     ```cpp
     TcpServer tcpServer;
-    tcpServer.start(8081);
+    tcpServer.start(8081); // Start server on port 8081 allowing unlimited connections
+    tcpServer.start(8081, 10); // Start server on port 8081 allowing maximum 10 connections in parallel
     ```
 
 2. stop():
