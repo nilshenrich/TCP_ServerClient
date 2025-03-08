@@ -4,10 +4,10 @@
  * @brief Base framework for all classes that build a network client based on TCP.
  * This class contains no functionality, but serves a base framework for the creation of stable clients based on TCP.
  * When compiling with the -DDEBUG flag, the class will print out all received messages to the console.
- * @version 3.2.0
+ * @version 3.2.1
  * @date 2021-12-28
  *
- * @copyright Copyright (c) 2021
+ * @copyright Copyright (c) 2025
  *
  */
 
@@ -20,7 +20,6 @@
 #include <cstring>
 #include <thread>
 #include <memory>
-#include <exception>
 #include <atomic>
 #include <functional>
 #include <unistd.h>
@@ -28,6 +27,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <sys/socket.h>
+#include "exception.hpp"
 
 // Debugging output
 #ifdef DEVELOP
@@ -65,29 +65,11 @@ namespace tcp
         }
     };
 
-    /**
-     * @brief Exception class for the Client class.
-     */
-    class Client_error : public ::std::exception
+    // Client error
+    class Client_error : public Error
     {
     public:
-        Client_error(::std::string msg = "unexpected client error") : msg{msg} {}
-        virtual ~Client_error() {}
-
-        const char *what()
-        {
-            return msg.c_str();
-        }
-
-    private:
-        const ::std::string msg;
-
-        // Delete default constructor
-        Client_error() = delete;
-
-        // Disallow copy
-        Client_error(const Client_error &) = delete;
-        Client_error &operator=(const Client_error &) = delete;
+        Client_error(::std::string msg = "unexpected client error") : Error{msg} {}
     };
 
     /**
