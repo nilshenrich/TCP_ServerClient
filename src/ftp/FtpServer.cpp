@@ -444,7 +444,7 @@ void FtpServer::on_msg_modePassive(const int clientId, const uint32_t command, c
         dataServer.reset(new TcpServer()); // Continuous mode
         dataServer->setCreateForwardStream([this](const int dataClientId)
                                            { return work_writeTempFile(); }); // Can't create outside lock guard to avoid memory leak in case of exception
-        if (dataServer->start(port) != SERVER_START_OK)
+        if (dataServer->start(port, 1) != SERVER_START_OK)
         {
             tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::FAILED_OPEN_DATACONN)) + " Failed to open data connection."s);
             return;
