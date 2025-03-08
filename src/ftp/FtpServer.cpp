@@ -222,24 +222,15 @@ void FtpServer::on_messageIn(const int clientId, const uint32_t command, const v
     // Erasing a session is not allowed as long as a handler is working on it
     lock_guard<mutex> lck{session_delete_m};
 
-    // Buffer needed session data
-    bool connected;
-    bool loggedIn;
-    string username;
-    {
-        lock_guard<mutex> lck{session_modify_m};
-        connected = session.find(clientId) != session.end();
-        loggedIn = session[clientId].loggedIn;
-        username = session[clientId].username;
-    }
-
     // Check whether session exists and user is logged in
-    if (!connected)
+    if (session.find(clientId) == session.end())
     {
         tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::FAILED_UNKNOWN_ERROR)) + " Session not found."s);
         return;
     }
-    if (mustLoggedIn != loggedIn)
+
+    // Check if user is logged in
+    if (mustLoggedIn != session[clientId].loggedIn)
     {
         tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_WRONG_ORDER)) + (mustLoggedIn ? " User not logged in."s : " User already logged in."s));
         return;
@@ -322,7 +313,6 @@ void FtpServer::on_msg_getSystemType(const int clientId, const uint32_t command,
 void FtpServer::on_msg_getDirectory(const int clientId, const uint32_t command, const valarray<string> &args)
 {
     // Get current directory from session
-    // BUG[performance]: Session could be deleted since existence check in on_messageIn
     string path;
     {
         lock_guard<mutex> lck{session_modify_m};
@@ -337,7 +327,6 @@ void FtpServer::on_msg_getDirectory(const int clientId, const uint32_t command, 
 void FtpServer::on_msg_changeDirectory(const int clientId, const uint32_t command, const valarray<string> &args)
 {
     // Get user and current directory from session
-    // BUG[performance]: Session could be deleted since existence check in on_messageIn
     string username;
     string path;
     {
@@ -376,6 +365,7 @@ void FtpServer::on_msg_changeDirectory(const int clientId, const uint32_t comman
 void FtpServer::on_msg_fileTransferType(const int clientId, const uint32_t command, const valarray<string> &args)
 {
     // Set file transfer type for user
+    // FIXME: First argument could be an empty string -> Check for empty string first
     string modename;
     switch (args[0][0])
     {
@@ -455,7 +445,6 @@ void FtpServer::on_msg_modePassive(const int clientId, const uint32_t command, c
     }
 
     // Add data server to session and inform client
-    // BUG[performance]: Session could be deleted since existence check in on_messageIn
     {
         lock_guard<mutex> lck{session_modify_m};
         session[clientId].tcpData = move(dataServer);
@@ -490,7 +479,6 @@ void FtpServer::on_msg_modePassive(const int clientId, const uint32_t command, c
 void FtpServer::on_msg_listDirectory(const int clientId, const uint32_t command, const valarray<string> &args)
 {
     // Get user, current directory and data server from session
-    // BUG[performance]: Session could be deleted since existence check in on_messageIn
     string username;
     string path;
     unique_ptr<TcpServer> dataServer;
@@ -529,7 +517,6 @@ void FtpServer::on_msg_listDirectory(const int clientId, const uint32_t command,
 void FtpServer::on_msg_fileDownload(const int clientId, const uint32_t command, const valarray<string> &args)
 {
     // Get user, current directory and data server from session
-    // BUG[performance]: Session could be deleted since existence check in on_messageIn
     string username;
     string path;
     unique_ptr<TcpServer> dataServer;
@@ -580,7 +567,6 @@ void FtpServer::on_msg_listFeatures(const int clientId, const uint32_t command, 
 void FtpServer::on_msg_createDirectory(const int clientId, const uint32_t command, const valarray<string> &args)
 {
     // Get user and current directory from session
-    // BUG[performance]: Session could be deleted since existence check in on_messageIn
     string username;
     string path;
     {
@@ -620,7 +606,6 @@ void FtpServer::on_msg_createDirectory(const int clientId, const uint32_t comman
 void FtpServer::on_msg_fileUpload(const int clientId, const uint32_t command, const valarray<string> &args)
 {
     // Get user, current directory and data server from session
-    // BUG[performance]: Session could be deleted since existence check in on_messageIn
     string username;
     string path;
     unique_ptr<TcpServer> dataServer;
@@ -632,7 +617,6 @@ void FtpServer::on_msg_fileUpload(const int clientId, const uint32_t command, co
     }
 
     // On data server closed, close file writer and inform client
-    // BUG[performance]: Set work on closed could be called after data server connection is closed
     mutex transfer_m;
     transfer_m.lock();
     dataServer->setWorkOnClosed([&dataServer, &transfer_m](const int)
