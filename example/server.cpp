@@ -2,10 +2,10 @@
  * @file server.cpp
  * @author Nils Henrich
  * @brief Example how to use the server part
- * @version 1.0
+ * @version 3.2.1
  * @date 2024-04-20
  *
- * @copyright Copyright (c) 2024
+ * @copyright Copyright (c) 2025
  */
 
 #include <iostream>

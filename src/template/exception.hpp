@@ -3,7 +3,7 @@
  * @author Nils Henrich
  * @brief Basic exceptions for the project.
  *        - General exception (Exception): Used for general errors.
- * @version 3.2.0
+ * @version 3.2.1
  * @date 2025-02-25
  *
  * @copyright Copyright (c) 2025
