@@ -194,7 +194,8 @@ namespace tcp
         ::std::string getClientIp(const int clientId) const;
 
         /**
-         * @brief Get server IP address the client sicket is connected to (Identified by its TCP ID).
+         * @brief Get server IP address the client socket is connected to (Identified by its TCP ID).
+         *        Throw Server_error if server IP can't be determined.
          *
          * @param clientId
          * @return string
@@ -559,10 +560,10 @@ namespace tcp
         if (getsockname(clientId, (struct sockaddr *)&addr, &addrSize))
         {
 #ifdef DEVELOP
-            ::std::cerr << typeid(this).name() << "::" << __func__ << ": Error reading server 's IP address the client" << clientId << " is connected to" << ::std::endl;
+            ::std::cerr << DEBUGINFO << ": Error reading server 's IP address the client" << clientId << " is connected to" << ::std::endl;
 #endif // DEVELOP
 
-            return "Failed Read!";
+            throw Server_error("Error reading server's IP address");
         }
 
         // Convert the IP address to a string and return it

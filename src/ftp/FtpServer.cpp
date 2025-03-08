@@ -411,7 +411,16 @@ void FtpServer::on_msg_fileTransferType(const int clientId, const uint32_t comma
 void FtpServer::on_msg_modePassive(const int clientId, const uint32_t command, const valarray<string> &args)
 {
     // Get server IP address the client is connected to
-    string myIp{tcpControl.getServerIp(clientId)};
+    string myIp;
+    try
+    {
+        myIp = tcpControl.getServerIp(clientId);
+    }
+    catch (Server_error &e)
+    {
+        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::FAILED_UNKNOWN_ERROR)) + " Failed to determine control connection details."s);
+        return;
+    }
 
     // Check IP type matches command
     // IPv4: [\d\.]+
@@ -545,7 +554,7 @@ void FtpServer::on_msg_fileDownload(const int clientId, const uint32_t command, 
     // Wait here for data server to accept connection
     // FIXME: Not ideal performance
     // FIXME: Works just if no other data connections are open
-    // FIXME: Add timeout
+    // TODO: Add timeout
     vector<int> dataClients;
     while ((dataClients = dataServer->getAllClientIds()).empty())
         this_thread::sleep_for(chrono::milliseconds(10));
