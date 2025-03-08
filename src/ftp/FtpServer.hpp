@@ -17,6 +17,7 @@
 #include <map>
 #include <iomanip>
 #include <istream>
+#include <functional>
 
 #include "../basic/TcpServer.hpp"
 #include "../basic/TlsServer.hpp"
@@ -247,7 +248,8 @@ namespace ftp
         ::std::map<int, Session> session{}; // Open sessions
 
         // Thread safety
-        ::std::mutex session_m{}; // Mutex for session
+        ::std::mutex session_delete_m{}; // Mutex for deleting (closed) session
+        ::std::mutex session_modify_m{}; // Mutex for modifying session: add, change
         ::std::mutex tcpPort_m{}; // Mutex for TCP port availability
 
         // Pointer to functions on incoming message
