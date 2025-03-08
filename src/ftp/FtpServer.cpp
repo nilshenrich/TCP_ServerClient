@@ -440,7 +440,6 @@ void FtpServer::on_msg_modePassive(const int clientId, const uint32_t command, c
 
         // Create new data server and start listening on free port
         // All incoming data is forwarded to stream to temporary buffer
-        // Each session could have multiple data connections open at the same time (For transferring multiple files in parallel)
         dataServer.reset(new TcpServer()); // Continuous mode
         dataServer->setCreateForwardStream([this](const int dataClientId)
                                            { return work_writeTempFile(); }); // Can't create outside lock guard to avoid memory leak in case of exception
@@ -624,7 +623,7 @@ void FtpServer::on_msg_fileUpload(const int clientId, const uint32_t command, co
     transfer_m.lock();
     dataServer->setWorkOnClosed([&dataServer, &transfer_m](const int)
                                 {
-                                    if(dataServer->getAllClientIds().empty()) // Only continue on all data sessions closed (Handle multiple data connections)
+                                    if(dataServer->getAllClientIds().empty()) 
                                         transfer_m.unlock(); });
 
     // Data server is now ready to accept data
