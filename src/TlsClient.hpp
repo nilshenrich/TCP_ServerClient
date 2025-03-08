@@ -2,10 +2,10 @@
  * @file TlsClient.hpp
  * @author Nils Henrich
  * @brief TLS client for encrypted data transfer with authentication.
- * @version 3.2.0
+ * @version 3.2.1
  * @date 2021-12-27
  *
- * @copyright Copyright (c) 2021
+ * @copyright Copyright (c) 2025
  *
  */
 
@@ -66,6 +66,46 @@ namespace tcp
          * @brief Destructor
          */
         virtual ~TlsClient() { stop(); }
+
+        /**
+         * @brief Get specific subject part as string of the certificate of the server.
+         *        Throw Client_error if server not connected or NID is invalid.
+         *
+         * @param subjPart
+         * @return string
+         */
+        ::std::string getSubjPartFromServerCert(const int subjPart)
+        {
+            char buf[256]{0};
+
+            // Check if server is connected
+            if (!isRunning())
+            {
+#ifdef DEVELOP
+                ::std::cerr << DEBUGINFO << ": Client is not running, means not connected to any server" << ::std::endl;
+#endif // DEVELOP
+
+                throw Client_error("Not connected to any server to read certificate subject part from");
+            }
+
+            // Read server certificate from TLS channel
+            ::std::unique_ptr<X509, void (*)(X509 *)> remoteCert{SSL_get_peer_certificate(clientSocket.get()), X509_free};
+
+            // Get whole subject part from server certificate
+            X509_NAME *remoteCertSubject{X509_get_subject_name(remoteCert.get())};
+
+            // Get specific part from subject
+            if (-1 == X509_NAME_get_text_by_NID(remoteCertSubject, subjPart, buf, 256))
+            {
+#ifdef DEVELOP
+                ::std::cerr << DEBUGINFO << ": Invalid NID " << subjPart << " for certificate subject" << ::std::endl;
+#endif // DEVELOP
+
+                throw Client_error("Invalid NID " + ::std::to_string(subjPart) + " for server certificate subject");
+            }
+
+            return ::std::string(buf);
+        }
 
         /**
          * @brief Sets the file paths for the CA certificate, server certificate, and private key.

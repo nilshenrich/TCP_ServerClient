@@ -23,9 +23,18 @@ then
     # ---------- Update version ----------
     version=$(echo $current_branch | sed "s/release\///g" | sed -E "s/^[a-zA-Z]+//g")
     find $root_dir/src/ -type f -exec sed -i -E "s/@version\s*[1234567890\.\+]+$/@version $version/g" {} \;
+    find $root_dir/example/ -type f -exec sed -i -E "s/@version\s*[1234567890\.\+]+$/@version $version/g" {} \;
     find $root_dir/example/ -type f -name CMakeLists.txt -exec sed -i -E "s/project\((\w+)\s+VERSION\s+[1234567890\.\+]+/project(\1 VERSION $version/g" {} \;
+
+    # ---------- Update copyright year ----------
+    year=$(date +"%Y")
+    find $root_dir/src/ -type f -exec sed -i -E "s/@copyright.*/@copyright Copyright (c) $year/g" {} \;
+    find $root_dir/example/ -type f -exec sed -i -E "s/@copyright.*/@copyright Copyright (c) $year/g" {} \;
+
+    # ---------- Commit changes ----------
     git add $root_dir
     git commit -m "<hook> Update to version $version"
+
 else
     echo "Nothing to be done for branch '$current_branch'"
 fi

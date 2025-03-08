@@ -57,6 +57,23 @@ namespace TestApi
          */
         ::std::vector<int> getClientIds();
 
+        /**
+         * @brief Get the IP of a specific connected client
+         *
+         * @param clientId ID of the client
+         * @return string
+         */
+        ::std::string getClientIp(const int clientId) const;
+
+        /**
+         * @brief Get specific subject part as string of the certificate of a specific connected client
+         *
+         * @param clientId ID of the client
+         * @param subjPart Subject part to get
+         * @return string
+         */
+        ::std::string getSubjPartFromClientCert(const int clientId, const int subjPart);
+
     private:
         /**
          * @brief Buffer incoming messages
@@ -133,6 +150,23 @@ namespace TestApi
          * @return vector<int> Vector of client IDs
          */
         ::std::vector<int> getClientIds();
+
+        /**
+         * @brief Get the IP of a specific connected client
+         *
+         * @param clientId ID of the client
+         * @return string
+         */
+        ::std::string getClientIp(const int clientId) const;
+
+        /**
+         * @brief Get specific subject part as string of the certificate of a specific connected client
+         *
+         * @param clientId ID of the client
+         * @param subjPart Subject part to get
+         * @return string
+         */
+        ::std::string getSubjPartFromClientCert(const int clientId, const int subjPart);
 
     private:
         /**
