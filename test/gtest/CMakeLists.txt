@@ -9,7 +9,7 @@ cmake_minimum_required(VERSION 3.13)
 project(test)
 
 # Include directories
-include_directories(include include/api ../../src)
+include_directories(include include/api ../../src/basic)
 
 # Add source files (All files in src folder)
 file(GLOB sourcefiles "src/*.cpp" "src/*/*.cpp")
