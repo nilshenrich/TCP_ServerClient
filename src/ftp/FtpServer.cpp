@@ -515,7 +515,6 @@ void FtpServer::on_msg_listDirectory(const int clientId, const uint32_t command,
         this_thread::sleep_for(chrono::milliseconds(10));
 
     // Send directory list to client
-    // TODO: Send in chunks while retrieving, not all at once
     tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DATA_OPEN)) + " Here comes the directory listing."s);
     dataServer->sendMsg(dataClients[0], msg.str());
     tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DATA_CLOSE)) + " Directory send OK."s);
@@ -548,7 +547,6 @@ void FtpServer::on_msg_fileDownload(const int clientId, const uint32_t command, 
         this_thread::sleep_for(chrono::milliseconds(10));
 
     // Send file content to client
-    // TODO: Send in chunks while retrieving, not all at once
     tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DATA_OPEN)) + " Here comes the content of file "s + args[0] + "."s);
     string chunk{string(FILETRANSFER_CHUNKSIZE, 0)};
     while (!is->eof())
