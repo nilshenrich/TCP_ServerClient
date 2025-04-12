@@ -109,8 +109,8 @@ namespace ftp
         bool loggedIn;                               // Is user logged in?
         ::std::string username;                      // Username
         ::std::string currentpath;                   // Always absolute from user home
-        char mode;                                   // FileTransferType
-        ::std::unique_ptr<::tcp::TcpServer> tcpData; // Data server for file transfer
+        char mode;                                   // FileTransferType // TODO: Rename to 'transferType' // TODO: Set file transfer type on calling user methods
+        ::std::unique_ptr<::tcp::TcpServer> tcpData; // Data server for file transfer // TODO: Check if data server is runninf whenever used for data transfer
 
         // Constructors
 
