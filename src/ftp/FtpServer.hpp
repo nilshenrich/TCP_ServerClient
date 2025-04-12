@@ -129,7 +129,7 @@ namespace ftp
         ::std::string username;                      // Username
         ::std::string currentpath;                   // Always absolute from user home
         char transferType;                           // FileTransferType
-        ::std::unique_ptr<::tcp::TcpServer> tcpData; // Data server for file transfer // TODO: Check if data server is running whenever used for data transfer
+        ::std::unique_ptr<::tcp::TcpServer> tcpData; // Data server for file transfer
 
         // Constructors
 

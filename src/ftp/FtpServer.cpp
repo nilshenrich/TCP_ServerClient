@@ -524,6 +524,13 @@ void FtpServer::on_msg_listDirectory(const int clientId, const uint32_t command,
         dataServer = move(session[clientId].tcpData); // Remove data server from session as should be closed after this action
     }
 
+    // Check data server exists and is running
+    if (!(dataServer && dataServer->isRunning())) // INFO: If left evaluated false, right will not be evaluated at all
+    {
+        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_WRONG_ORDER)) + " Data connection must be opened first via PASV"s);
+        return;
+    }
+
     // Get directory list into string
     ostringstream msg;
     valarray<Item> items = work_listDirectory(username);
@@ -560,6 +567,13 @@ void FtpServer::on_msg_fileDownload(const int clientId, const uint32_t command, 
         path = session[clientId].currentpath;
         transferType = session[clientId].transferType; // No check needed as already done in on_msg_modePassive
         dataServer = move(session[clientId].tcpData); // Remove data server from session as should be closed after this action
+    }
+
+    // Check data server exists and is running
+    if (!(dataServer && dataServer->isRunning())) // INFO: If left evaluated false, right will not be evaluated at all
+    {
+        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_WRONG_ORDER)) + " Data connection must be opened first via PASV"s);
+        return;
     }
 
     // Get stream to file that should be downloaded
@@ -647,6 +661,13 @@ void FtpServer::on_msg_fileUpload(const int clientId, const uint32_t command, co
         username = session[clientId].username;
         path = session[clientId].currentpath;
         dataServer = move(session[clientId].tcpData); // Remove data server from session as should be closed after this action
+    }
+
+    // Check data server exists and is running
+    if (!(dataServer && dataServer->isRunning())) // INFO: If left evaluated false, right will not be evaluated at all
+    {
+        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_WRONG_ORDER)) + " Data connection must be opened first via PASV"s);
+        return;
     }
 
     // On data server closed, close file writer and inform client
