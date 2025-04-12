@@ -13,11 +13,15 @@
 #define FTPSERVER_HPP_
 
 #include <string>
+#include <memory>
 #include <valarray>
 #include <map>
 #include <iomanip>
 #include <istream>
+#include <ostream>
 #include <functional>
+#include <type_traits>
+#include <mutex>
 
 #include "../basic/TcpServer.hpp"
 #include "../basic/TlsServer.hpp"

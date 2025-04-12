@@ -2,9 +2,14 @@
 #include <iostream>
 #endif // DEVELOP
 
+#include <istream>
+#include <ostream>
 #include <sstream>
 #include <fstream>
+#include <string>
 #include <cstring>
+#include <valarray>
+#include <vector>
 #include <mutex>
 #include <memory>
 #include <cstdlib>
@@ -111,6 +116,7 @@ string FtpServer::sanitizeRequest(const string &request) const
     return sReturn;
 }
 
+// TODO: Move basic algorithms
 int FtpServer::getFreePort() const
 {
     // First get rabdom number inside port range
