@@ -552,7 +552,7 @@ void FtpServer::on_msg_fileDownload(const int clientId, const uint32_t command, 
 
     // Get stream to file that should be downloaded
     path += "/"s + args[0];
-    istream *is{work_readFile(path, getStreamOpenMode(STREAM_DIRECTION_READ, transferType))};
+    unique_ptr<istream> is{work_readFile(path, getStreamOpenMode(STREAM_DIRECTION_READ, transferType))};
 
     // Wait here for data server to accept connection
     // FIXME: Not ideal performance
