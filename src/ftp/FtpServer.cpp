@@ -431,10 +431,13 @@ void FtpServer::on_msg_modePassive(const int clientId, const uint32_t command, c
     unique_ptr<TcpServer> dataServer;
     {
         lock_guard<mutex> lck{tcpPort_m};
-        port = algorithms::getFreePort(PORT_RANGE_DATA[0], PORT_RANGE_DATA[1]);
-        if (port == -1)
+        try
         {
-            tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::FAILED_OPEN_DATACONN)) + " No free port."s);
+            port = algorithms::getFreePort(PORT_RANGE_DATA[0], PORT_RANGE_DATA[1]);
+        }
+        catch (const Error &e)
+        {
+            tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::FAILED_OPEN_DATACONN)) + " No free TCP port."s);
             return;
         }
 

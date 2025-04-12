@@ -13,6 +13,7 @@
 
 #include <string>
 #include <netinet/in.h>
+#include "./template/exception.hpp"
 
 namespace tcp::algorithms
 {
@@ -42,7 +43,6 @@ namespace tcp::algorithms
      * @param range_max Maximum port number (inclusive)
      * @return int
      */
-    // TODO: Raise exception if no port is found
     int getFreePort(int range_min, int range_max)
     {
         // First get random number inside port range
@@ -73,8 +73,8 @@ namespace tcp::algorithms
             }
         }
 
-        // If we get here, no free port was found. Return -1.
-        return -1;
+        // If we get here, no free port was found
+        throw ::tcp::Error("No free port found in range [" + ::std::to_string(range_min) + " ... " + ::std::to_string(range_max) + "]");
     }
 
 } // namespace tcp::algorithms
