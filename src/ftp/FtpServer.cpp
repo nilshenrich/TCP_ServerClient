@@ -370,11 +370,11 @@ void FtpServer::on_msg_fileTransferType(const int clientId, const uint32_t comma
         tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_SYNTAX_ARGUMENT)) + " Exactly one character expected as file transfer type."s);
         return;
     }
-    char modeCode{arg1[0]};
+    char transferType{arg1[0]};
 
     // Set file transfer type for user
     string modename;
-    switch (modeCode)
+    switch (transferType)
     {
     case ENUM_CLASS_VALUE(FileTransferType::ASCII):
         modename = "ASCII";
@@ -392,7 +392,7 @@ void FtpServer::on_msg_fileTransferType(const int clientId, const uint32_t comma
 
     {
         lock_guard<mutex> lck{session_modify_m};
-        session[clientId].mode = modeCode;
+        session[clientId].transferType = transferType;
     }
     tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::OK)) + " Switching to "s + modename + " mode."s);
     return;
@@ -430,7 +430,7 @@ void FtpServer::on_msg_modePassive(const int clientId, const uint32_t command, c
     underlying_type_t<FileTransferType> transferType;
     {
         lock_guard<mutex> lck{session_modify_m};
-        transferType = session[clientId].mode;
+        transferType = session[clientId].transferType;
     }
 
     // If not transfer type is specified, return with error code

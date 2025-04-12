@@ -109,7 +109,7 @@ namespace ftp
         bool loggedIn;                               // Is user logged in?
         ::std::string username;                      // Username
         ::std::string currentpath;                   // Always absolute from user home
-        char mode;                                   // FileTransferType // TODO: Rename to 'transferType' // TODO: Set file transfer type on calling user methods
+        char transferType;                           // FileTransferType // TODO: Set file transfer type on calling user methods
         ::std::unique_ptr<::tcp::TcpServer> tcpData; // Data server for file transfer // TODO: Check if data server is runninf whenever used for data transfer
 
         // Constructors
@@ -118,20 +118,20 @@ namespace ftp
         Session() : loggedIn{false},
                     username{},
                     currentpath{},
-                    mode{0},
+                    transferType{0},
                     tcpData{nullptr} {}
 
         // Given logged in, username and current path
         Session(bool loggedIn, const ::std::string &username, const ::std::string &currentpath) : loggedIn{loggedIn},
                                                                                                   username{username},
                                                                                                   currentpath{currentpath},
-                                                                                                  mode{0},
+                                                                                                  transferType{0},
                                                                                                   tcpData{nullptr} {}
 
         // Overload operator<<
         friend ::std::ostream &operator<<(::std::ostream &os, const Session &s)
         {
-            os << "{loggedIn: " << s.loggedIn << ", username: " << s.username << ", currentpath: " << s.currentpath << ", mode: " << s.mode << ", has tcpData: " << (s.tcpData ? "yes" : "no") << "}";
+            os << "{loggedIn: " << s.loggedIn << ", username: " << s.username << ", currentpath: " << s.currentpath << ", transferType: " << s.transferType << ", has tcpData: " << (s.tcpData ? "yes" : "no") << "}";
             return os;
         }
     };
