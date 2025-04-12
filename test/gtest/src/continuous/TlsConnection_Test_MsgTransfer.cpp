@@ -16,8 +16,7 @@ Continuous_TlsConnection_Test_MsgTransfer::~Continuous_TlsConnection_Test_MsgTra
 void Continuous_TlsConnection_Test_MsgTransfer::SetUp()
 {
     // Get free TLS port
-    port = HelperFunctions::getFreePort();
-    ASSERT_NE(port, -1) << "No free port found";
+    ASSERT_NO_THROW(port = HelperFunctions::getFreePort()) << "Error finding free port";
 
     // Start TLS server and connect client
     ASSERT_EQ(tlsServer.start(port), SERVER_START_OK) << "Unable to start TLS server on port " << port;

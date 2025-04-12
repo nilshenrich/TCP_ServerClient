@@ -20,8 +20,7 @@ void Fragmentation_TlsConnection_Test_MsgTransfer::SetUp()
     // ==============================================
     {
         // Get free TLS port
-        port_serverLong_clientLong = HelperFunctions::getFreePort();
-        ASSERT_NE(port_serverLong_clientLong, -1) << "No free port found";
+        ASSERT_NO_THROW(port_serverLong_clientLong = HelperFunctions::getFreePort()) << "No free port found";
 
         // Start TLS server and connect client
         ASSERT_EQ(tlsServer_selfLong_frgnLong.start(port_serverLong_clientLong), SERVER_START_OK) << "Unable to start TLS server on port " << port_serverLong_clientLong;
@@ -37,8 +36,7 @@ void Fragmentation_TlsConnection_Test_MsgTransfer::SetUp()
     // ==============================================
     {
         // Get free TLS port
-        port_serverLong_clientShort = HelperFunctions::getFreePort();
-        ASSERT_NE(port_serverLong_clientShort, -1) << "No free port found";
+        ASSERT_NO_THROW(port_serverLong_clientShort = HelperFunctions::getFreePort()) << "No free port found";
 
         // Start TLS server and connect client
         ASSERT_EQ(tlsServer_selfLong_frgnShort.start(port_serverLong_clientShort), SERVER_START_OK) << "Unable to start TLS server on port " << port_serverLong_clientShort;
@@ -54,8 +52,7 @@ void Fragmentation_TlsConnection_Test_MsgTransfer::SetUp()
     // ==============================================
     {
         // Get free TLS port
-        port_serverShort_clientLong = HelperFunctions::getFreePort();
-        ASSERT_NE(port_serverShort_clientLong, -1) << "No free port found";
+        ASSERT_NO_THROW(port_serverShort_clientLong = HelperFunctions::getFreePort()) << "No free port found";
 
         // Start TLS server and connect client
         ASSERT_EQ(tlsServer_selfShort_frgnLong.start(port_serverShort_clientLong), SERVER_START_OK) << "Unable to start TLS server on port " << port_serverShort_clientLong;
@@ -71,8 +68,7 @@ void Fragmentation_TlsConnection_Test_MsgTransfer::SetUp()
     // ==============================================
     {
         // Get free TLS port
-        port_serverShort_clientShort = HelperFunctions::getFreePort();
-        ASSERT_NE(port_serverShort_clientShort, -1) << "No free port found";
+        ASSERT_NO_THROW(port_serverShort_clientShort = HelperFunctions::getFreePort()) << "No free port found";
 
         // Start TLS server and connect client
         ASSERT_EQ(tlsServer_selfShort_frgnShort.start(port_serverShort_clientShort), SERVER_START_OK) << "Unable to start TLS server on port " << port_serverShort_clientShort;

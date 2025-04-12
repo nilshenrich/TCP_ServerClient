@@ -16,8 +16,7 @@ Continuous_TcpServer_Test_ManyClients::~Continuous_TcpServer_Test_ManyClients() 
 void Continuous_TcpServer_Test_ManyClients::SetUp()
 {
     // Get free TCP port
-    port = HelperFunctions::getFreePort();
-    ASSERT_NE(port, -1) << "No free port found";
+    ASSERT_NO_THROW(port = HelperFunctions::getFreePort()) << "Error finding free port";
 
     // Start TCP server
     ASSERT_EQ(tcpServer.start(port), SERVER_START_OK) << "Unable to start TCP server on port " << port;

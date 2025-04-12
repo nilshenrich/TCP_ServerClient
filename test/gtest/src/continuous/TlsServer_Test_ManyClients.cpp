@@ -16,8 +16,7 @@ Continuous_TlsServer_Test_ManyClients::~Continuous_TlsServer_Test_ManyClients() 
 void Continuous_TlsServer_Test_ManyClients::SetUp()
 {
     // Get free TLS port
-    port = HelperFunctions::getFreePort();
-    ASSERT_NE(port, -1) << "No free port found";
+    ASSERT_NO_THROW(port = HelperFunctions::getFreePort()) << "Error finding free port";
 
     // Start TLS server
     ASSERT_EQ(tlsServer.start(port), SERVER_START_OK) << "Unable to start TLS server on port " << port;

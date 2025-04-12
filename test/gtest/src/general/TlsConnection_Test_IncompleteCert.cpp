@@ -14,8 +14,8 @@ General_TlsConnection_Test_IncompleteCert::~General_TlsConnection_Test_Incomplet
 void General_TlsConnection_Test_IncompleteCert::SetUp()
 {
     // Get free TLS port
-    port = HelperFunctions::getFreePort();
-    ASSERT_NE(port, -1) << "No free port found";
+    ASSERT_NO_THROW(port = HelperFunctions::getFreePort()) << "Error finding free port";
+
     return;
 }
 
