@@ -116,41 +116,6 @@ string FtpServer::sanitizeRequest(const string &request) const
     return sReturn;
 }
 
-// TODO: Move basic algorithms
-int FtpServer::getFreePort() const
-{
-    // First get rabdom number inside port range
-    // Then check if port is in use
-    //     -> If not, use it
-    //     -> If yes, try next number
-
-    int port{rand() % (PORT_RANGE_DATA[1] - PORT_RANGE_DATA[0]) + PORT_RANGE_DATA[0]};
-    for (int i{0}; i <= PORT_RANGE_DATA[1] - PORT_RANGE_DATA[0]; i += 1)
-    {
-        port += 1;
-        if (port > PORT_RANGE_DATA[1])
-            port = PORT_RANGE_DATA[0];
-
-        int sock{socket(AF_INET, SOCK_STREAM, 0)};
-        if (-1 == sock)
-            return -1;
-
-        struct sockaddr_in sin;
-        sin.sin_family = AF_INET;
-        sin.sin_addr.s_addr = INADDR_ANY;
-        sin.sin_port = htons(port);
-
-        if (!bind(sock, (struct sockaddr *)&sin, sizeof(sin)))
-        {
-            close(sock);
-            return port;
-        }
-    }
-
-    // If we get here, no free port was found. Return -1.
-    return -1;
-}
-
 ios::openmode FtpServer::getStreamOpenMode(const bool direction, const ::std::underlying_type_t<FileTransferType> transferType) const
 {
     switch (transferType)
@@ -466,7 +431,7 @@ void FtpServer::on_msg_modePassive(const int clientId, const uint32_t command, c
     unique_ptr<TcpServer> dataServer;
     {
         lock_guard<mutex> lck{tcpPort_m};
-        port = getFreePort();
+        port = algorithms::getFreePort(PORT_RANGE_DATA[0], PORT_RANGE_DATA[1]);
         if (port == -1)
         {
             tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::FAILED_OPEN_DATACONN)) + " No free port."s);

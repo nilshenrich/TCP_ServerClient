@@ -252,14 +252,6 @@ namespace ftp
         ::std::string sanitizeRequest(const ::std::string &request) const;
 
         /**
-         * @brief Get free random TCP port for data within range
-         *        Return -1 if no free port found
-         *
-         * @return int
-         */
-        int getFreePort() const;
-
-        /**
          * @brief Determine the stream open mode based on direction and file transfer type
          *
          * @param direction Stream direction (read/write)
