@@ -104,7 +104,7 @@ namespace ftp
     };
 
     // Session data
-    struct Session // TODO: Check session is cleared properly after every closure
+    struct Session
     {
         bool loggedIn;                               // Is user logged in?
         ::std::string username;                      // Username

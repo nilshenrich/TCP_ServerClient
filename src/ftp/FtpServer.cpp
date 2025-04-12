@@ -506,7 +506,7 @@ void FtpServer::on_msg_listDirectory(const int clientId, const uint32_t command,
 
     // Wait here for data server to accept connection
     // FIXME: Not ideal performance
-    // FIXME: Add timeout
+    // TODO: Add timeout
     vector<int> dataClients;
     while ((dataClients = dataServer->getAllClientIds()).empty())
         this_thread::sleep_for(chrono::milliseconds(10));
