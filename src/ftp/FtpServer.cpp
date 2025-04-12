@@ -523,12 +523,21 @@ void FtpServer::on_msg_fileDownload(const int clientId, const uint32_t command, 
     // Get user, current directory and data server from session
     string username;
     string path;
+    underlying_type_t<FileTransferType> mode; // TODO: Use file transfer mode
     unique_ptr<TcpServer> dataServer;
     {
         lock_guard<mutex> lck{session_modify_m};
         username = session[clientId].username;
         path = session[clientId].currentpath;
+        mode = session[clientId].mode;
         dataServer = move(session[clientId].tcpData); // Remove data server from session as should be closed after this action
+    }
+
+    // If not transfer type is specified, return with error code
+    if (mode == ENUM_CLASS_VALUE(FileTransferType::INVALID))
+    {
+        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_WRONG_ORDER)) + " File transfer type must be specified first specified."s);
+        return;
     }
 
     // Get stream to file that should be downloaded
@@ -610,12 +619,21 @@ void FtpServer::on_msg_fileUpload(const int clientId, const uint32_t command, co
     // Get user, current directory and data server from session
     string username;
     string path;
+    underlying_type_t<FileTransferType> mode; // TODO: Use file transfer mode
     unique_ptr<TcpServer> dataServer;
     {
         lock_guard<mutex> lck{session_modify_m};
         username = session[clientId].username;
         path = session[clientId].currentpath;
+        mode = session[clientId].mode;
         dataServer = move(session[clientId].tcpData); // Remove data server from session as should be closed after this action
+    }
+
+    // If not transfer type is specified, return with error code
+    if (mode == ENUM_CLASS_VALUE(FileTransferType::INVALID))
+    {
+        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_WRONG_ORDER)) + " File transfer type must be specified first specified."s);
+        return;
     }
 
     // On data server closed, close file writer and inform client

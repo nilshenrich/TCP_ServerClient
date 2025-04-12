@@ -311,6 +311,7 @@ namespace ftp
     };
 
     // Hashed request keywords
+    // https://en.wikipedia.org/wiki/List_of_FTP_commands
     enum class Request : uint32_t
     {
         SYSTEMTYPE = FtpServer::hashCommand("SYST"),          // System type of server (e.g. UNIX Type: L8)
@@ -330,6 +331,7 @@ namespace ftp
     };
 
     // Response codes
+    // https://en.wikipedia.org/wiki/List_of_FTP_server_return_codes
     enum class Response : int
     {
         SUCCESS_DATA_OPEN = 150,
@@ -363,7 +365,7 @@ namespace ftp
         ASCII = 'A',
         BINARY = 'I',
         UNICODE = 'U',
-        INVALID = 0, // TODO: Check for invalid whenever used for file transfer and throw error
+        INVALID = 0,
     };
 }
 
