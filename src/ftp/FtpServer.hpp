@@ -25,8 +25,27 @@
 // Define getting enum class value as underlying type
 #define ENUM_CLASS_VALUE(x) static_cast<::std::underlying_type_t<decltype(x)>>(x)
 
+// Define stream open modes for directions and file transfer types
+#define STREAM_OPEN_MODE_READ_ASCII std::ios::in
+#define STREAM_OPEN_MODE_READ_UNICODE std::ios::in
+#define STREAM_OPEN_MODE_READ_BINARY std::ios::in | std::ios::binary
+#define STREAM_OPEN_MODE_WRITE_ASCII std::ios::out
+#define STREAM_OPEN_MODE_WRITE_UNICODE std::ios::out
+#define STREAM_OPEN_MODE_WRITE_BINARY std::ios::out | std::ios::binary
+#define STREAM_DIRECTION_READ true
+#define STREAM_DIRECTION_WRITE false
+
 namespace ftp
 {
+    // File transfer types (EBCDIC not supported)
+    enum class FileTransferType : char
+    {
+        ASCII = 'A',
+        BINARY = 'I',
+        UNICODE = 'U',
+        INVALID = 0,
+    };
+
     // Item type
     enum class ItemType
     {
@@ -109,8 +128,8 @@ namespace ftp
         bool loggedIn;                               // Is user logged in?
         ::std::string username;                      // Username
         ::std::string currentpath;                   // Always absolute from user home
-        char transferType;                           // FileTransferType // TODO: Set file transfer type on calling user methods
-        ::std::unique_ptr<::tcp::TcpServer> tcpData; // Data server for file transfer // TODO: Check if data server is runninf whenever used for data transfer
+        char transferType;                           // FileTransferType
+        ::std::unique_ptr<::tcp::TcpServer> tcpData; // Data server for file transfer // TODO: Check if data server is running whenever used for data transfer
 
         // Constructors
 
@@ -168,8 +187,8 @@ namespace ftp
         void setWork_checkAccessible(::std::function<bool(const ::std::string, const ::std::string)> work);
         void setWork_listDirectory(::std::function<::std::valarray<Item>(const ::std::string)> work);
         void setWork_createDirectory(::std::function<bool(const ::std::string)> work);
-        void setWork_readFile(::std::function<::std::istream *(const ::std::string)> work);
-        void setWork_writeTempFile(::std::function<::std::ostream *()> work);
+        void setWork_readFile(::std::function<::std::istream *(const ::std::string, const ::std::ios::openmode)> work);
+        void setWork_writeTempFile(::std::function<::std::ostream *(const ::std::ios::openmode)> work);
         void setWork_moveTempFile(::std::function<void(const ::std::string)> work);
 
         /**
@@ -236,6 +255,15 @@ namespace ftp
          */
         int getFreePort() const;
 
+        /**
+         * @brief Determine the stream open mode based on direction and file transfer type
+         *
+         * @param direction Stream direction (read/write)
+         * @param transferType FTP file transfer type
+         * @return ::std::ios::openmode
+         */
+        ::std::ios::openmode getStreamOpenMode(const bool direction, const ::std::underlying_type_t<FileTransferType> transferType) const;
+
         // Constants
         const size_t MAXIMUM_MESSAGE_LENGTH{4096};
         const int PORT_CONTROL{21};
@@ -253,13 +281,13 @@ namespace ftp
         ::std::mutex tcpPort_m{}; // Mutex for TCP port availability
 
         // Pointer to functions on incoming message
-        ::std::function<bool(const ::std::string, const ::std::string)> work_checkUserCredentials; // Check user credentials: name, password -> bool
-        ::std::function<bool(const ::std::string, const ::std::string)> work_checkAccessible;      // Check if path is accessible (directory or file) for user: username, path -> bool
-        ::std::function<::std::valarray<Item>(const ::std::string)> work_listDirectory;            // List directory content: path -> items
-        ::std::function<bool(const ::std::string)> work_createDirectory;                           // Create directory: path -> bool
-        ::std::function<::std::istream *(const ::std::string)> work_readFile;                      // Read file content: path -> reading stream
-        ::std::function<::std::ostream *()> work_writeTempFile;                                    // Stream to temporary file to be moved later on: -> writing stream
-        ::std::function<void(const ::std::string)> work_moveTempFile;                              // Move temporary file to final destination: path
+        ::std::function<bool(const ::std::string, const ::std::string)> work_checkUserCredentials;        // Check user credentials: name, password -> bool
+        ::std::function<bool(const ::std::string, const ::std::string)> work_checkAccessible;             // Check if path is accessible (directory or file) for user: username, path -> bool
+        ::std::function<::std::valarray<Item>(const ::std::string)> work_listDirectory;                   // List directory content: path -> items
+        ::std::function<bool(const ::std::string)> work_createDirectory;                                  // Create directory: path -> bool
+        ::std::function<::std::istream *(const ::std::string, const ::std::ios::openmode)> work_readFile; // Read file content: path -> reading stream
+        ::std::function<::std::ostream *(const ::std::ios::openmode)> work_writeTempFile;                 // Stream to temporary file to be moved later on: -> writing stream
+        ::std::function<void(const ::std::string)> work_moveTempFile;                                     // Move temporary file to final destination: path
 
         //////////////////////////////////////////////////
         // Worker methods on incoming messages
@@ -357,15 +385,6 @@ namespace ftp
         ERROR_WRONG_ORDER = 503,
         ERROR_ARGUMENT_NOTSUPPORTED = 504,
         ERROR_LOGIN = 530,
-    };
-
-    // File transfer types (EBCDIC not supported)
-    enum class FileTransferType : char
-    {
-        ASCII = 'A',
-        BINARY = 'I',
-        UNICODE = 'U',
-        INVALID = 0,
     };
 }
 

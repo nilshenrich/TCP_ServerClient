@@ -27,9 +27,9 @@ FtpServer::FtpServer() : tcpControl{'\n', "\r", MAXIMUM_MESSAGE_LENGTH},
                                             { return valarray<Item>{}; }}, // Default: Return empty directory
                          work_createDirectory{[](const string) -> bool
                                               { return false; }}, // Default: Refuse all directory creations
-                         work_readFile{[](const string) -> istream *
+                         work_readFile{[](const string, const ios::openmode) -> istream *
                                        { return nullptr; }}, // Default: Return null-stream
-                         work_writeTempFile{[]() -> ostream *
+                         work_writeTempFile{[](const ios::openmode) -> ostream *
                                             { return nullptr; }}, // Default: Return null-stream
                          work_moveTempFile{[](const string)
                                            { return; }} // Default: Do nothing
@@ -51,8 +51,8 @@ void FtpServer::setWork_checkUserCredentials(function<bool(const string, const s
 void FtpServer::setWork_checkAccessible(function<bool(const string, const string)> worker) { work_checkAccessible = worker; }
 void FtpServer::setWork_listDirectory(function<valarray<Item>(const string)> worker) { work_listDirectory = worker; }
 void FtpServer::setWork_createDirectory(function<bool(const string)> worker) { work_createDirectory = worker; }
-void FtpServer::setWork_readFile(function<istream *(const string)> worker) { work_readFile = worker; }
-void FtpServer::setWork_writeTempFile(function<ostream *()> worker) { work_writeTempFile = worker; }
+void FtpServer::setWork_readFile(function<istream *(const string, const ios::openmode)> worker) { work_readFile = worker; }
+void FtpServer::setWork_writeTempFile(function<ostream *(const ios::openmode)> worker) { work_writeTempFile = worker; }
 void FtpServer::setWork_moveTempFile(function<void(const string)> worker) { work_moveTempFile = worker; }
 
 bool FtpServer::isRunning() const { return tcpControl.isRunning(); }
@@ -143,6 +143,21 @@ int FtpServer::getFreePort() const
 
     // If we get here, no free port was found. Return -1.
     return -1;
+}
+
+ios::openmode FtpServer::getStreamOpenMode(const bool direction, const ::std::underlying_type_t<FileTransferType> transferType) const
+{
+    switch (transferType)
+    {
+    case ENUM_CLASS_VALUE(FileTransferType::ASCII):
+        return (direction == STREAM_DIRECTION_READ) ? STREAM_OPEN_MODE_READ_ASCII : STREAM_OPEN_MODE_WRITE_ASCII;
+    case ENUM_CLASS_VALUE(FileTransferType::UNICODE):
+        return (direction == STREAM_DIRECTION_READ) ? STREAM_OPEN_MODE_READ_UNICODE : STREAM_OPEN_MODE_WRITE_UNICODE;
+    case ENUM_CLASS_VALUE(FileTransferType::BINARY):
+        return (direction == STREAM_DIRECTION_READ) ? STREAM_OPEN_MODE_READ_BINARY : STREAM_OPEN_MODE_WRITE_BINARY;
+    default:
+        throw Server_error("Invalid file transfer type: "s + to_string(transferType));
+    }
 }
 
 void FtpServer::on_newClient(const int clientId)
@@ -455,8 +470,8 @@ void FtpServer::on_msg_modePassive(const int clientId, const uint32_t command, c
         // Create new data server and start listening on free port
         // All incoming data is forwarded to stream to temporary buffer
         dataServer.reset(new TcpServer()); // Continuous mode
-        dataServer->setCreateForwardStream([this](const int dataClientId)
-                                           { return work_writeTempFile(); }); // Can't create outside lock guard to avoid memory leak in case of exception
+        dataServer->setCreateForwardStream([this, &transferType](const int dataClientId)
+                                           { return work_writeTempFile(getStreamOpenMode(STREAM_DIRECTION_WRITE, transferType)); }); // Can't create outside lock guard to avoid memory leak in case of exception
         if (dataServer->start(port, 1) != SERVER_START_OK)
         {
             tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::FAILED_OPEN_DATACONN)) + " Failed to open data connection."s);
@@ -537,17 +552,19 @@ void FtpServer::on_msg_fileDownload(const int clientId, const uint32_t command, 
     // Get user, current directory and data server from session
     string username;
     string path;
+    underlying_type_t<FileTransferType> transferType;
     unique_ptr<TcpServer> dataServer;
     {
         lock_guard<mutex> lck{session_modify_m};
         username = session[clientId].username;
         path = session[clientId].currentpath;
+        transferType = session[clientId].transferType; // No check needed as already done in on_msg_modePassive
         dataServer = move(session[clientId].tcpData); // Remove data server from session as should be closed after this action
     }
 
     // Get stream to file that should be downloaded
     path += "/"s + args[0];
-    istream *is{work_readFile(path)};
+    istream *is{work_readFile(path, getStreamOpenMode(STREAM_DIRECTION_READ, transferType))};
 
     // Wait here for data server to accept connection
     // FIXME: Not ideal performance

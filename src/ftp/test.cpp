@@ -39,10 +39,14 @@ int main()
                                                          Item{ItemType::file, "MyFile", {6, 4, 4}, 0, 10, 11, 4096, 1722164144}}; });
     server.setWork_createDirectory([](const string) -> bool
                                    { return true; });
-    server.setWork_readFile([](const string path) -> istringstream *
-                            { return new istringstream{"My file content for file '"s + path + "'"s}; });
-    server.setWork_writeTempFile([]() -> MyTempOstream *
-                                 { return new MyTempOstream; });
+    server.setWork_readFile([](const string path, const ios::openmode mode) -> istringstream *
+                            {
+                                cout << "[Test] Start reading file '"s + path + "' in mode '"s + to_string(mode) + "'"s; 
+                                return new istringstream{"My file content for file '"s + path + "'"s, mode}; });
+    server.setWork_writeTempFile([](const ios::openmode mode) -> MyTempOstream *
+                                 {
+                                    cout << "[Test] Start writing to temporary file in mode '"s + to_string(mode) + "'"s;
+                                    return new MyTempOstream(); });
     server.setWork_moveTempFile([](const string path)
                                 { cout << "Move temp file to " << path << endl; });
 
