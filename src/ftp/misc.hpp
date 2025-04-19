@@ -1,0 +1,249 @@
+/**
+ * @file misc.hpp
+ * @author Nils Henrich
+ * @brief Miscellaneous classes, structures, collections and functions used for FTP server
+ * @version 3.0.0
+ * @date 2025-04-19
+ *
+ * @copyright Copyright (c) 2025
+ */
+
+#ifndef MISC_HPP_
+#define MISC_HPP_
+
+#include <string>
+#include <ostream>
+#include <iomanip>
+#include <ctime>
+#include <cstdint>
+#include <valarray>
+#include <memory>
+
+#include "../basic/TcpServer.hpp"
+#include "../basic/TlsServer.hpp"
+
+//////////////////////////////////////////////////
+// General definitions
+//////////////////////////////////////////////////
+
+// Define getting enum class value as underlying type
+#define ENUM_CLASS_VALUE(x) static_cast<::std::underlying_type_t<decltype(x)>>(x)
+
+// Define stream open modes for directions and file transfer types
+#define STREAM_OPEN_MODE_READ_ASCII std::ios::in
+#define STREAM_OPEN_MODE_READ_UNICODE std::ios::in
+#define STREAM_OPEN_MODE_READ_BINARY std::ios::in | std::ios::binary
+#define STREAM_OPEN_MODE_WRITE_ASCII std::ios::out
+#define STREAM_OPEN_MODE_WRITE_UNICODE std::ios::out
+#define STREAM_OPEN_MODE_WRITE_BINARY std::ios::out | std::ios::binary
+#define STREAM_DIRECTION_READ true
+#define STREAM_DIRECTION_WRITE false
+
+namespace ftp
+{
+    //////////////////////////////////////////////////
+    // Types for file transfer
+    //////////////////////////////////////////////////
+
+    // Item type
+    enum class ItemType
+    {
+        directory,
+        file,
+        link
+    };
+
+    // File transfer types (EBCDIC not supported)
+    enum class FileTransferType : char
+    {
+        ASCII = 'A',
+        BINARY = 'I',
+        UNICODE = 'U',
+        INVALID = 0,
+    };
+
+    //////////////////////////////////////////////////
+    // Small utility structures used for type bundling across the FTP server implementation
+    //////////////////////////////////////////////////
+
+    // Item properties
+    struct Item
+    {
+        ItemType type;
+        ::std::string name;
+        char permissions[3]; // "rwx"*[user, group, other]
+        int nLinks;          // number of links
+        int uid;             // user id
+        int gid;             // group id
+        int size;            // [file] size in bytes | [directory] number of items
+        int mtime;           // modification time in UNIX seconds
+
+        // Overload operator<<
+        friend ::std::ostream &operator<<(::std::ostream &os, const Item &i)
+        {
+            // Item type
+            switch (i.type)
+            {
+            case ItemType::directory:
+                os << "d";
+                break;
+            case ItemType::link:
+                os << "l";
+                break;
+            case ItemType::file:
+            default:
+                os << "-";
+                break;
+            }
+
+            // Item permissions (user, group, other)
+            for (int pi{0}; pi < 3; pi += 1)
+            {
+                const char &p{i.permissions[pi]};
+                os << (p & 4 ? "r" : "-"); // read
+                os << (p & 2 ? "w" : "-"); // write
+                os << (p & 1 ? "x" : "-"); // execute
+            }
+
+            // Number of links, owner, group, size
+            os.fill(0x20);
+            os << ' ' << ::std::setw(4) << i.nLinks;
+            os << ' ' << ::std::setw(4) << i.uid;
+            os << ' ' << ::std::setw(4) << i.gid;
+            os << ' ' << ::std::setw(12) << i.size;
+
+            // Modification time using format: yyyy mmm dd hh:mm
+            os.fill('0');
+            ::std::time_t time{i.mtime};
+            size_t tSize{::std::size("yyyy mmm dd hh:mm")};
+            char tBuffer[tSize];
+            ::std::strftime(tBuffer, tSize, "%Y %b %d %H:%M", ::std::localtime(&time));
+            os << ' ' << tBuffer;
+
+            // Item name
+            os << ' ' << i.name;
+
+            return os;
+        }
+    };
+
+    // Request properties
+    struct Reqp
+    {
+        uint32_t command;
+        ::std::valarray<::std::string> args;
+    };
+
+    // Session data
+    struct Session
+    {
+        bool loggedIn;                               // Is user logged in?
+        ::std::string username;                      // Username
+        ::std::string currentpath;                   // Always absolute from user home
+        char transferType;                           // FileTransferType
+        ::std::unique_ptr<::tcp::TcpServer> tcpData; // Data server for file transfer
+
+        // Constructors
+
+        // Default: Not logged in
+        Session() : loggedIn{false},
+                    username{},
+                    currentpath{},
+                    transferType{0},
+                    tcpData{nullptr} {}
+
+        // Given logged in, username and current path
+        Session(bool loggedIn, const ::std::string &username, const ::std::string &currentpath) : loggedIn{loggedIn},
+                                                                                                  username{username},
+                                                                                                  currentpath{currentpath},
+                                                                                                  transferType{0},
+                                                                                                  tcpData{nullptr} {}
+
+        // Overload operator<<
+        friend ::std::ostream &operator<<(::std::ostream &os, const Session &s)
+        {
+            os << "{loggedIn: " << s.loggedIn << ", username: " << s.username << ", currentpath: " << s.currentpath << ", transferType: " << s.transferType << ", has tcpData: " << (s.tcpData ? "yes" : "no") << "}";
+            return os;
+        }
+    };
+
+    //////////////////////////////////////////////////
+    // Utility functions
+    //////////////////////////////////////////////////
+
+    /**
+     * @brief Get unique ID for a command string
+     *        This makes it easier to jump in code based on the command
+     *        Each command is made of 3-4 bytes, so the ID is just the numeric representation
+     *
+     * @param command
+     * @return uint32
+     */
+    // TODO: Increase performance by parallelizing byte calculations
+    constexpr uint32_t hashCommand(const char *const command)
+    {
+        size_t len{::std::min<size_t>(::std::strlen(command), 4)};
+
+        uint32_t id{0};
+        for (size_t i = 0; i < len; i += 1)
+        {
+            char c{command[i]};
+            id |= static_cast<uint32_t>(c * (c >= 0x20)) << (24 - (i * 8));
+        }
+        return id;
+    }
+
+    //////////////////////////////////////////////////
+    // FTP command and response codes
+    //////////////////////////////////////////////////
+
+    // Hashed request keywords
+    // https://en.wikipedia.org/wiki/List_of_FTP_commands
+    enum class Request : uint32_t
+    {
+        SYSTEMTYPE = hashCommand("SYST"),          // System type of server (e.g. UNIX Type: L8)
+        USERNAME = hashCommand("USER"),            // Username for login
+        PASSWORD = hashCommand("PASS"),            // Password for login
+        DIRECTORY_GETCURRENT = hashCommand("PWD"), // Get current directory path
+        FEATURES_LIST = hashCommand("FEAT"),       // List of features supported by server
+        DIRECTORY_LIST = hashCommand("LIST"),      // List directory content
+        DIRECTORY_CHANGE = hashCommand("CWD"),     // Change directory
+        DIRECTORY_CREATE = hashCommand("MKD"),     // Create directory
+        FILE_TRANSFER_TYPE = hashCommand("TYPE"),  // Set file transfer type
+        MODE_PASSIVE_ALL = hashCommand("EPSV"),    // Enter passive mode (For both IPv4 and IPv6)
+        MODE_PASSIVE_SHORT = hashCommand("PASV"),  // Enter passive mode (For IPv4 only)
+        MODE_PASSIVE_LONG = hashCommand("LPSV"),   // Enter passive mode (For IPv6 only)
+        FILE_DOWNLOAD = hashCommand("RETR"),       // Download file
+        FILE_UPLOAD = hashCommand("STOR"),         // Upload file
+    };
+
+    // Response codes
+    // https://en.wikipedia.org/wiki/List_of_FTP_server_return_codes
+    enum class Response : int
+    {
+        SUCCESS_DATA_OPEN = 150,
+        OK = 200,
+        SUCCESS_STATUS = 211,
+        SUCCESS_SYSTEMTYPE = 215,
+        SUCCESS_WELCOME = 220,
+        SUCCESS_DATA_CLOSE = 226,
+        SUCCESS_PASSIVE_ALL = 229,
+        SUCCESS_PASSIVE_SHORT = 227,
+        SUCCESS_PASSIVE_LONG = 228,
+        SUCCESS_LOGIN = 230,
+        SUCCESS_ACTION = 250,
+        SUCCESS_DIRECTORY = 257,
+        CONTINUE_PASSWORD_REQUIRED = 331,
+        FAILED_OPEN_DATACONN = 425,
+        FAILED_LOGIN = 430,
+        FAILED_FILENOTACCESSIBLE = 450,
+        FAILED_UNKNOWN_ERROR = 451,
+        ERROR_SYNTAX_COMMAND = 500,
+        ERROR_SYNTAX_ARGUMENT = 501,
+        ERROR_NOTIMPLEMENTED = 502,
+        ERROR_WRONG_ORDER = 503,
+        ERROR_ARGUMENT_NOTSUPPORTED = 504,
+        ERROR_LOGIN = 530,
+    };
+}
+#endif // MISC_HPP_
