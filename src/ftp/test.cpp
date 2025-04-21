@@ -11,19 +11,56 @@ using namespace ::tcp;
 using namespace ::ftp;
 using namespace ::std::chrono_literals;
 
-class MyTempOstream : private streambuf, public ostream
+class MyOstreambuf : public streambuf
 {
 public:
-    MyTempOstream() : ostream(this) {}
-
-private:
-    int overflow(int c) override
+    MyOstreambuf(streambuf *buf = cout.rdbuf()) : myStreambuf_p{buf},
+                                                  myBuffer{valarray<char>(256)},
+                                                  prepend{"MyOstream says: "},
+                                                  append{}
     {
-        cout << "MyTempOstream says '";
-        cout.put(c);
-        cout << "'" << endl;
+        setp(begin(myBuffer) + prepend.size(), end(myBuffer) - 1 - append.size());
+    }
+    virtual ~MyOstreambuf() {}
+
+    int_type overflow(int_type c) override
+    {
+        if (c != traits_type::eof())
+        {
+            *pptr() = traits_type::to_char_type(c);
+            pbump(1);
+            output();
+        }
         return c;
     }
+    int sync() override
+    {
+        output();
+        return 0;
+    }
+
+private:
+    streambuf *myStreambuf_p;
+    valarray<char> myBuffer;
+    const string prepend;
+    const string append;
+
+    void output()
+    {
+        for (size_t i{0}; i < prepend.size(); i += 1)
+            myBuffer[i] = prepend[i];
+        for (size_t i{0}; i < append.size(); i += 1)
+            myBuffer[myBuffer.size() - append.size() + i] = append[i];
+        myStreambuf_p->sputn(begin(myBuffer), myBuffer.size());
+        setp(begin(myBuffer) + prepend.size(), end(myBuffer) - 1 - append.size());
+    }
+};
+
+class MyOstream : public ostream
+{
+public:
+    MyOstream() : ostream{new MyOstreambuf()} {}
+    ~MyOstream() { delete rdbuf(); }
 };
 
 int main()
@@ -43,10 +80,10 @@ int main()
                             {
                                 cout << "[Test] Start reading file '"s + path + "' in mode '"s + to_string(mode) + "'"s; 
                                 return new istringstream{"My file content for file '"s + path + "'"s, mode}; });
-    server.setWork_writeTempFile([](const ios::openmode mode) -> MyTempOstream *
+    server.setWork_writeTempFile([](const ios::openmode mode) -> ostream *
                                  {
                                     cout << "[Test] Start writing to temporary file in mode '"s + to_string(mode) + "'"s;
-                                    return new MyTempOstream(); });
+                                    return new MyOstream(); });
     server.setWork_moveTempFile([](const string path)
                                 { cout << "Move temp file to " << path << endl; });
 
