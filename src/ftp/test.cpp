@@ -60,7 +60,7 @@ class MyOstream : public ostream
 {
 public:
     MyOstream() : ostream{new MyOstreambuf()} {}
-    ~MyOstream() { delete rdbuf(); }
+    ~MyOstream() {}
 };
 
 int main()

@@ -194,6 +194,46 @@ namespace ftp
     }
 
     //////////////////////////////////////////////////
+    // Classes
+    //////////////////////////////////////////////////
+
+    class DynamicStreambuf : public ::std::streambuf
+    {
+    public:
+        // Default constructor. Passing stream buffer and buffer size
+        DynamicStreambuf(::std::streambuf *buf, size_t size) : p_streambuf{buf},
+                                                               bufferSize{size},
+                                                               buffer{::std::valarray<char>('\x00', size)} {}
+        // TODO: Add constructors where either buffer or size is pre-defined (Not to be passed)
+
+        // Destructor
+        virtual ~DynamicStreambuf()
+        {
+            // Flush the buffer and delete the stream buffer
+            sync();
+            delete p_streambuf;
+        }
+
+    private:
+        // Pointer to the stream buffer. This can be changed while usage. This makes this stream buffer dynamic.
+        ::std::streambuf *p_streambuf;
+
+        // Buffered data not yet sent to the stream
+        const size_t bufferSize;
+        ::std::valarray<char> buffer;
+    };
+    class DynamicOstream : public ::std::ostream
+    {
+    public:
+        // Default constructor. Passing stream buffer and buffer size
+        DynamicOstream(::std::streambuf *buf, size_t size) : ::std::ostream{new DynamicStreambuf(buf, size)} {}
+        // TODO: Add constructors where either buffer or size is pre-defined (Not to be passed)
+
+        // Destructor
+        virtual ~DynamicOstream() = default;
+    };
+
+    //////////////////////////////////////////////////
     // FTP command and response codes
     //////////////////////////////////////////////////
 
