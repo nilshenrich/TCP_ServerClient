@@ -12,18 +12,18 @@
 #ifndef FTPSERVER_HPP_
 #define FTPSERVER_HPP_
 
-#include <string>
-#include <valarray>
-#include <map>
-#include <istream>
-#include <ostream>
 #include <functional>
-#include <type_traits>
+#include <istream>
+#include <map>
 #include <mutex>
+#include <ostream>
+#include <string>
+#include <type_traits>
+#include <valarray>
 
-#include "misc.hpp"
 #include "../basic/TcpServer.hpp"
 #include "../basic/TlsServer.hpp"
+#include "misc.hpp"
 
 namespace ftp
 {
@@ -60,8 +60,7 @@ namespace ftp
         void setWork_listDirectory(::std::function<::std::valarray<Item>(const ::std::string)> work);
         void setWork_createDirectory(::std::function<bool(const ::std::string)> work);
         void setWork_readFile(::std::function<::std::istream *(const ::std::string, const ::std::ios::openmode)> work);
-        void setWork_writeTempFile(::std::function<::std::ostream *(const ::std::ios::openmode)> work);
-        void setWork_moveTempFile(::std::function<void(const ::std::string)> work);
+        void setWork_writeFile(::std::function<::std::ostream *(const ::std::string, const ::std::ios::openmode)> work);
 
         /**
          * @brief Return if the FTP server is running (means if underlying TCP server is running)
@@ -121,16 +120,15 @@ namespace ftp
         // Thread safety
         ::std::mutex session_delete_m{}; // Mutex for deleting (closed) session
         ::std::mutex session_modify_m{}; // Mutex for modifying session: add, change
-        ::std::mutex tcpPort_m{}; // Mutex for TCP port availability
+        ::std::mutex tcpPort_m{};        // Mutex for TCP port availability
 
         // Pointer to functions on incoming message
-        ::std::function<bool(const ::std::string, const ::std::string)> work_checkUserCredentials;        // Check user credentials: name, password -> bool
-        ::std::function<bool(const ::std::string, const ::std::string)> work_checkAccessible;             // Check if path is accessible (directory or file) for user: username, path -> bool
-        ::std::function<::std::valarray<Item>(const ::std::string)> work_listDirectory;                   // List directory content: path -> items
-        ::std::function<bool(const ::std::string)> work_createDirectory;                                  // Create directory: path -> bool
-        ::std::function<::std::istream *(const ::std::string, const ::std::ios::openmode)> work_readFile; // Read file content: path -> reading stream
-        ::std::function<::std::ostream *(const ::std::ios::openmode)> work_writeTempFile;                 // Stream to temporary file to be moved later on: -> writing stream
-        ::std::function<void(const ::std::string)> work_moveTempFile;                                     // Move temporary file to final destination: path
+        ::std::function<bool(const ::std::string, const ::std::string)> work_checkUserCredentials;         // Check user credentials: name, password -> bool
+        ::std::function<bool(const ::std::string, const ::std::string)> work_checkAccessible;              // Check if path is accessible (directory or file) for user: username, path -> bool
+        ::std::function<::std::valarray<Item>(const ::std::string)> work_listDirectory;                    // List directory content: path -> items
+        ::std::function<bool(const ::std::string)> work_createDirectory;                                   // Create directory: path -> bool
+        ::std::function<::std::istream *(const ::std::string, const ::std::ios::openmode)> work_readFile;  // Read file content: path -> reading stream
+        ::std::function<::std::ostream *(const ::std::string, const ::std::ios::openmode)> work_writeFile; // Write content to file: path -> writing stream
 
         //////////////////////////////////////////////////
         // Worker methods on incoming messages

@@ -11,13 +11,13 @@
 #ifndef MISC_HPP_
 #define MISC_HPP_
 
-#include <string>
-#include <ostream>
-#include <iomanip>
-#include <ctime>
 #include <cstdint>
-#include <valarray>
+#include <ctime>
+#include <iomanip>
 #include <memory>
+#include <ostream>
+#include <string>
+#include <valarray>
 
 #include "../basic/TcpServer.hpp"
 #include "../basic/TlsServer.hpp"
@@ -200,18 +200,50 @@ namespace ftp
     class DynamicStreambuf : public ::std::streambuf
     {
     public:
-        // Default constructor. Passing stream buffer and buffer size
-        DynamicStreambuf(::std::streambuf *buf, size_t size) : p_streambuf{buf},
-                                                               bufferSize{size},
-                                                               buffer{::std::valarray<char>('\x00', size)} {}
-        // TODO: Add constructors where either buffer or size is pre-defined (Not to be passed)
+        // Default constructor. Stream buffer not set on object creation (null-stream), to be set later via setStreambuf()
+        DynamicStreambuf(size_t size) : p_streambuf{nullptr},
+                                        bufferSize{size},
+                                        buffer{::std::valarray<char>('\x00', bufferSize)}
+        {
+            setp(begin(buffer), end(buffer) - 1);
+        }
 
         // Destructor
         virtual ~DynamicStreambuf()
         {
-            // Flush the buffer and delete the stream buffer
+            // Flush the buffer. Stream buffer already deleted in base class destructor
             sync();
-            delete p_streambuf;
+        }
+
+        // Redirect the stream buffer to the given stream buffer
+        void setStreambuf(::std::streambuf *buf)
+        {
+            if (p_streambuf)
+                throw ::tcp::Server_error("DynamicStreambuf::setStreambuf() - Stream buffer already set.");
+
+            p_streambuf = buf;
+        }
+
+        // Buffer full, send data to the stream if existing. If not, throw an error
+        int_type overflow(int_type c) override
+        {
+#ifdef DEVELOP
+            ::std::cout << "DynamicStreambuf::overflow() - Buffer full, sending data to stream." << ::std::endl;
+#endif // DEVELOP
+
+            if (c != traits_type::eof())
+            {
+                *pptr() = traits_type::to_char_type(c);
+                pbump(1);
+                sync();
+            }
+            return c;
+        }
+
+        // Send buffered data to the stream
+        int sync() override
+        {
+            return output();
         }
 
     private:
@@ -221,16 +253,61 @@ namespace ftp
         // Buffered data not yet sent to the stream
         const size_t bufferSize;
         ::std::valarray<char> buffer;
+
+        // Output the buffered data to the stream
+        // Returns 0 on success, -1 on error
+        // BUG: flushing stream buffer before setting a stream buffer ignores everything coming after
+        int output()
+        {
+            if (!p_streambuf)
+            {
+#ifdef DEVELOP
+                ::std::cerr << "DynamicStreambuf::output() - No stream buffer set, cannot send data." << ::std::endl;
+#endif                     // DEVELOP
+                return -1; // BUG: Has no effect and throw-ing an exception seems catched somewhere in the basic streambuf
+            }
+
+#ifdef DEVELOP
+            ::std::cout << "DynamicStreambuf::output() - Sending " << buffer.size() << " bytes to stream: \"";
+            for (const char &c : buffer)
+            {
+                if (c == '\0')
+                    continue;
+                if (c == '\n')
+                    ::std::cout << "\\n";
+                else if (c == '\r')
+                    ::std::cout << "\\r";
+                else
+                    ::std::cout << c;
+            }
+            ::std::cout << "\"" << ::std::endl;
+#endif // DEVELOP
+
+            p_streambuf->sputn(begin(buffer), buffer.size());
+            buffer = '\x00'; // Clear buffer after sending to stream
+            setp(begin(buffer), end(buffer) - 1);
+            return 0; // Success
+        }
     };
     class DynamicOstream : public ::std::ostream
     {
     public:
-        // Default constructor. Passing stream buffer and buffer size
-        DynamicOstream(::std::streambuf *buf, size_t size) : ::std::ostream{new DynamicStreambuf(buf, size)} {}
-        // TODO: Add constructors where either buffer or size is pre-defined (Not to be passed)
+        // Default constructor. Default size of the stream buffer is 256 bytes.
+        DynamicOstream(size_t size = 256) : ::std::ostream{new DynamicStreambuf(size)} {}
 
         // Destructor
-        virtual ~DynamicOstream() = default;
+        virtual ~DynamicOstream()
+        {
+            // Delete the stream buffer
+            delete getStreambuf();
+        }
+
+        // Get the stream buffer
+        // TODO: Name it rdbuf overriding the base class method
+        DynamicStreambuf *getStreambuf() const
+        {
+            return static_cast<DynamicStreambuf *>(rdbuf());
+        }
     };
 
     //////////////////////////////////////////////////

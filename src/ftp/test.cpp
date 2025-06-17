@@ -1,8 +1,8 @@
 // DEV: Debugging file to be deleted
 
-#include <thread>
-#include <sstream>
 #include <iostream>
+#include <sstream>
+#include <thread>
 
 #include "FtpServer.hpp"
 
@@ -65,6 +65,17 @@ public:
 
 int main()
 {
+    DynamicOstream myStream{};
+    cout << 1 << endl;
+    myStream << "Hello, world! - before" << endl;
+    cout << 2 << endl;
+    myStream.getStreambuf()->setStreambuf(cout.rdbuf());
+    cout << 3 << endl;
+    myStream << "Hello, world! - after" << endl;
+    cout << 4 << endl;
+
+    return 0;
+
     FtpServer server;
     server.setWork_checkUserCredentials([](const string, const string) -> bool
                                         { return true; });
@@ -78,14 +89,12 @@ int main()
                                    { return true; });
     server.setWork_readFile([](const string path, const ios::openmode mode) -> istringstream *
                             {
-                                cout << "[Test] Start reading file '"s + path + "' in mode '"s + to_string(mode) + "'"s; 
+                                cout << "[Test] Start reading file '"s + path + "' in mode '"s + to_string(mode) + "'"s;
                                 return new istringstream{"My file content for file '"s + path + "'"s, mode}; });
-    server.setWork_writeTempFile([](const ios::openmode mode) -> ostream *
-                                 {
-                                    cout << "[Test] Start writing to temporary file in mode '"s + to_string(mode) + "'"s;
-                                    return new MyOstream(); });
-    server.setWork_moveTempFile([](const string path)
-                                { cout << "Move temp file to " << path << endl; });
+    server.setWork_writeFile([](const string path, const ios::openmode mode) -> ostream *
+                             {
+                                cout << "[Test] Start writing to file '"s + path + "' in mode '"s + to_string(mode) + "'"s;
+                                return new ostream{cout.rdbuf()}; });
 
     if (server.start())
         return -1;
