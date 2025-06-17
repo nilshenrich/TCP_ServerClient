@@ -231,7 +231,15 @@ namespace ftp
             ::std::cout << "DynamicStreambuf::overflow() - Buffer full, sending data to stream." << ::std::endl;
 #endif // DEVELOP
 
-            // TODO: Throw if no stream buffer set
+            // If no stream buffer is set, clear the buffer and return failure code
+            if (!p_streambuf)
+            {
+#ifdef DEVELOP
+                ::std::cerr << "DynamicStreambuf::overflow() - No stream buffer set, cannot send data." << ::std::endl;
+#endif // DEVELOP
+                buffer = '\x00';
+                return traits_type::eof();
+            }
 
             if (c != traits_type::eof())
             {
@@ -263,9 +271,9 @@ namespace ftp
             if (!p_streambuf)
             {
 #ifdef DEVELOP
-                ::std::cerr << "DynamicStreambuf::output() - No stream buffer set, cannot send data." << ::std::endl;
+                ::std::cerr << "DynamicStreambuf::output() - No stream buffer set, just buffer data." << ::std::endl;
 #endif                     // DEVELOP
-                return 0;  // BUG: Has no effect and throw-ing an exception seems catched somewhere in the basic streambuf
+                return 0;
             }
 
 #ifdef DEVELOP

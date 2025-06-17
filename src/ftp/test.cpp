@@ -65,7 +65,9 @@ public:
 
 int main()
 {
-    DynamicOstream myStream{};
+    // DynamicOstream myStream{16}; // Buffer too small for first message -> Error
+    DynamicOstream myStream{32}; // Buffer large enough for first message, but not for complete message -> First message buffered and complete message sent out in chunks
+    // DynamicOstream myStream{64}; // Buffer large enough for complete message -> Complete message sent out in one go
     cout << 1 << endl;
     myStream << "Hello, world! - before" << endl;
     cout << 2 << endl;
