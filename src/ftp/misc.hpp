@@ -224,6 +224,20 @@ namespace ftp
             p_streambuf = buf;
         }
 
+    private:
+        // Pointer to the stream buffer. This can be changed while usage. This makes this stream buffer dynamic.
+        ::std::streambuf *p_streambuf;
+
+        // Buffered data not yet sent to the stream
+        const size_t bufferSize;
+        ::std::valarray<char> buffer;
+
+        // Send buffered data to the stream
+        int sync() override
+        {
+            return output();
+        }
+
         // Buffer full, send data to the stream if existing. If not, throw an error
         int_type overflow(int_type c) override
         {
@@ -237,7 +251,6 @@ namespace ftp
 #ifdef DEVELOP
                 ::std::cerr << "DynamicStreambuf::overflow() - No stream buffer set, cannot send data." << ::std::endl;
 #endif // DEVELOP
-                buffer = '\x00';
                 return traits_type::eof();
             }
 
@@ -249,20 +262,6 @@ namespace ftp
             }
             return c;
         }
-
-        // Send buffered data to the stream
-        int sync() override
-        {
-            return output();
-        }
-
-    private:
-        // Pointer to the stream buffer. This can be changed while usage. This makes this stream buffer dynamic.
-        ::std::streambuf *p_streambuf;
-
-        // Buffered data not yet sent to the stream
-        const size_t bufferSize;
-        ::std::valarray<char> buffer;
 
         // Output the buffered data to the stream
         // Returns 0 on success, -1 on error
@@ -277,11 +276,13 @@ namespace ftp
             }
 
 #ifdef DEVELOP
-            ::std::cout << "DynamicStreambuf::output() - Sending " << buffer.size() << " bytes to stream: \"";
-            for (const char &c : buffer)
+            ::std::cout << "DynamicStreambuf::output() - Sending " << pptr() - pbase() << " bytes to stream: \"";
+            for (int i{0}; i < pptr() - pbase(); i += 1)
             {
+                char c{*(pbase() + i)};
+
                 if (c == '\0')
-                    continue;
+                    ::std::cout << "\\0";
                 if (c == '\n')
                     ::std::cout << "\\n";
                 else if (c == '\r')
@@ -292,8 +293,7 @@ namespace ftp
             ::std::cout << "\"" << ::std::endl;
 #endif // DEVELOP
 
-            p_streambuf->sputn(begin(buffer), buffer.size());
-            buffer = '\x00'; // Clear buffer after sending to stream
+            p_streambuf->sputn(pbase(), pptr() - pbase());
             setp(begin(buffer), end(buffer) - 1);
             return 0; // Success
         }
