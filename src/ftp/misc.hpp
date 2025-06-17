@@ -231,6 +231,8 @@ namespace ftp
             ::std::cout << "DynamicStreambuf::overflow() - Buffer full, sending data to stream." << ::std::endl;
 #endif // DEVELOP
 
+            // TODO: Throw if no stream buffer set
+
             if (c != traits_type::eof())
             {
                 *pptr() = traits_type::to_char_type(c);
@@ -256,7 +258,6 @@ namespace ftp
 
         // Output the buffered data to the stream
         // Returns 0 on success, -1 on error
-        // BUG: flushing stream buffer before setting a stream buffer ignores everything coming after
         int output()
         {
             if (!p_streambuf)
@@ -264,7 +265,7 @@ namespace ftp
 #ifdef DEVELOP
                 ::std::cerr << "DynamicStreambuf::output() - No stream buffer set, cannot send data." << ::std::endl;
 #endif                     // DEVELOP
-                return -1; // BUG: Has no effect and throw-ing an exception seems catched somewhere in the basic streambuf
+                return 0;  // BUG: Has no effect and throw-ing an exception seems catched somewhere in the basic streambuf
             }
 
 #ifdef DEVELOP
