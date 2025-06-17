@@ -203,7 +203,7 @@ namespace ftp
         // Default constructor. Stream buffer not set on object creation (null-stream), to be set later via setStreambuf()
         DynamicStreambuf(size_t size) : p_streambuf{nullptr},
                                         bufferSize{size},
-                                        buffer{::std::valarray<char>('\x00', bufferSize)}
+                                        buffer{::std::valarray<char>(bufferSize)}
         {
             setp(begin(buffer), end(buffer) - 1);
         }
