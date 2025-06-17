@@ -11,9 +11,10 @@
 #ifndef ALGORITHMS_HPP_
 #define ALGORITHMS_HPP_
 
-#include <string>
-#include <netinet/in.h>
 #include "./template/exception.hpp"
+#include <netinet/in.h>
+#include <string>
+#include <unistd.h>
 
 namespace tcp::algorithms
 {
