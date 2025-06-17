@@ -11,6 +11,7 @@
 #ifndef MISC_HPP_
 #define MISC_HPP_
 
+#include <array>
 #include <cstdint>
 #include <ctime>
 #include <iomanip>
@@ -197,13 +198,13 @@ namespace ftp
     // Classes
     //////////////////////////////////////////////////
 
+    template <::std::size_t BUFFER_SIZE>
     class DynamicStreambuf : public ::std::streambuf
     {
     public:
         // Default constructor. Stream buffer not set on object creation (null-stream), to be set later via setStreambuf()
-        DynamicStreambuf(size_t size) : p_streambuf{nullptr},
-                                        bufferSize{size},
-                                        buffer{::std::valarray<char>(bufferSize)}
+        DynamicStreambuf() : p_streambuf{nullptr},
+                             buffer{}
         {
             setp(begin(buffer), end(buffer) - 1);
         }
@@ -229,8 +230,7 @@ namespace ftp
         ::std::streambuf *p_streambuf;
 
         // Buffered data not yet sent to the stream
-        const size_t bufferSize;
-        ::std::valarray<char> buffer;
+        ::std::array<char, BUFFER_SIZE> buffer;
 
         // Send buffered data to the stream
         int sync() override
@@ -271,7 +271,7 @@ namespace ftp
             {
 #ifdef DEVELOP
                 ::std::cerr << "DynamicStreambuf::output() - No stream buffer set, just buffer data." << ::std::endl;
-#endif                     // DEVELOP
+#endif // DEVELOP
                 return 0;
             }
 
@@ -298,11 +298,12 @@ namespace ftp
             return 0; // Success
         }
     };
+    template <::std::size_t BUFFER_SIZE = 256>
     class DynamicOstream : public ::std::ostream
     {
     public:
         // Default constructor. Default size of the stream buffer is 256 bytes.
-        DynamicOstream(size_t size = 256) : ::std::ostream{new DynamicStreambuf(size)} {}
+        DynamicOstream() : ::std::ostream{new DynamicStreambuf<BUFFER_SIZE>()} {}
 
         // Destructor
         virtual ~DynamicOstream()
@@ -313,9 +314,9 @@ namespace ftp
 
         // Get the stream buffer
         // TODO: Name it rdbuf overriding the base class method
-        DynamicStreambuf *getStreambuf() const
+        DynamicStreambuf<BUFFER_SIZE> *getStreambuf() const
         {
-            return static_cast<DynamicStreambuf *>(rdbuf());
+            return static_cast<DynamicStreambuf<BUFFER_SIZE> *>(rdbuf());
         }
     };
 
