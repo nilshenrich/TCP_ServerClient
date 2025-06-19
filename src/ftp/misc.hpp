@@ -40,6 +40,9 @@
 #define STREAM_DIRECTION_READ true
 #define STREAM_DIRECTION_WRITE false
 
+// Dynamic stream buffer size
+#define STREAM_DYNAMICOSTREAM_BUFFERSIZE 65536
+
 namespace ftp
 {
     //////////////////////////////////////////////////
@@ -324,11 +327,11 @@ namespace ftp
             return 0; // Success
         }
     };
-    template <::std::size_t BUFFER_SIZE = 65536>
+    template <::std::size_t BUFFER_SIZE>
     class DynamicOstream : public ::std::ostream
     {
     public:
-        // Default constructor. Default size of the stream buffer is 65536 bytes.
+        // Default constructor
         DynamicOstream() : ::std::ostream{new DynamicStreambuf<BUFFER_SIZE>()} {}
 
         // Destructor

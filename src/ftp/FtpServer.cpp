@@ -442,7 +442,7 @@ void FtpServer::on_msg_modePassive(const int clientId, const uint32_t command, c
         // All incoming data is forwarded to stream to temporary buffer
         dataServer.reset(new TcpServer()); // Continuous mode
         dataServer->setCreateForwardStream([](const int dataClientId)
-                                           { return new DynamicOstream{}; }); // Create dynamic output stream for temporarily buffering incoming data
+                                           { return new DynamicOstream<STREAM_DYNAMICOSTREAM_BUFFERSIZE>{}; }); // Create dynamic output stream for temporarily buffering incoming data
         if (dataServer->start(port, 1) != SERVER_START_OK)
         {
             tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::FAILED_OPEN_DATACONN)) + " Failed to open data connection."s);
