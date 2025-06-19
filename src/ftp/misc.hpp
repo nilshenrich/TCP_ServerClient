@@ -212,7 +212,7 @@ namespace ftp
         // Destructor
         virtual ~DynamicStreambuf()
         {
-            // Flush the buffer. Stream buffer already deleted in base class destructor
+            // Flush the buffer. Stream buffer already deleted in base class destructor // TODO: Is it?
             sync();
         }
 

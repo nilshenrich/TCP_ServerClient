@@ -65,13 +65,21 @@ public:
 
 int main()
 {
+    MyOstream ms;
+    string msg{"Hello, world! - MyOstreambuf"};
+    ms << msg << endl;
+    ms.rdbuf()->sputn(msg.c_str(), msg.size()); // DEV: Not sent out
+    ms << endl;                                 // DEV: msg sent out when called becaused sync-ed
+    return 0;
+
     // DynamicOstream<16> myStream{}; // Buffer too small for first message -> Error
     DynamicOstream<32> myStream{}; // Buffer large enough for first message, but not for complete message -> First message buffered and complete message sent out in chunks
     // DynamicOstream<64> myStream{}; // Buffer large enough for complete message -> Complete message sent out in one go
+    MyOstream myOstream;
     cout << "1: Status = " << myStream.rdbuf()->status() << endl;
     myStream << "Hello, world! - before" << endl;
     cout << "2: Status = " << myStream.rdbuf()->status() << endl;
-    myStream.rdbuf()->setStreambuf(cout.rdbuf());
+    myStream.rdbuf()->setStreambuf(myOstream.rdbuf()); // FIXME: Nothing sent out, why? (cout.rdbuf works)
     cout << "3: Status = " << myStream.rdbuf()->status() << endl;
     myStream << "Hello, world! - after" << endl;
     cout << "4: Status = " << myStream.rdbuf()->status() << endl;
