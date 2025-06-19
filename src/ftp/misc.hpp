@@ -147,12 +147,7 @@ namespace ftp
         // Constructors
 
         // Default: Not logged in
-        // TODO: Call argumented constructor with default values instead of repeating inizialization list
-        Session() : loggedIn{false},
-                    username{},
-                    currentpath{},
-                    transferType{0},
-                    tcpData{nullptr} {}
+        Session() : Session{false, ::std::string{}, ::std::string{}} {}
 
         // Given logged in, username and current path
         Session(bool loggedIn, const ::std::string &username, const ::std::string &currentpath) : loggedIn{loggedIn},
@@ -329,11 +324,11 @@ namespace ftp
             return 0; // Success
         }
     };
-    template <::std::size_t BUFFER_SIZE = 256>
+    template <::std::size_t BUFFER_SIZE = 65536>
     class DynamicOstream : public ::std::ostream
     {
     public:
-        // Default constructor. Default size of the stream buffer is 256 bytes.
+        // Default constructor. Default size of the stream buffer is 65536 bytes.
         DynamicOstream() : ::std::ostream{new DynamicStreambuf<BUFFER_SIZE>()} {}
 
         // Destructor
