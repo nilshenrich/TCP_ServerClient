@@ -68,13 +68,13 @@ int main()
     // DynamicOstream<16> myStream{}; // Buffer too small for first message -> Error
     DynamicOstream<32> myStream{}; // Buffer large enough for first message, but not for complete message -> First message buffered and complete message sent out in chunks
     // DynamicOstream<64> myStream{}; // Buffer large enough for complete message -> Complete message sent out in one go
-    cout << 1 << endl;
+    cout << "1: Status = " << myStream.rdbuf()->status() << endl;
     myStream << "Hello, world! - before" << endl;
-    cout << 2 << endl;
-    myStream.getStreambuf()->setStreambuf(cout.rdbuf());
-    cout << 3 << endl;
+    cout << "2: Status = " << myStream.rdbuf()->status() << endl;
+    myStream.rdbuf()->setStreambuf(cout.rdbuf());
+    cout << "3: Status = " << myStream.rdbuf()->status() << endl;
     myStream << "Hello, world! - after" << endl;
-    cout << 4 << endl;
+    cout << "4: Status = " << myStream.rdbuf()->status() << endl;
 
     return 0;
 

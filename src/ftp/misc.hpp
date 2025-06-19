@@ -147,6 +147,7 @@ namespace ftp
         // Constructors
 
         // Default: Not logged in
+        // TODO: Call argumented constructor with default values instead of repeating inizialization list
         Session() : loggedIn{false},
                     username{},
                     currentpath{},
@@ -204,7 +205,8 @@ namespace ftp
     public:
         // Default constructor. Stream buffer not set on object creation (null-stream), to be set later via setStreambuf()
         DynamicStreambuf() : p_streambuf{nullptr},
-                             buffer{}
+                             buffer{},
+                             bufferStatus{1}
         {
             setp(begin(buffer), end(buffer) - 1);
         }
@@ -219,11 +221,24 @@ namespace ftp
         // Redirect the stream buffer to the given stream buffer
         void setStreambuf(::std::streambuf *buf)
         {
+            if (bufferStatus == -1)
+                throw ::tcp::Server_error("DynamicStreambuf::setStreambuf() - Cannot set stream buffer as buffer is full and in error state.");
+
             if (p_streambuf)
                 throw ::tcp::Server_error("DynamicStreambuf::setStreambuf() - Stream buffer already set.");
 
+            if (!buf)
+                throw ::tcp::Server_error("DynamicStreambuf::setStreambuf() - Cannot set null stream buffer.");
+
             p_streambuf = buf;
+            bufferStatus = 0; // Stream buffer successfully set
         }
+
+        // Get the current stream buffer status
+        //  0: Stream buffer successfully set -> data buffered and sent
+        //  1: Stream buffer not full and not set -> data buffered but not sent
+        // -1: Stream buffer full but not set -> data not sent
+        int status() const { return bufferStatus; }
 
     private:
         // Pointer to the stream buffer. This can be changed while usage. This makes this stream buffer dynamic.
@@ -231,6 +246,12 @@ namespace ftp
 
         // Buffered data not yet sent to the stream
         ::std::array<char, BUFFER_SIZE> buffer;
+
+        // Status
+        //  0: Stream buffer successfully set -> data buffered and sent
+        //  1: Stream buffer not full and not set -> data buffered but not sent
+        // -1: Stream buffer full but not set -> data not sent
+        int bufferStatus;
 
         // Send buffered data to the stream
         int sync() override
@@ -251,6 +272,9 @@ namespace ftp
 #ifdef DEVELOP
                 ::std::cerr << "DynamicStreambuf::overflow() - No stream buffer set, cannot send data." << ::std::endl;
 #endif // DEVELOP
+
+                setp(begin(buffer), end(buffer) - 1);
+                bufferStatus = -1; // Buffer full but not set
                 return traits_type::eof();
             }
 
@@ -281,14 +305,21 @@ namespace ftp
             {
                 char c{*(pbase() + i)};
 
-                if (c == '\0')
+                switch (c)
+                {
+                case '\0':
                     ::std::cout << "\\0";
-                if (c == '\n')
+                    break;
+                case '\n':
                     ::std::cout << "\\n";
-                else if (c == '\r')
+                    break;
+                case '\r':
                     ::std::cout << "\\r";
-                else
+                    break;
+                default:
                     ::std::cout << c;
+                    break;
+                }
             }
             ::std::cout << "\"" << ::std::endl;
 #endif // DEVELOP
@@ -309,14 +340,13 @@ namespace ftp
         virtual ~DynamicOstream()
         {
             // Delete the stream buffer
-            delete getStreambuf();
+            delete ::std::ostream::rdbuf();
         }
 
         // Get the stream buffer
-        // TODO: Name it rdbuf overriding the base class method
-        DynamicStreambuf<BUFFER_SIZE> *getStreambuf() const
+        DynamicStreambuf<BUFFER_SIZE> *rdbuf() const
         {
-            return static_cast<DynamicStreambuf<BUFFER_SIZE> *>(rdbuf());
+            return static_cast<DynamicStreambuf<BUFFER_SIZE> *>(::std::ostream::rdbuf());
         }
     };
 
