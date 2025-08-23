@@ -87,6 +87,11 @@ public:
 
 void test1()
 {
+    cout << endl
+         << "==================================" << endl
+         << "Test 1: MyOstreambuf via MyOstream" << endl
+         << "==================================" << endl;
+
     MyOstream ms;
     string msg{"Hello, world! - MyOstreambuf"};
     ms << msg << endl;
@@ -96,6 +101,11 @@ void test1()
 
 void test2()
 {
+    cout << endl
+         << "==================================" << endl
+         << "Test 2: DynamicOstream with MyOstreambuf" << endl
+         << "==================================" << endl;
+
     // DynamicOstream<16> myStream{}; // Buffer too small for first message -> Error
     DynamicOstream<32> myStream{}; // Buffer large enough for first message, but not for complete message -> First message buffered and complete message sent out in chunks
     // DynamicOstream<64> myStream{}; // Buffer large enough for complete message -> Complete message sent out in one go
@@ -109,9 +119,35 @@ void test2()
     cout << "4: Status = " << myStream.rdbuf()->status() << endl;
 }
 
+void test3()
+{
+    cout << endl
+         << "==================================" << endl
+         << "Test 3: DynamicOstream with MyOstreambuf (via temp pointer)" << endl
+         << "==================================" << endl;
+
+    // DynamicOstream<16> myStream{}; // Buffer too small for first message -> Error
+    DynamicOstream<32> myStream{}; // Buffer large enough for first message, but not for complete message -> First message buffered and complete message sent out in chunks
+    // DynamicOstream<64> myStream{}; // Buffer large enough for complete message -> Complete message sent out in one go
+    // ofstream myOstream{"test.txt"};
+    MyOstream myOstream;
+    auto temp_buf{static_cast<DynamicStreambuf<32> *>(myStream.rdbuf())};
+    myOstream << "Hello, world! - direct to myOstream - before all" << endl;
+    cout << "1: Status = " << temp_buf->status() << endl;
+    myStream << "Hello, world! - before" << endl;
+    cout << "2: Status = " << temp_buf->status() << endl;
+    temp_buf->setStreambuf(myOstream.rdbuf()); // DEV: Works fine, just if used via temp_buf pointer that is determined before (even if DynamicOstream overrides rdbuf() method)
+    cout << "3: Status = " << temp_buf->status() << endl;
+    myStream << "Hello, world! - after" << endl;
+    cout << "4: Status = " << temp_buf->status() << endl;
+    myOstream << "Hello, world! - direct to myOstream - after all" << endl;
+}
+
 int main()
 {
+    test1();
     test2();
+    test3();
     return 0;
 
     FtpServer server;

@@ -344,7 +344,7 @@ namespace ftp
         // Get the stream buffer
         DynamicStreambuf<BUFFER_SIZE> *rdbuf() const
         {
-            return static_cast<DynamicStreambuf<BUFFER_SIZE> *>(::std::ostream::rdbuf());
+            return static_cast<DynamicStreambuf<BUFFER_SIZE> *>(::std::ostream::rdbuf()); // FIXME: Doesn't get the correct pointer
         }
     };
 
