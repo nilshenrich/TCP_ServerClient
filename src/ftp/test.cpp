@@ -21,7 +21,7 @@ public:
     {
         setp(begin(myBuffer) + prepend.size(), end(myBuffer) - 1 - append.size());
     }
-    virtual ~MyOstreambuf() {}
+    virtual ~MyOstreambuf() { sync(); }
 
     int_type overflow(int_type c) override
     {
@@ -82,7 +82,7 @@ class MyOstream : public ostream
 {
 public:
     MyOstream() : ostream{new MyOstreambuf()} {}
-    ~MyOstream() {}
+    ~MyOstream() { delete rdbuf(); }
 };
 
 void test1()
@@ -99,11 +99,11 @@ void test1()
     ms << endl;                                 // DEV: msg sent out when called because sync-ed
 }
 
-void test2()
+void test2(bool finalSend)
 {
     cout << endl
          << "==================================" << endl
-         << "Test 2: DynamicOstream with MyOstreambuf" << endl
+         << "Test 2: DynamicOstream with MyOstreambuf. Final send: " << finalSend << endl
          << "==================================" << endl;
 
     // DynamicOstream<16> myStream{}; // Buffer too small for first message -> Error
@@ -118,13 +118,15 @@ void test2()
     myStream << "Hello, world! - after" << endl;
     cout << "4: Status = " << myStream.rdbuf()->status() << endl;
 
-    myOstream << "Send something to MyOstream directly." << endl; // INFO: Actually this makes the MyOstream work (worked for cout as debug messages were sent to cout before)
+    if (finalSend)
+        myOstream << "Send something to MyOstream directly." << endl; // INFO: Actually this makes the MyOstream work (worked for cout as debug messages were sent to cout before)
 }
 
 int main()
 {
     test1();
-    test2();
+    test2(false);
+    test2(true);
     return 0;
 
     FtpServer server;
