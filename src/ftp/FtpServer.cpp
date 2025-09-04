@@ -426,7 +426,8 @@ void FtpServer::on_msg_modePassive(const int clientId, const uint32_t command, c
     // Open data server on free port within range
     int port;
     unique_ptr<TcpServer> dataServer;
-    unique_ptr<DynamicOstream<STREAM_DYNAMICOSTREAM_BUFFERSIZE>> incomingStreamFwd;
+    unique_ptr<DynamicOstream<STREAM_DYNAMICOSTREAM_BUFFERSIZE>> incomingStreamFwd{new DynamicOstream<STREAM_DYNAMICOSTREAM_BUFFERSIZE>()};
+    DynamicOstream<STREAM_DYNAMICOSTREAM_BUFFERSIZE> *p_incomingStreamFwd = incomingStreamFwd.get();
     {
         lock_guard<mutex> lck{tcpPort_m};
         try
@@ -442,8 +443,8 @@ void FtpServer::on_msg_modePassive(const int clientId, const uint32_t command, c
         // Create new data server and start listening on free port
         // All incoming data is forwarded to stream to temporary buffer
         dataServer.reset(new TcpServer()); // Continuous mode
-        dataServer->setCreateForwardStream([&incomingStreamFwd](const int dataClientId)
-                                           { return incomingStreamFwd.get(); }); // Create dynamic output stream for temporarily buffering incoming data
+        dataServer->setCreateForwardStream([p_incomingStreamFwd](const int dataClientId)
+                                           { return p_incomingStreamFwd; }); // Create dynamic output stream for temporarily buffering incoming data
         if (dataServer->start(port, 1) != SERVER_START_OK)
         {
             tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::FAILED_OPEN_DATACONN)) + " Failed to open data connection."s);
@@ -635,8 +636,8 @@ void FtpServer::on_msg_fileUpload(const int clientId, const uint32_t command, co
         lock_guard<mutex> lck{session_modify_m};
         username = session[clientId].username;
         path = session[clientId].currentpath;
-        transferType = session[clientId].transferType; // No check needed as already done in on_msg_modePassive
-        dataServer = move(session[clientId].tcpData); // Remove data server from session as should be closed after this action
+        transferType = session[clientId].transferType;                 // No check needed as already done in on_msg_modePassive
+        dataServer = move(session[clientId].tcpData);                  // Remove data server from session as should be closed after this action
         incomingStreamFwd = move(session[clientId].incomingStreamFwd); // Remove stream from session as should be closed after this action
     }
 
