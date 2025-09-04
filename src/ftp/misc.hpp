@@ -46,128 +46,6 @@
 namespace ftp
 {
     //////////////////////////////////////////////////
-    // Types for file transfer
-    //////////////////////////////////////////////////
-
-    // Item type
-    enum class ItemType
-    {
-        directory,
-        file,
-        link
-    };
-
-    // File transfer types (EBCDIC not supported)
-    enum class FileTransferType : char
-    {
-        ASCII = 'A',
-        BINARY = 'I',
-        UNICODE = 'U',
-        INVALID = 0,
-    };
-
-    //////////////////////////////////////////////////
-    // Small utility structures used for type bundling across the FTP server implementation
-    //////////////////////////////////////////////////
-
-    // Item properties
-    struct Item
-    {
-        ItemType type;
-        ::std::string name;
-        char permissions[3]; // "rwx"*[user, group, other]
-        int nLinks;          // number of links
-        int uid;             // user id
-        int gid;             // group id
-        int size;            // [file] size in bytes | [directory] number of items
-        int mtime;           // modification time in UNIX seconds
-
-        // Overload operator<<
-        friend ::std::ostream &operator<<(::std::ostream &os, const Item &i)
-        {
-            // Item type
-            switch (i.type)
-            {
-            case ItemType::directory:
-                os << "d";
-                break;
-            case ItemType::link:
-                os << "l";
-                break;
-            case ItemType::file:
-            default:
-                os << "-";
-                break;
-            }
-
-            // Item permissions (user, group, other)
-            for (int pi{0}; pi < 3; pi += 1)
-            {
-                const char &p{i.permissions[pi]};
-                os << (p & 4 ? "r" : "-"); // read
-                os << (p & 2 ? "w" : "-"); // write
-                os << (p & 1 ? "x" : "-"); // execute
-            }
-
-            // Number of links, owner, group, size
-            os.fill(0x20);
-            os << ' ' << ::std::setw(4) << i.nLinks;
-            os << ' ' << ::std::setw(4) << i.uid;
-            os << ' ' << ::std::setw(4) << i.gid;
-            os << ' ' << ::std::setw(12) << i.size;
-
-            // Modification time using format: yyyy mmm dd hh:mm
-            os.fill('0');
-            ::std::time_t time{i.mtime};
-            size_t tSize{::std::size("yyyy mmm dd hh:mm")};
-            char tBuffer[tSize];
-            ::std::strftime(tBuffer, tSize, "%Y %b %d %H:%M", ::std::localtime(&time));
-            os << ' ' << tBuffer;
-
-            // Item name
-            os << ' ' << i.name;
-
-            return os;
-        }
-    };
-
-    // Request properties
-    struct Reqp
-    {
-        uint32_t command;
-        ::std::valarray<::std::string> args;
-    };
-
-    // Session data
-    struct Session
-    {
-        bool loggedIn;                               // Is user logged in?
-        ::std::string username;                      // Username
-        ::std::string currentpath;                   // Always absolute from user home
-        char transferType;                           // FileTransferType
-        ::std::unique_ptr<::tcp::TcpServer> tcpData; // Data server for file transfer
-
-        // Constructors
-
-        // Default: Not logged in
-        Session() : Session{false, ::std::string{}, ::std::string{}} {}
-
-        // Given logged in, username and current path
-        Session(bool loggedIn, const ::std::string &username, const ::std::string &currentpath) : loggedIn{loggedIn},
-                                                                                                  username{username},
-                                                                                                  currentpath{currentpath},
-                                                                                                  transferType{0},
-                                                                                                  tcpData{nullptr} {}
-
-        // Overload operator<<
-        friend ::std::ostream &operator<<(::std::ostream &os, const Session &s)
-        {
-            os << "{loggedIn: " << s.loggedIn << ", username: " << s.username << ", currentpath: " << s.currentpath << ", transferType: " << s.transferType << ", has tcpData: " << (s.tcpData ? "yes" : "no") << "}";
-            return os;
-        }
-    };
-
-    //////////////////////////////////////////////////
     // Utility functions
     //////////////////////////////////////////////////
 
@@ -299,6 +177,16 @@ namespace ftp
         // Destructor
         virtual ~DynamicOstream() {}
 
+        // Redirect the stream buffer to the given stream buffer or stream
+        void redirect(::std::streambuf *buf)
+        {
+            streambuf.setStreambuf(buf);
+        }
+        void redirect(::std::ostream *os)
+        {
+            streambuf.setStreambuf(os->rdbuf());
+        }
+
         // Get the stream buffer
         DynamicStreambuf<BUFFER_SIZE> *rdbuf() const
         {
@@ -307,6 +195,135 @@ namespace ftp
 
     private:
         DynamicStreambuf<BUFFER_SIZE> streambuf;
+    };
+
+    //////////////////////////////////////////////////
+    // Types for file transfer
+    //////////////////////////////////////////////////
+
+    // Item type
+    enum class ItemType
+    {
+        directory,
+        file,
+        link
+    };
+
+    // File transfer types (EBCDIC not supported)
+    enum class FileTransferType : char
+    {
+        ASCII = 'A',
+        BINARY = 'I',
+        UNICODE = 'U',
+        INVALID = 0,
+    };
+
+    //////////////////////////////////////////////////
+    // Small utility structures used for type bundling across the FTP server implementation
+    //////////////////////////////////////////////////
+
+    // Item properties
+    struct Item
+    {
+        ItemType type;
+        ::std::string name;
+        char permissions[3]; // "rwx"*[user, group, other]
+        int nLinks;          // number of links
+        int uid;             // user id
+        int gid;             // group id
+        int size;            // [file] size in bytes | [directory] number of items
+        int mtime;           // modification time in UNIX seconds
+
+        // Overload operator<<
+        friend ::std::ostream &operator<<(::std::ostream &os, const Item &i)
+        {
+            // Item type
+            switch (i.type)
+            {
+            case ItemType::directory:
+                os << "d";
+                break;
+            case ItemType::link:
+                os << "l";
+                break;
+            case ItemType::file:
+            default:
+                os << "-";
+                break;
+            }
+
+            // Item permissions (user, group, other)
+            for (int pi{0}; pi < 3; pi += 1)
+            {
+                const char &p{i.permissions[pi]};
+                os << (p & 4 ? "r" : "-"); // read
+                os << (p & 2 ? "w" : "-"); // write
+                os << (p & 1 ? "x" : "-"); // execute
+            }
+
+            // Number of links, owner, group, size
+            os.fill(0x20);
+            os << ' ' << ::std::setw(4) << i.nLinks;
+            os << ' ' << ::std::setw(4) << i.uid;
+            os << ' ' << ::std::setw(4) << i.gid;
+            os << ' ' << ::std::setw(12) << i.size;
+
+            // Modification time using format: yyyy mmm dd hh:mm
+            os.fill('0');
+            ::std::time_t time{i.mtime};
+            size_t tSize{::std::size("yyyy mmm dd hh:mm")};
+            char tBuffer[tSize];
+            ::std::strftime(tBuffer, tSize, "%Y %b %d %H:%M", ::std::localtime(&time));
+            os << ' ' << tBuffer;
+
+            // Item name
+            os << ' ' << i.name;
+
+            return os;
+        }
+    };
+
+    // Request properties
+    struct Reqp
+    {
+        uint32_t command;
+        ::std::valarray<::std::string> args;
+    };
+
+    // Session data
+    struct Session
+    {
+        bool loggedIn;                                                                         // Is user logged in?
+        ::std::string username;                                                                // Username
+        ::std::string currentpath;                                                             // Always absolute from user home
+        char transferType;                                                                     // FileTransferType
+        ::std::unique_ptr<::tcp::TcpServer> tcpData;                                           // Data server for file transfer
+        ::std::unique_ptr<DynamicOstream<STREAM_DYNAMICOSTREAM_BUFFERSIZE>> incomingStreamFwd; // Forward incoming data to this stream (file upload)
+
+        // Constructors
+
+        // Default: Not logged in
+        Session() : Session{false, ::std::string{}, ::std::string{}} {}
+
+        // Given logged in, username and current path
+        Session(bool loggedIn, const ::std::string &username, const ::std::string &currentpath) : loggedIn{loggedIn},
+                                                                                                  username{username},
+                                                                                                  currentpath{currentpath},
+                                                                                                  transferType{0},
+                                                                                                  tcpData{nullptr},
+                                                                                                  incomingStreamFwd{nullptr} {}
+
+        // Overload operator<<
+        friend ::std::ostream &operator<<(::std::ostream &os, const Session &s)
+        {
+            os << "{loggedIn: " << s.loggedIn
+               << ", username: " << s.username
+               << ", currentpath: " << s.currentpath
+               << ", transferType: " << s.transferType
+               << ", has tcpData: " << (s.tcpData ? "yes" : "no")
+               << ", forward stream set: " << (s.incomingStreamFwd && s.incomingStreamFwd->rdbuf() ? "yes" : "no") << "}";
+            return os;
+        }
     };
 
     //////////////////////////////////////////////////

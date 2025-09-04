@@ -119,11 +119,6 @@ void test2(bool finalSend)
 
 int main()
 {
-    test1();
-    test2(false);
-    test2(true);
-    return 0;
-
     FtpServer server;
     server.setWork_checkUserCredentials([](const string, const string) -> bool
                                         { return true; });
