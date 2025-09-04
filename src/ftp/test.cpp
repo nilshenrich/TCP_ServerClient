@@ -35,18 +35,6 @@ public:
     }
     int sync() override
     {
-        output();
-        return 0;
-    }
-
-private:
-    streambuf *myStreambuf_p;
-    valarray<char> myBuffer;
-    const string prepend;
-    const string append;
-
-    void output()
-    {
         cout << "MyStreambuf::output() - Sending " << pptr() - pbase() << " bytes to stream: \"";
         for (int i{0}; i < pptr() - pbase(); i += 1)
         {
@@ -75,7 +63,14 @@ private:
             myBuffer[myBuffer.size() - append.size() + i] = append[i];
         myStreambuf_p->sputn(begin(myBuffer), myBuffer.size());
         setp(begin(myBuffer) + prepend.size(), end(myBuffer) - 1 - append.size());
+        return 0;
     }
+
+private:
+    streambuf *myStreambuf_p;
+    valarray<char> myBuffer;
+    const string prepend;
+    const string append;
 };
 
 void test1()
