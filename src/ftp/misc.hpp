@@ -298,7 +298,7 @@ namespace ftp
         ::std::string currentpath;                                                             // Always absolute from user home
         char transferType;                                                                     // FileTransferType
         ::std::unique_ptr<::tcp::TcpServer> tcpData;                                           // Data server for file transfer
-        ::std::unique_ptr<DynamicOstream<STREAM_DYNAMICOSTREAM_BUFFERSIZE>> incomingStreamFwd; // Forward incoming data to this stream (file upload)
+        DynamicOstream<STREAM_DYNAMICOSTREAM_BUFFERSIZE> *incomingStreamFwd;                   // Forward incoming data to this stream (file upload) - Memory managed outside of session by Server
 
         // Constructors
 
