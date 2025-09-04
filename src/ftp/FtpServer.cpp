@@ -649,6 +649,7 @@ void FtpServer::on_msg_fileUpload(const int clientId, const uint32_t command, co
     }
 
     // Get stream to file that should be uploaded and redirect data server output to file stream
+    // BUG: [ofstream] Works well for big files, but small files stay empty (when buffer size not reached)
     path += "/"s + args[0];
     incomingStreamFwd->redirect(work_writeFile(path, getStreamOpenMode(STREAM_DIRECTION_WRITE, transferType)));
 
