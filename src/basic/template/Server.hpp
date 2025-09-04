@@ -14,19 +14,20 @@
 #ifndef SERVER_HPP_
 #define SERVER_HPP_
 
-#include <iostream>
-#include <string>
-#include <vector>
-#include <map>
-#include <thread>
-#include <mutex>
-#include <cstring>
-#include <atomic>
-#include <memory>
-#include <functional>
-#include <netinet/in.h>
 #include <arpa/inet.h>
+#include <atomic>
+#include <cstring>
+#include <functional>
+#include <iostream>
+#include <map>
+#include <memory>
+#include <mutex>
+#include <netinet/in.h>
+#include <string>
+#include <thread>
 #include <unistd.h>
+#include <vector>
+
 #include "exception.hpp"
 
 // Debugging output

@@ -14,19 +14,20 @@
 #ifndef CLIENT_HPP_
 #define CLIENT_HPP_
 
-#include <iostream>
-#include <string>
-#include <vector>
-#include <cstring>
-#include <thread>
-#include <memory>
-#include <atomic>
-#include <functional>
-#include <unistd.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
+#include <atomic>
+#include <cstring>
+#include <functional>
+#include <iostream>
+#include <memory>
 #include <netdb.h>
+#include <netinet/in.h>
+#include <string>
 #include <sys/socket.h>
+#include <thread>
+#include <unistd.h>
+#include <vector>
+
 #include "exception.hpp"
 
 // Debugging output
