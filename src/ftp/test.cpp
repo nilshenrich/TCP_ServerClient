@@ -22,7 +22,6 @@ public:
     {
         setp(begin(myBuffer) + prepend.size(), end(myBuffer) - 1 - append.size());
     }
-    virtual ~MyStreambuf() { sync(); }
 
     int_type overflow(int_type c) override
     {
