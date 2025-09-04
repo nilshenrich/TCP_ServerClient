@@ -117,6 +117,35 @@ void test2(bool finalSend)
         myOstream << "Send something to MyOstream directly." << endl; // INFO: Actually this makes the MyOstream work (worked for cout as debug messages were sent to cout before)
 }
 
+void test3()
+{
+    cout << endl
+         << "==================================" << endl
+         << "Test 3: Use raw numbers (including 0)" << endl
+         << "==================================" << endl;
+
+    string zero_no;
+    string zero_yes;
+    for (char i{-10}; i < 10; i += 1)
+    {
+        zero_no += (i + 75);
+        zero_yes += i;
+    }
+
+    DynamicOstream<32> myStream{};
+    MyStreambuf myBuf;
+    ostream myOstream{&myBuf};
+    cout << "1: Status = " << myStream.rdbuf()->status() << endl;
+    myStream << "zero-no:  " << zero_no << endl;
+    cout << "2: Status = " << myStream.rdbuf()->status() << endl;
+    myStream.redirect(&myBuf);
+    cout << "3: Status = " << myStream.rdbuf()->status() << endl;
+    myStream << "zero-yes: " << zero_yes << endl;
+    cout << "4: Status = " << myStream.rdbuf()->status() << endl;
+
+    myOstream << "Final endline" << endl;
+}
+
 int main()
 {
     FtpServer server;
