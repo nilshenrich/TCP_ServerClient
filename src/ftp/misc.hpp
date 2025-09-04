@@ -210,11 +210,7 @@ namespace ftp
         }
 
         // Destructor
-        virtual ~DynamicStreambuf()
-        {
-            // Flush the buffer. Stream buffer already deleted in base class destructor // TODO: Is it?
-            sync();
-        }
+        virtual ~DynamicStreambuf() {}
 
         // Redirect the stream buffer to the given stream buffer
         void setStreambuf(::std::streambuf *buf)
@@ -335,11 +331,7 @@ namespace ftp
         DynamicOstream() : ::std::ostream{new DynamicStreambuf<BUFFER_SIZE>()} {}
 
         // Destructor
-        virtual ~DynamicOstream()
-        {
-            // Delete the stream buffer
-            delete ::std::ostream::rdbuf();
-        }
+        virtual ~DynamicOstream() {}
 
         // Get the stream buffer
         DynamicStreambuf<BUFFER_SIZE> *rdbuf() const
