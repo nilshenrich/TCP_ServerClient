@@ -256,10 +256,6 @@ namespace ftp
         // Buffer full, send data to the stream if existing. If not, throw an error
         int_type overflow(int_type c) override
         {
-#ifdef DEVELOP
-            ::std::cout << "DynamicStreambuf::overflow() - Buffer full, sending data to stream." << ::std::endl;
-#endif // DEVELOP
-
             // If no stream buffer is set, clear the buffer and return failure code
             if (!p_streambuf)
             {
@@ -286,37 +282,7 @@ namespace ftp
         int output()
         {
             if (!p_streambuf)
-            {
-#ifdef DEVELOP
-                ::std::cerr << "DynamicStreambuf::output() - No stream buffer set, just buffer data." << ::std::endl;
-#endif // DEVELOP
                 return 0;
-            }
-
-#ifdef DEVELOP
-            ::std::cout << "DynamicStreambuf::output() - Sending " << pptr() - pbase() << " bytes to stream: \"";
-            for (int i{0}; i < pptr() - pbase(); i += 1)
-            {
-                char c{*(pbase() + i)};
-
-                switch (c)
-                {
-                case '\0':
-                    ::std::cout << "\\0";
-                    break;
-                case '\n':
-                    ::std::cout << "\\n";
-                    break;
-                case '\r':
-                    ::std::cout << "\\r";
-                    break;
-                default:
-                    ::std::cout << c;
-                    break;
-                }
-            }
-            ::std::cout << "\"" << ::std::endl;
-#endif // DEVELOP
 
             p_streambuf->sputn(pbase(), pptr() - pbase());
             setp(begin(buffer), end(buffer) - 1);
