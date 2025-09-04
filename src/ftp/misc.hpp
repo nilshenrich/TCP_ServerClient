@@ -328,7 +328,7 @@ namespace ftp
     {
     public:
         // Default constructor
-        DynamicOstream() : ::std::ostream{new DynamicStreambuf<BUFFER_SIZE>()} {}
+        DynamicOstream() : ::std::ostream{}, streambuf{} { init(&streambuf); }
 
         // Destructor
         virtual ~DynamicOstream() {}
@@ -336,8 +336,11 @@ namespace ftp
         // Get the stream buffer
         DynamicStreambuf<BUFFER_SIZE> *rdbuf() const
         {
-            return static_cast<DynamicStreambuf<BUFFER_SIZE> *>(::std::ostream::rdbuf()); // INFO: Same as using _M_streambuf directly
+            return const_cast<DynamicStreambuf<BUFFER_SIZE> *>(&streambuf);
         }
+
+    private:
+        DynamicStreambuf<BUFFER_SIZE> streambuf;
     };
 
     //////////////////////////////////////////////////

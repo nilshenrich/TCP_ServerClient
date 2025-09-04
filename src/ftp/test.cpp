@@ -1,5 +1,6 @@
 // DEV: Debugging file to be deleted
 
+#include <fstream>
 #include <iostream>
 #include <sstream>
 #include <thread>
@@ -11,17 +12,17 @@ using namespace ::tcp;
 using namespace ::ftp;
 using namespace ::std::chrono_literals;
 
-class MyOstreambuf : public streambuf
+class MyStreambuf : public streambuf
 {
 public:
-    MyOstreambuf(streambuf *buf = cout.rdbuf()) : myStreambuf_p{buf},
-                                                  myBuffer{valarray<char>(256)},
-                                                  prepend{"MyOstream says: "},
-                                                  append{}
+    MyStreambuf(streambuf *buf = cout.rdbuf()) : myStreambuf_p{buf},
+                                                 myBuffer{valarray<char>(256)},
+                                                 prepend{"MyOstream says: "},
+                                                 append{}
     {
         setp(begin(myBuffer) + prepend.size(), end(myBuffer) - 1 - append.size());
     }
-    virtual ~MyOstreambuf() { sync(); }
+    virtual ~MyStreambuf() { sync(); }
 
     int_type overflow(int_type c) override
     {
@@ -47,7 +48,7 @@ private:
 
     void output()
     {
-        cout << "MyOstreambuf::output() - Sending " << pptr() - pbase() << " bytes to stream: \"";
+        cout << "MyStreambuf::output() - Sending " << pptr() - pbase() << " bytes to stream: \"";
         for (int i{0}; i < pptr() - pbase(); i += 1)
         {
             char c{*(pbase() + i)};
@@ -78,22 +79,16 @@ private:
     }
 };
 
-class MyOstream : public ostream
-{
-public:
-    MyOstream() : ostream{new MyOstreambuf()} {}
-    virtual ~MyOstream() {}
-};
-
 void test1()
 {
     cout << endl
          << "==================================" << endl
-         << "Test 1: MyOstreambuf via MyOstream" << endl
+         << "Test 1: MyStreambuf via ostream directly" << endl
          << "==================================" << endl;
 
-    MyOstream ms;
-    string msg{"Hello, world! - MyOstreambuf"};
+    MyStreambuf myBuf;
+    ostream ms{&myBuf};
+    string msg{"Hello, world! - MyStreambuf"};
     ms << msg << endl;
     ms.rdbuf()->sputn(msg.c_str(), msg.size()); // DEV: Not sent out yet (Just buffered)
     ms << endl;                                 // DEV: msg sent out when called because sync-ed
@@ -103,13 +98,14 @@ void test2(bool finalSend)
 {
     cout << endl
          << "==================================" << endl
-         << "Test 2: DynamicOstream with MyOstreambuf. Final send: " << finalSend << endl
+         << "Test 2: DynamicOstream with MyStreambuf. Final send: " << finalSend << endl
          << "==================================" << endl;
 
     // DynamicOstream<16> myStream{}; // Buffer too small for first message -> Error
     DynamicOstream<32> myStream{}; // Buffer large enough for first message, but not for complete message -> First message buffered and complete message sent out in chunks
     // DynamicOstream<64> myStream{}; // Buffer large enough for complete message -> Complete message sent out in one go
-    MyOstream myOstream;
+    MyStreambuf myBuf;
+    ostream myOstream{&myBuf};
     cout << "1: Status = " << myStream.rdbuf()->status() << endl;
     myStream << "Hello, world! - before" << endl;
     cout << "2: Status = " << myStream.rdbuf()->status() << endl;
