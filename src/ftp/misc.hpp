@@ -126,9 +126,16 @@ namespace ftp
         int bufferStatus;
 
         // Send buffered data to the stream
+        // Output the buffered data to the stream
+        // Returns 0 on success, -1 on error
         int sync() override
         {
-            return output();
+            if (!p_streambuf)
+                return 0;
+
+            p_streambuf->sputn(pbase(), pptr() - pbase());
+            setp(begin(buffer), end(buffer) - 1);
+            return 0; // Success
         }
 
         // Buffer full, send data to the stream if existing. If not, throw an error
@@ -153,18 +160,6 @@ namespace ftp
                 sync();
             }
             return c;
-        }
-
-        // Output the buffered data to the stream
-        // Returns 0 on success, -1 on error
-        int output()
-        {
-            if (!p_streambuf)
-                return 0;
-
-            p_streambuf->sputn(pbase(), pptr() - pbase());
-            setp(begin(buffer), end(buffer) - 1);
-            return 0; // Success
         }
     };
     template <::std::size_t BUFFER_SIZE>
