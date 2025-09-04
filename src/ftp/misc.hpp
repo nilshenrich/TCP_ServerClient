@@ -11,13 +11,14 @@
 #ifndef MISC_HPP_
 #define MISC_HPP_
 
-#include <string>
-#include <ostream>
-#include <iomanip>
-#include <ctime>
+#include <array>
 #include <cstdint>
-#include <valarray>
+#include <ctime>
+#include <iomanip>
 #include <memory>
+#include <ostream>
+#include <string>
+#include <valarray>
 
 #include "../basic/TcpServer.hpp"
 #include "../basic/TlsServer.hpp"
@@ -39,8 +40,163 @@
 #define STREAM_DIRECTION_READ true
 #define STREAM_DIRECTION_WRITE false
 
+// Dynamic stream buffer size
+#define STREAM_DYNAMICOSTREAM_BUFFERSIZE 65536
+
 namespace ftp
 {
+    //////////////////////////////////////////////////
+    // Utility functions
+    //////////////////////////////////////////////////
+
+    /**
+     * @brief Get unique ID for a command string
+     *        This makes it easier to jump in code based on the command
+     *        Each command is made of 3-4 bytes, so the ID is just the numeric representation
+     *
+     * @param command
+     * @return uint32
+     */
+    // TODO: Increase performance by parallelizing byte calculations
+    constexpr uint32_t hashCommand(const char *const command)
+    {
+        size_t len{::std::min<size_t>(::std::strlen(command), 4)};
+
+        uint32_t id{0};
+        for (size_t i = 0; i < len; i += 1)
+        {
+            char c{command[i]};
+            id |= static_cast<uint32_t>(c * (c >= 0x20)) << (24 - (i * 8));
+        }
+        return id;
+    }
+
+    //////////////////////////////////////////////////
+    // Classes
+    //////////////////////////////////////////////////
+
+    template <::std::size_t BUFFER_SIZE>
+    class DynamicStreambuf : public ::std::streambuf
+    {
+    public:
+        // Default constructor. Stream buffer not set on object creation (null-stream), to be set later via setStreambuf()
+        DynamicStreambuf() : p_streambuf{nullptr},
+                             buffer{},
+                             bufferStatus{1}
+        {
+            setp(begin(buffer), end(buffer) - 1);
+        }
+
+        // Destructor
+        virtual ~DynamicStreambuf() {}
+
+        // Redirect the stream buffer to the given stream buffer
+        void setStreambuf(::std::streambuf *buf)
+        {
+            if (bufferStatus == -1)
+                throw ::tcp::Server_error("DynamicStreambuf::setStreambuf() - Cannot set stream buffer as buffer is full and in error state.");
+
+            if (p_streambuf)
+                throw ::tcp::Server_error("DynamicStreambuf::setStreambuf() - Stream buffer already set.");
+
+            if (!buf)
+                throw ::tcp::Server_error("DynamicStreambuf::setStreambuf() - Cannot set null stream buffer.");
+
+            p_streambuf = buf;
+            bufferStatus = 0; // Stream buffer successfully set
+        }
+
+        // Get the current stream buffer status
+        //  0: Stream buffer successfully set -> data buffered and sent
+        //  1: Stream buffer not full and not set -> data buffered but not sent
+        // -1: Stream buffer full but not set -> data not sent
+        int status() const { return bufferStatus; }
+
+    private:
+        // Pointer to the stream buffer. This can be changed while usage. This makes this stream buffer dynamic.
+        ::std::streambuf *p_streambuf;
+
+        // Buffered data not yet sent to the stream
+        ::std::array<char, BUFFER_SIZE> buffer;
+
+        // Status
+        //  0: Stream buffer successfully set -> data buffered and sent
+        //  1: Stream buffer not full and not set -> data buffered but not sent
+        // -1: Stream buffer full but not set -> data not sent
+        int bufferStatus;
+
+        // Send buffered data to the stream
+        int sync() override
+        {
+            return output();
+        }
+
+        // Buffer full, send data to the stream if existing. If not, throw an error
+        int_type overflow(int_type c) override
+        {
+            // If no stream buffer is set, clear the buffer and return failure code
+            if (!p_streambuf)
+            {
+#ifdef DEVELOP
+                ::std::cerr << "DynamicStreambuf::overflow() - No stream buffer set, cannot send data." << ::std::endl;
+#endif // DEVELOP
+
+                setp(begin(buffer), end(buffer) - 1);
+                bufferStatus = -1; // Buffer full but not set
+                return traits_type::eof();
+            }
+
+            if (c != traits_type::eof())
+            {
+                *pptr() = traits_type::to_char_type(c);
+                pbump(1);
+                sync();
+            }
+            return c;
+        }
+
+        // Output the buffered data to the stream
+        // Returns 0 on success, -1 on error
+        int output()
+        {
+            if (!p_streambuf)
+                return 0;
+
+            p_streambuf->sputn(pbase(), pptr() - pbase());
+            setp(begin(buffer), end(buffer) - 1);
+            return 0; // Success
+        }
+    };
+    template <::std::size_t BUFFER_SIZE>
+    class DynamicOstream : public ::std::ostream
+    {
+    public:
+        // Default constructor
+        DynamicOstream() : ::std::ostream{}, streambuf{} { init(&streambuf); }
+
+        // Destructor
+        virtual ~DynamicOstream() {}
+
+        // Redirect the stream buffer to the given stream buffer or stream
+        void redirect(::std::streambuf *buf)
+        {
+            streambuf.setStreambuf(buf);
+        }
+        void redirect(::std::ostream *os)
+        {
+            streambuf.setStreambuf(os->rdbuf());
+        }
+
+        // Get the stream buffer
+        DynamicStreambuf<BUFFER_SIZE> *rdbuf() const
+        {
+            return const_cast<DynamicStreambuf<BUFFER_SIZE> *>(&streambuf);
+        }
+
+    private:
+        DynamicStreambuf<BUFFER_SIZE> streambuf;
+    };
+
     //////////////////////////////////////////////////
     // Types for file transfer
     //////////////////////////////////////////////////
@@ -137,61 +293,38 @@ namespace ftp
     // Session data
     struct Session
     {
-        bool loggedIn;                               // Is user logged in?
-        ::std::string username;                      // Username
-        ::std::string currentpath;                   // Always absolute from user home
-        char transferType;                           // FileTransferType
-        ::std::unique_ptr<::tcp::TcpServer> tcpData; // Data server for file transfer
+        bool loggedIn;                                                                         // Is user logged in?
+        ::std::string username;                                                                // Username
+        ::std::string currentpath;                                                             // Always absolute from user home
+        char transferType;                                                                     // FileTransferType
+        ::std::unique_ptr<::tcp::TcpServer> tcpData;                                           // Data server for file transfer
+        DynamicOstream<STREAM_DYNAMICOSTREAM_BUFFERSIZE> *incomingStreamFwd;                   // Forward incoming data to this stream (file upload) - Memory managed outside of session by Server
 
         // Constructors
 
         // Default: Not logged in
-        Session() : loggedIn{false},
-                    username{},
-                    currentpath{},
-                    transferType{0},
-                    tcpData{nullptr} {}
+        Session() : Session{false, ::std::string{}, ::std::string{}} {}
 
         // Given logged in, username and current path
         Session(bool loggedIn, const ::std::string &username, const ::std::string &currentpath) : loggedIn{loggedIn},
                                                                                                   username{username},
                                                                                                   currentpath{currentpath},
                                                                                                   transferType{0},
-                                                                                                  tcpData{nullptr} {}
+                                                                                                  tcpData{nullptr},
+                                                                                                  incomingStreamFwd{nullptr} {}
 
         // Overload operator<<
         friend ::std::ostream &operator<<(::std::ostream &os, const Session &s)
         {
-            os << "{loggedIn: " << s.loggedIn << ", username: " << s.username << ", currentpath: " << s.currentpath << ", transferType: " << s.transferType << ", has tcpData: " << (s.tcpData ? "yes" : "no") << "}";
+            os << "{loggedIn: " << s.loggedIn
+               << ", username: " << s.username
+               << ", currentpath: " << s.currentpath
+               << ", transferType: " << s.transferType
+               << ", has tcpData: " << (s.tcpData ? "yes" : "no")
+               << ", forward stream set: " << (s.incomingStreamFwd && s.incomingStreamFwd->rdbuf() ? "yes" : "no") << "}";
             return os;
         }
     };
-
-    //////////////////////////////////////////////////
-    // Utility functions
-    //////////////////////////////////////////////////
-
-    /**
-     * @brief Get unique ID for a command string
-     *        This makes it easier to jump in code based on the command
-     *        Each command is made of 3-4 bytes, so the ID is just the numeric representation
-     *
-     * @param command
-     * @return uint32
-     */
-    // TODO: Increase performance by parallelizing byte calculations
-    constexpr uint32_t hashCommand(const char *const command)
-    {
-        size_t len{::std::min<size_t>(::std::strlen(command), 4)};
-
-        uint32_t id{0};
-        for (size_t i = 0; i < len; i += 1)
-        {
-            char c{command[i]};
-            id |= static_cast<uint32_t>(c * (c >= 0x20)) << (24 - (i * 8));
-        }
-        return id;
-    }
 
     //////////////////////////////////////////////////
     // FTP command and response codes
