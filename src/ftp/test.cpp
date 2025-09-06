@@ -29,7 +29,7 @@ public:
         {
             *pptr() = traits_type::to_char_type(c);
             pbump(1);
-            output();
+            sync();
         }
         return c;
     }
