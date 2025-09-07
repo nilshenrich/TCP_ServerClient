@@ -161,7 +161,7 @@ int main()
     server.setWork_writeFile([](const string path, const ios::openmode mode) -> ostream *
                              {
                                 cout << "[Test] Start writing to file '"s + path + "' in mode '"s + to_string(mode) + "'"s;
-                                return new ostream{cout.rdbuf()}; });
+                                return new ofstream{"./" + path, mode}; });
 
     if (server.start())
         return -1;
