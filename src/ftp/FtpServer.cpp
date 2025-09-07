@@ -441,8 +441,8 @@ void FtpServer::on_msg_modePassive(const int clientId, const uint32_t command, c
 
         // Create new data server and start listening on free port
         // All incoming data is forwarded to stream to temporary buffer
-        dataServer.reset(new TcpServer()); // Continuous mode
-        p_incomingStreamFwd = new DynamicOstream<STREAM_DYNAMICOSTREAM_BUFFERSIZE>(); // FIXME: Memory leak if client disconnects before upload
+        dataServer.reset(new TcpServer());                                            // Continuous mode
+        p_incomingStreamFwd = new DynamicOstream<STREAM_DYNAMICOSTREAM_BUFFERSIZE>(); // FIXME: Memory leak if client disconnects before upload -> Stream must be created in setCreateForwardStream itself using new
         dataServer->setCreateForwardStream([p_incomingStreamFwd](const int dataClientId)
                                            { return p_incomingStreamFwd; }); // Create dynamic output stream for temporarily buffering incoming data
         if (dataServer->start(port, 1) != SERVER_START_OK)

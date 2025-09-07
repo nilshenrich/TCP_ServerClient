@@ -288,12 +288,12 @@ namespace ftp
     // Session data
     struct Session
     {
-        bool loggedIn;                                                                         // Is user logged in?
-        ::std::string username;                                                                // Username
-        ::std::string currentpath;                                                             // Always absolute from user home
-        char transferType;                                                                     // FileTransferType
-        ::std::unique_ptr<::tcp::TcpServer> tcpData;                                           // Data server for file transfer
-        DynamicOstream<STREAM_DYNAMICOSTREAM_BUFFERSIZE> *incomingStreamFwd;                   // Forward incoming data to this stream (file upload) - Memory managed outside of session by Server
+        bool loggedIn;                                                       // Is user logged in?
+        ::std::string username;                                              // Username
+        ::std::string currentpath;                                           // Always absolute from user home
+        char transferType;                                                   // FileTransferType
+        ::std::unique_ptr<::tcp::TcpServer> tcpData;                         // Data server for file transfer
+        DynamicOstream<STREAM_DYNAMICOSTREAM_BUFFERSIZE> *incomingStreamFwd; // Forward incoming data to this stream (file upload) - Memory managed outside of session by Server
 
         // Constructors
 
