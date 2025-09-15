@@ -795,7 +795,7 @@ namespace tcp
             {
                 // Just forward incoming message to output stream
                 if (forwardStreams.find(clientId) != forwardStreams.end())
-                    *forwardStreams[clientId].get() << msg << ::std::flush; // TODO: Really needed to flush?
+                    *forwardStreams[clientId].get() << msg << ::std::flush;
             }
         }
     }
