@@ -293,6 +293,7 @@ namespace ftp
         ::std::string currentpath;                                           // Always absolute from user home
         char transferType;                                                   // FileTransferType
         ::std::unique_ptr<::tcp::TcpServer> tcpData;                         // Data server for file transfer
+        ::std::mutex tcpData_m;                                              // Mutex for data server
         DynamicOstream<STREAM_DYNAMICOSTREAM_BUFFERSIZE> *incomingStreamFwd; // Forward incoming data to this stream (file upload) - Memory managed outside of session by Server
 
         // Constructors
@@ -306,6 +307,7 @@ namespace ftp
                                                                                                   currentpath{currentpath},
                                                                                                   transferType{0},
                                                                                                   tcpData{nullptr},
+                                                                                                  tcpData_m{},
                                                                                                   incomingStreamFwd{nullptr} {}
 
         // Overload operator<<
@@ -319,6 +321,10 @@ namespace ftp
                << ", forward stream set: " << (s.incomingStreamFwd && s.incomingStreamFwd->rdbuf() ? "yes" : "no") << "}";
             return os;
         }
+
+        // Delete copy constructor and assignment operator, as unique_ptr and mutex are not copyable
+        Session(const Session &) = delete;
+        Session &operator=(const Session &) = delete;
     };
 
     //////////////////////////////////////////////////

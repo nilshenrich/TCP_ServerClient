@@ -132,7 +132,7 @@ void FtpServer::on_newClient(const int clientId)
 {
     {
         lock_guard<mutex> lck{session_modify_m};
-        session[clientId] = Session{}; // Create new session. Not logged in
+        session[clientId] = Session{}; // Create new session. Not logged in // BUG: Can't assign a new Session because of deleted copy constructor
     }
     tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_WELCOME)) + " Welcome"s);
 }
@@ -236,7 +236,7 @@ void FtpServer::on_msg_username(const int clientId, const uint32_t command, cons
     // Buffer login request. Override possible old session
     {
         lock_guard<mutex> lck{session_modify_m};
-        session[clientId] = Session{false, args[0], "/"}; // Set username but not logged in
+        session[clientId] = Session{false, args[0], "/"}; // Set username but not logged in // BUG: Can't assign a new Session because of deleted copy constructor
     }
     // Request fine, require password
     tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::CONTINUE_PASSWORD_REQUIRED)) + " Password required for user "s + args[0] + "."s);
@@ -255,7 +255,7 @@ void FtpServer::on_msg_password(const int clientId, const uint32_t command, cons
     {
         {
             lock_guard<mutex> lck{session_modify_m};
-            session[clientId] = Session{}; // Clear session
+            session[clientId] = Session{}; // Clear session // BUG: Can't assign a new Session because of deleted copy constructor
         }
         tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::FAILED_LOGIN)) + " Login failed."s);
         return;
@@ -264,7 +264,7 @@ void FtpServer::on_msg_password(const int clientId, const uint32_t command, cons
     // Login success
     {
         lock_guard<mutex> lck{session_modify_m};
-        session[clientId] = Session{true, username, "/"};
+        session[clientId] = Session{true, username, "/"}; // BUG: Can't assign a new Session because of deleted copy constructor
     }
     tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_LOGIN)) + " Login successful."s);
     return;
