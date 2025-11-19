@@ -17,6 +17,7 @@
 #include <map>
 #include <mutex>
 #include <ostream>
+#include <shared_mutex>
 #include <string>
 #include <type_traits>
 #include <valarray>
@@ -118,17 +119,41 @@ namespace ftp
         ::std::map<int, ::std::unique_ptr<Session>> session{}; // Open sessions // INFO: Needs to be pointer as Session contains unique_ptr and mutex which are not copyable or movable
 
         // Thread safety
-        ::std::mutex session_delete_m{}; // Mutex for deleting (closed) session
-        ::std::mutex session_modify_m{}; // Mutex for modifying session: add, change
+        // Rules for session map access:
+        // - Read:
+        //     - [allowed] simultaneous reads
+        //     - [allowed] simultaneous modifications (Each item is managed by its own mutex)
+        //     - [allowed] simultaneous creates (Blocked here due to ease of implementation)
+        //     - [blocked] simultaneous deletes (Automatically done by unique lock on delete)
+        //     -> Allows all parallel actions
+        // - Modify:
+        //     - [allowed] simultaneous reads (Each item is managed by its own mutex)
+        //     - [allowed] simultaneous modifications (Each item is managed by its own mutex)
+        //     - [allowed] simultaneous creates (Blocked here due to ease of implementation)
+        //     - [blocked] simultaneous deletes (Automatically done by unique lock on delete)
+        //     -> Allows all parallel actions
+        // - Create:
+        //     - [allowed] simultaneous reads (Blocked here due to ease of implementation)
+        //     - [allowed] simultaneous modifications (Blocked here due to ease of implementation)
+        //     - [blocked] simultaneous creates
+        //     - [blocked] simultaneous deletes
+        //     -> Blocks all other actions
+        // - Delete:
+        //     - [blocked] simultaneous reads
+        //     - [blocked] simultaneous modifications
+        //     - [blocked] simultaneous creates
+        //     - [blocked] simultaneous deletes
+        //     -> Blocks all other actions
+        ::std::shared_mutex session_m{}; // Mutex for blocking actions on session map: read, modify, create, delete
         ::std::mutex tcpPort_m{};        // Mutex for TCP port availability
 
         // Pointer to functions on incoming message
-        ::std::function<bool(const ::std::string, const ::std::string)> work_checkUserCredentials;         // Check user credentials: name, password -> bool
-        ::std::function<bool(const ::std::string, const ::std::string)> work_checkAccessible;              // Check if path is accessible (directory or file) for user: username, path -> bool
-        ::std::function<::std::valarray<Item>(const ::std::string)> work_listDirectory;                    // List directory content: path -> items
-        ::std::function<bool(const ::std::string)> work_createDirectory;                                   // Create directory: path -> bool
-        ::std::function<::std::istream *(const ::std::string, const ::std::ios::openmode)> work_readFile;  // Read file content: path -> reading stream
-        ::std::function<::std::ostream *(const ::std::string, const ::std::ios::openmode)> work_writeFile; // Write content to file: path -> writing stream
+        ::std::function<bool(const ::std::string &, const ::std::string &)> work_checkUserCredentials;       // Check user credentials: name, password -> bool
+        ::std::function<bool(const ::std::string &, const ::std::string &)> work_checkAccessible;            // Check if path is accessible (directory or file) for user: username, path -> bool
+        ::std::function<::std::valarray<Item>(const ::std::string &)> work_listDirectory;                    // List directory content: path -> items
+        ::std::function<bool(const ::std::string &)> work_createDirectory;                                   // Create directory: path -> bool
+        ::std::function<::std::istream *(const ::std::string &, const ::std::ios::openmode)> work_readFile;  // Read file content: path -> reading stream
+        ::std::function<::std::ostream *(const ::std::string &, const ::std::ios::openmode)> work_writeFile; // Write content to file: path -> writing stream
 
         //////////////////////////////////////////////////
         // Worker methods on incoming messages
