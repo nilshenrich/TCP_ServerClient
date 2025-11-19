@@ -425,10 +425,8 @@ void FtpServer::on_msg_modePassive(const int clientId, const uint32_t command, c
 
     // Open data server on free port within range
     int port;
-    unique_ptr<TcpServer> dataServer;
-    DynamicOstream<STREAM_DYNAMICOSTREAM_BUFFERSIZE> *p_incomingStreamFwd;
     {
-        lock_guard<mutex> lck{tcpPort_m};
+        lock_guard<mutex> lck_port{tcpPort_m};
         try
         {
             port = algorithms::getFreePort(PORT_RANGE_DATA[0], PORT_RANGE_DATA[1]);
@@ -441,23 +439,46 @@ void FtpServer::on_msg_modePassive(const int clientId, const uint32_t command, c
 
         // Create new data server and start listening on free port
         // All incoming data is forwarded to stream to temporary buffer
-        dataServer.reset(new TcpServer());                                            // Continuous mode
-        p_incomingStreamFwd = new DynamicOstream<STREAM_DYNAMICOSTREAM_BUFFERSIZE>(); // FIXME: Memory leak if client disconnects before upload -> Stream must be created in setCreateForwardStream itself using new
-        dataServer->setCreateForwardStream([p_incomingStreamFwd](const int dataClientId)
-                                           { return p_incomingStreamFwd; }); // Create dynamic output stream for temporarily buffering incoming data
+        lock_guard<mutex> lck_session{session_modify_m};
+        Session *p_session{session.at(clientId).get()};
+        DynamicOstream<STREAM_DYNAMICOSTREAM_BUFFERSIZE> **pp_incomingStreamFwd{&p_session->incomingStreamFwd};
+        mutex *p_established_m{&p_session->established_m};
+        mutex *p_processed_m{&p_session->processed_m};
+        mutex *p_closed_m{&p_session->closed_m};
+        unique_ptr<TcpServer> dataServer{make_unique<TcpServer>()}; // Continuous mode
+        dataServer->setCreateForwardStream([pp_incomingStreamFwd, p_established_m](const int dataClientId) -> DynamicOstream<STREAM_DYNAMICOSTREAM_BUFFERSIZE> *
+                                           { cout << "Lambda established 1: pp_incomingStreamFwd = " << pp_incomingStreamFwd << " -> " << *pp_incomingStreamFwd << endl
+                                                  << "                      p_established_m = " << p_established_m << endl;
+                                             *pp_incomingStreamFwd = new DynamicOstream<STREAM_DYNAMICOSTREAM_BUFFERSIZE>();
+                                             cout << "Lambda established 2: pp_incomingStreamFwd = " << pp_incomingStreamFwd << " -> " << *pp_incomingStreamFwd << endl
+                                                  << "                      p_established_m = " << p_established_m << endl;
+                                             p_established_m->unlock();
+                                             cout << "Lambda established 3: Mutex unlocked" << endl
+                                                  << "                      p_established_m = " << p_established_m << endl;
+                                             return *pp_incomingStreamFwd; });
+        dataServer->setWorkOnClosed([p_processed_m, p_closed_m](const int dataClientId) -> void
+                                    { cout << "Lambda closed 1: Wait for processing to finish" << endl
+                                           << "                 p_processed_m = " << p_processed_m << endl;
+                                      p_processed_m->lock(); // Wait until processing is finished
+                                      cout << "Lambda closed 2: Processing finished" << endl
+                                           << "                 p_processed_m = " << p_processed_m << endl;
+                                      p_closed_m->unlock();
+                                      cout << "Lambda closed 3: on_closed: Mutex unlocked" << endl
+                                           << "                            p_closed_m = " << p_closed_m << endl; });
         if (dataServer->start(port, 1) != SERVER_START_OK)
         {
             tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::FAILED_OPEN_DATACONN)) + " Failed to open data connection."s);
             return;
         }
+        p_established_m->try_lock(); // Lock mutex until stream is created in lambda
+        p_processed_m->try_lock();   // Lock mutex until data transfer is processed in lambda
+        p_closed_m->try_lock();      // Lock mutex until connection is closed in lambda
+        cout << "on_msg_modePassive: Mutex locked" << endl
+             << "          p_established_m = " << p_established_m << endl
+             << "          p_closed_m = " << p_closed_m << endl;
+        p_session->tcpData = move(dataServer);
     }
 
-    // Add data server to session and inform client
-    {
-        lock_guard<mutex> lck{session_modify_m};
-        session[clientId]->tcpData = move(dataServer);
-        session[clientId]->incomingStreamFwd = p_incomingStreamFwd;
-    }
     string msg;
     Response responseCode;
     switch (command)
@@ -632,13 +653,20 @@ void FtpServer::on_msg_fileUpload(const int clientId, const uint32_t command, co
     underlying_type_t<FileTransferType> transferType;
     unique_ptr<TcpServer> dataServer;
     DynamicOstream<STREAM_DYNAMICOSTREAM_BUFFERSIZE> *incomingStreamFwd;
+    mutex *p_processed_m;
+    mutex *p_closed_m;
     {
         lock_guard<mutex> lck{session_modify_m};
+        cout << "on_msg_fileUpload: Wait for mutex - stream ready" << endl;
+        session[clientId]->established_m.lock();
+        cout << "on_msg_fileUpload: Mutex acquired - stream ready" << endl;
         username = session[clientId]->username;
         path = session[clientId]->currentpath;
         transferType = session[clientId]->transferType;           // No check needed as already done in on_msg_modePassive
         dataServer = move(session[clientId]->tcpData);            // Remove data server from session as should be closed after this action
         incomingStreamFwd = session[clientId]->incomingStreamFwd; // Remove stream from session as should be closed after this action
+        p_processed_m = &session[clientId]->processed_m;
+        p_closed_m = &session[clientId]->closed_m;
     }
 
     // Check data server exists and is running
@@ -652,19 +680,14 @@ void FtpServer::on_msg_fileUpload(const int clientId, const uint32_t command, co
     path += "/"s + args[0];
     unique_ptr<ostream> outgoingStream{work_writeFile(path, getStreamOpenMode(STREAM_DIRECTION_WRITE, transferType))};
     incomingStreamFwd->redirect(outgoingStream.get());
-
-    // On data server closed, close file writer and inform client
-    mutex transfer_m;
-    transfer_m.lock();
-    dataServer->setWorkOnClosed([&dataServer, &transfer_m](const int)
-                                {
-                                    if(dataServer->getAllClientIds().empty())
-                                        transfer_m.unlock(); });
+    p_processed_m->unlock(); // Allow data processing to start
+    cout << "on_msg_fileUpload: Mutex unlocked - data processing finished" << endl;
 
     // Data server is now ready to accept data
     // Data will be written to temporary file and moved to final destination after upload is complete
     tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DATA_OPEN)) + " Ready to receive data."s);
-    transfer_m.lock();
+    p_closed_m->lock(); // Wait here until data server has closed connection and all data is received
+    cout << "on_msg_fileUpload: Mutex acquired - data transfer complete" << endl;
 
     // Client has disconnected from data server when reaching this point
     tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DATA_CLOSE)) + " File upload OK."s);

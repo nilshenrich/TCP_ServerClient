@@ -104,6 +104,7 @@ namespace ftp
 
             p_streambuf = buf;
             bufferStatus = 0; // Stream buffer successfully set
+            sync();           // Send any buffered data to the stream
         }
 
         // Get the current stream buffer status
@@ -293,8 +294,10 @@ namespace ftp
         ::std::string currentpath;                                           // Always absolute from user home
         char transferType;                                                   // FileTransferType
         ::std::unique_ptr<::tcp::TcpServer> tcpData;                         // Data server for file transfer
-        ::std::mutex tcpData_m;                                              // Mutex for data server
         DynamicOstream<STREAM_DYNAMICOSTREAM_BUFFERSIZE> *incomingStreamFwd; // Forward incoming data to this stream (file upload) - Memory managed outside of session by Server
+        ::std::mutex established_m;                                          // Mutex to wait for data connection to be established
+        ::std::mutex processed_m;                                            // Mutex to wait for data transfer to be processed
+        ::std::mutex closed_m;                                               // Mutex to wait for data connection to be closed
 
         // Constructors
 
@@ -307,8 +310,10 @@ namespace ftp
                                                                                                   currentpath{currentpath},
                                                                                                   transferType{0},
                                                                                                   tcpData{nullptr},
-                                                                                                  tcpData_m{},
-                                                                                                  incomingStreamFwd{nullptr} {}
+                                                                                                  incomingStreamFwd{nullptr},
+                                                                                                  established_m{},
+                                                                                                  processed_m{},
+                                                                                                  closed_m{} {}
 
         // Overload operator<<
         friend ::std::ostream &operator<<(::std::ostream &os, const Session &s)
