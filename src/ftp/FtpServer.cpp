@@ -450,17 +450,13 @@ void FtpServer::on_msg_modePassive(const int clientId, const uint32_t command, c
                                                *p_dataClientId = dataClientId;
                                                *pp_incomingStreamFwd = new DynamicOstream<STREAM_DYNAMICOSTREAM_BUFFERSIZE>();
                                                p_established_m->unlock();
-                                               cout << "Established unlocked" << endl;
                                                return *pp_incomingStreamFwd; //
                                            });
         dataServer->setWorkOnClosed([p_processed_m, p_closed_m, p_session_m](const int dataClientId) -> void
                                     {
                                         shared_lock<shared_mutex> lck_session{*p_session_m}; // Modify: Allow simultaneous actions on session map
-                                        cout << "Wait for processed unlock" << endl;
-                                        p_processed_m->lock(); // Wait here until data transfer is processed
-                                        cout << "Processed acquired" << endl;
-                                        p_closed_m->unlock(); //
-                                        cout << "Closed unlocked" << endl;
+                                        p_processed_m->lock();                               // Wait here until data transfer is processed
+                                        p_closed_m->unlock();                                //
                                     });
         if (dataServer->start(port, 1) != SERVER_START_OK)
         {
@@ -469,11 +465,8 @@ void FtpServer::on_msg_modePassive(const int clientId, const uint32_t command, c
         }
         bool _;                          // Dummy variable to suppress unused variable warning
         _ = p_established_m->try_lock(); // Lock mutex until stream is created in lambda
-        cout << "Established locked" << endl;
         _ = p_processed_m->try_lock();   // Lock mutex until data transfer is processed in lambda
-        cout << "Processed locked" << endl;
         _ = p_closed_m->try_lock();      // Lock mutex until connection is closed in lambda
-        cout << "Closed locked" << endl;
         session->tcpData = move(dataServer);
     }
 
@@ -515,9 +508,7 @@ void FtpServer::on_msg_listDirectory(const int clientId, const uint32_t command,
     {
         shared_lock<shared_mutex> lck_session{session_m}; // Read: Allow simultaneous actions on session map
         unique_ptr<Session> &session{activeSessions.at(clientId)};
-        cout << "Wait for established unlock" << endl;
         session->established_m.lock();
-        cout << "Established acquired" << endl;
         username = session->username;
         path = session->currentpath;
         dataServer = move(session->tcpData); // Remove data server from session as should be closed after this action
@@ -531,7 +522,6 @@ void FtpServer::on_msg_listDirectory(const int clientId, const uint32_t command,
     {
         tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_WRONG_ORDER)) + " Data connection must be opened first via PASV"s);
         p_processed_m->unlock();
-        cout << "Processed unlocked" << endl;
         return;
     }
 
@@ -549,7 +539,6 @@ void FtpServer::on_msg_listDirectory(const int clientId, const uint32_t command,
     dataServer->sendMsg(dataClientId, msg.str());
     tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DATA_CLOSE)) + " Directory send OK."s);
     p_processed_m->unlock();
-    cout << "Processed unlocked" << endl;
     return; // Close data connection by deleting the data server
 }
 
@@ -565,9 +554,7 @@ void FtpServer::on_msg_fileDownload(const int clientId, const uint32_t command, 
     {
         shared_lock<shared_mutex> lck_session{session_m}; // Read: Allow simultaneous actions on session map
         unique_ptr<Session> &session{activeSessions.at(clientId)};
-        cout << "Wait for established unlock" << endl;
         session->established_m.lock();
-        cout << "Established acquired" << endl;
         username = session->username;
         path = session->currentpath;
         transferType = session->transferType; // No check needed as already done in on_msg_modePassive
@@ -582,7 +569,6 @@ void FtpServer::on_msg_fileDownload(const int clientId, const uint32_t command, 
     {
         tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_WRONG_ORDER)) + " Data connection must be opened first via PASV"s);
         p_processed_m->unlock();
-        cout << "Processed unlocked" << endl;
         return;
     }
 
@@ -599,7 +585,6 @@ void FtpServer::on_msg_fileDownload(const int clientId, const uint32_t command, 
     }
     tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DATA_CLOSE)) + " File send OK."s);
     p_processed_m->unlock();
-    cout << "Processed unlocked" << endl;
     return;
 }
 
@@ -668,9 +653,7 @@ void FtpServer::on_msg_fileUpload(const int clientId, const uint32_t command, co
     {
         shared_lock<shared_mutex> lck_session{session_m}; // Read: Allow simultaneous actions on session map
         unique_ptr<Session> &session{activeSessions.at(clientId)};
-        cout << "Wait for established unlock" << endl;
         session->established_m.lock();
-        cout << "Established acquired" << endl;
         username = session->username;
         path = session->currentpath;
         transferType = session->transferType;           // No check needed as already done in on_msg_modePassive
@@ -685,7 +668,6 @@ void FtpServer::on_msg_fileUpload(const int clientId, const uint32_t command, co
     {
         tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_WRONG_ORDER)) + " Data connection must be opened first via PASV"s);
         p_processed_m->unlock(); // Clean up
-        cout << "Processed unlocked" << endl;
         return;
     }
 
@@ -693,14 +675,11 @@ void FtpServer::on_msg_fileUpload(const int clientId, const uint32_t command, co
     unique_ptr<ostream> outgoingStream{work_writeFile(path + "/"s + args[0], getStreamOpenMode(STREAM_DIRECTION_WRITE, transferType))};
     incomingStreamFwd->redirect(outgoingStream.get());
     p_processed_m->unlock(); // Allow data processing to start
-    cout << "Processed unlocked" << endl;
 
     // Data server is now ready to accept data
     // Data will be written to temporary file and moved to final destination after upload is complete
     tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DATA_OPEN)) + " Ready to receive data."s);
-    cout << "Wait for closed unlock" << endl;
     p_closed_m->lock(); // Wait here until data server has closed connection and all data is received
-    cout << "Closed acquired" << endl;
 
     // Client has disconnected from data server when reaching this point
     tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DATA_CLOSE)) + " File upload OK."s);
