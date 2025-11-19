@@ -115,7 +115,7 @@ namespace ftp
         ::tcp::TcpServer tcpControl; // Fragmented
 
         // Active user sessions. Key is client ID, value is username
-        ::std::map<int, Session> session{}; // Open sessions
+        ::std::map<int, ::std::unique_ptr<Session>> session{}; // Open sessions // INFO: Needs to be pointer as Session contains unique_ptr and mutex which are not copyable or movable
 
         // Thread safety
         ::std::mutex session_delete_m{}; // Mutex for deleting (closed) session

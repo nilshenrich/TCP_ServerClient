@@ -132,7 +132,7 @@ void FtpServer::on_newClient(const int clientId)
 {
     {
         lock_guard<mutex> lck{session_modify_m};
-        session[clientId] = Session{}; // Create new session. Not logged in // BUG: Can't assign a new Session because of deleted copy constructor
+        session.insert_or_assign(clientId, make_unique<Session>()); // Create new session. Not logged in
     }
     tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_WELCOME)) + " Welcome"s);
 }
@@ -212,7 +212,7 @@ void FtpServer::on_messageIn(const int clientId, const uint32_t command, const v
     }
 
     // Check if user is logged in
-    if (mustLoggedIn != session[clientId].loggedIn)
+    if (mustLoggedIn != session[clientId]->loggedIn)
     {
         tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_WRONG_ORDER)) + (mustLoggedIn ? " User not logged in."s : " User already logged in."s));
         return;
@@ -236,7 +236,7 @@ void FtpServer::on_msg_username(const int clientId, const uint32_t command, cons
     // Buffer login request. Override possible old session
     {
         lock_guard<mutex> lck{session_modify_m};
-        session[clientId] = Session{false, args[0], "/"}; // Set username but not logged in // BUG: Can't assign a new Session because of deleted copy constructor
+        session.at(clientId) = make_unique<Session>(false, args[0], "/"); // Set username but not logged in
     }
     // Request fine, require password
     tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::CONTINUE_PASSWORD_REQUIRED)) + " Password required for user "s + args[0] + "."s);
@@ -249,13 +249,13 @@ void FtpServer::on_msg_password(const int clientId, const uint32_t command, cons
     string username;
     {
         lock_guard<mutex> lck{session_modify_m};
-        username = session[clientId].username;
+        username = session[clientId]->username;
     }
     if (!work_checkUserCredentials(username, args[0]))
     {
         {
             lock_guard<mutex> lck{session_modify_m};
-            session[clientId] = Session{}; // Clear session // BUG: Can't assign a new Session because of deleted copy constructor
+            session.at(clientId) = make_unique<Session>(); // Clear session
         }
         tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::FAILED_LOGIN)) + " Login failed."s);
         return;
@@ -264,7 +264,7 @@ void FtpServer::on_msg_password(const int clientId, const uint32_t command, cons
     // Login success
     {
         lock_guard<mutex> lck{session_modify_m};
-        session[clientId] = Session{true, username, "/"}; // BUG: Can't assign a new Session because of deleted copy constructor
+        session.at(clientId) = make_unique<Session>(true, username, "/"); // Set username and logged in
     }
     tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_LOGIN)) + " Login successful."s);
     return;
@@ -298,7 +298,7 @@ void FtpServer::on_msg_getDirectory(const int clientId, const uint32_t command, 
     string path;
     {
         lock_guard<mutex> lck{session_modify_m};
-        path = session[clientId].currentpath;
+        path = session[clientId]->currentpath;
     }
 
     // Send current directory path to client
@@ -313,8 +313,8 @@ void FtpServer::on_msg_changeDirectory(const int clientId, const uint32_t comman
     string path;
     {
         lock_guard<mutex> lck{session_modify_m};
-        username = session[clientId].username;
-        path = session[clientId].currentpath;
+        username = session[clientId]->username;
+        path = session[clientId]->currentpath;
     }
 
     // Determine requested absolute path
@@ -338,7 +338,7 @@ void FtpServer::on_msg_changeDirectory(const int clientId, const uint32_t comman
     // Change directory and send positive feedback
     {
         lock_guard<mutex> lck{session_modify_m};
-        session[clientId].currentpath = path_req;
+        session[clientId]->currentpath = path_req;
     }
     tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_ACTION)) + " Directory successfully changed."s);
     return;
@@ -375,7 +375,7 @@ void FtpServer::on_msg_fileTransferType(const int clientId, const uint32_t comma
 
     {
         lock_guard<mutex> lck{session_modify_m};
-        session[clientId].transferType = transferType;
+        session[clientId]->transferType = transferType;
     }
     tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::OK)) + " Switching to "s + modename + " mode."s);
     return;
@@ -413,7 +413,7 @@ void FtpServer::on_msg_modePassive(const int clientId, const uint32_t command, c
     underlying_type_t<FileTransferType> transferType;
     {
         lock_guard<mutex> lck{session_modify_m};
-        transferType = session[clientId].transferType;
+        transferType = session[clientId]->transferType;
     }
 
     // If not transfer type is specified, return with error code
@@ -455,8 +455,8 @@ void FtpServer::on_msg_modePassive(const int clientId, const uint32_t command, c
     // Add data server to session and inform client
     {
         lock_guard<mutex> lck{session_modify_m};
-        session[clientId].tcpData = move(dataServer);
-        session[clientId].incomingStreamFwd = p_incomingStreamFwd;
+        session[clientId]->tcpData = move(dataServer);
+        session[clientId]->incomingStreamFwd = p_incomingStreamFwd;
     }
     string msg;
     Response responseCode;
@@ -493,9 +493,9 @@ void FtpServer::on_msg_listDirectory(const int clientId, const uint32_t command,
     unique_ptr<TcpServer> dataServer;
     {
         lock_guard<mutex> lck{session_modify_m};
-        username = session[clientId].username;
-        path = session[clientId].currentpath;
-        dataServer = move(session[clientId].tcpData); // Remove data server from session as should be closed after this action
+        username = session[clientId]->username;
+        path = session[clientId]->currentpath;
+        dataServer = move(session[clientId]->tcpData); // Remove data server from session as should be closed after this action
     }
 
     // Check data server exists and is running
@@ -537,10 +537,10 @@ void FtpServer::on_msg_fileDownload(const int clientId, const uint32_t command, 
     unique_ptr<TcpServer> dataServer;
     {
         lock_guard<mutex> lck{session_modify_m};
-        username = session[clientId].username;
-        path = session[clientId].currentpath;
-        transferType = session[clientId].transferType; // No check needed as already done in on_msg_modePassive
-        dataServer = move(session[clientId].tcpData);  // Remove data server from session as should be closed after this action
+        username = session[clientId]->username;
+        path = session[clientId]->currentpath;
+        transferType = session[clientId]->transferType; // No check needed as already done in on_msg_modePassive
+        dataServer = move(session[clientId]->tcpData);  // Remove data server from session as should be closed after this action
     }
 
     // Check data server exists and is running
@@ -592,8 +592,8 @@ void FtpServer::on_msg_createDirectory(const int clientId, const uint32_t comman
     string path;
     {
         lock_guard<mutex> lck{session_modify_m};
-        username = session[clientId].username;
-        path = session[clientId].currentpath;
+        username = session[clientId]->username;
+        path = session[clientId]->currentpath;
     }
 
     // Determine requested absolute path
@@ -634,11 +634,11 @@ void FtpServer::on_msg_fileUpload(const int clientId, const uint32_t command, co
     DynamicOstream<STREAM_DYNAMICOSTREAM_BUFFERSIZE> *incomingStreamFwd;
     {
         lock_guard<mutex> lck{session_modify_m};
-        username = session[clientId].username;
-        path = session[clientId].currentpath;
-        transferType = session[clientId].transferType;           // No check needed as already done in on_msg_modePassive
-        dataServer = move(session[clientId].tcpData);            // Remove data server from session as should be closed after this action
-        incomingStreamFwd = session[clientId].incomingStreamFwd; // Remove stream from session as should be closed after this action
+        username = session[clientId]->username;
+        path = session[clientId]->currentpath;
+        transferType = session[clientId]->transferType;           // No check needed as already done in on_msg_modePassive
+        dataServer = move(session[clientId]->tcpData);            // Remove data server from session as should be closed after this action
+        incomingStreamFwd = session[clientId]->incomingStreamFwd; // Remove stream from session as should be closed after this action
     }
 
     // Check data server exists and is running

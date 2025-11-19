@@ -322,8 +322,9 @@ namespace ftp
             return os;
         }
 
-        // Delete copy constructor and assignment operator, as unique_ptr and mutex are not copyable
+        // Delete copy constructor, move constructor and assignment operator, as unique_ptr and mutex are not copyable
         Session(const Session &) = delete;
+        Session(Session &&) = delete;
         Session &operator=(const Session &) = delete;
     };
 
