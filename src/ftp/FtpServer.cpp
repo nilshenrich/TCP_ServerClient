@@ -539,7 +539,7 @@ void FtpServer::on_msg_listDirectory(const int clientId, const uint32_t command,
     dataServer->sendMsg(dataClientId, msg.str());
     tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DATA_CLOSE)) + " Directory send OK."s);
     p_processed_m->unlock();
-    return; // Close data connection by deleting the data server
+    return; // Close data connection by deleting the data server. Disconnect to be done by transfer master (server in this case)
 }
 
 void FtpServer::on_msg_fileDownload(const int clientId, const uint32_t command, const valarray<string> &args)
@@ -585,7 +585,7 @@ void FtpServer::on_msg_fileDownload(const int clientId, const uint32_t command, 
     }
     tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DATA_CLOSE)) + " File send OK."s);
     p_processed_m->unlock();
-    return;
+    return; // Close data connection by deleting the data server. Disconnect to be done by transfer master (server in this case)
 }
 
 void FtpServer::on_msg_listFeatures(const int clientId, const uint32_t command, const valarray<string> &args)
@@ -679,7 +679,7 @@ void FtpServer::on_msg_fileUpload(const int clientId, const uint32_t command, co
     // Data server is now ready to accept data
     // Data will be written to temporary file and moved to final destination after upload is complete
     tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DATA_OPEN)) + " Ready to receive data."s);
-    p_closed_m->lock(); // Wait here until data server has closed connection and all data is received
+    p_closed_m->lock(); // Wait here until data server has closed connection and all data is received. Disconnect to be done by transfer master (client in this case)
 
     // Client has disconnected from data server when reaching this point
     tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DATA_CLOSE)) + " File upload OK."s);
