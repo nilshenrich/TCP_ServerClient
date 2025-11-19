@@ -84,7 +84,7 @@ Reqp FtpServer::parseRequest(const string &msg) const
 
 string FtpServer::sanitizeRequest(const string &request) const
 {
-    // Illegale characters
+    // Illegal characters
     valarray<char> illegalChars{'\n', '\r'};
     char *iBegin{begin(illegalChars)};
     char *iEnd{end(illegalChars)};
@@ -128,9 +128,10 @@ void FtpServer::on_newClient(const int clientId)
     {
         unique_ptr<Session> sessionNew{make_unique<Session>()}; // Create new session. Not logged in
         unique_lock<shared_mutex> lck_session{session_m};       // Create: Block simultaneous actions on session map
-        session.insert_or_assign(clientId, move(sessionNew));
+        activeSessions.insert_or_assign(clientId, move(sessionNew));
     }
     tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_WELCOME)) + " Welcome"s);
+    return;
 }
 void FtpServer::on_msg(const int clientId, const string &msg)
 {
@@ -179,12 +180,13 @@ void FtpServer::on_msg(const int clientId, const string &msg)
         tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_NOTIMPLEMENTED)) + " Command not implemented."s);
         break;
     }
+    return;
 }
 void FtpServer::on_closed(const int clientId)
 {
     // Logout session by erasing it
     unique_lock<shared_mutex> lck_session{session_m}; // Delete: Block simultaneous actions on session map
-    session.erase(clientId);
+    activeSessions.erase(clientId);
     return;
 }
 
@@ -201,8 +203,8 @@ void FtpServer::on_messageIn(const int clientId, const uint32_t command, const v
     try
     {
         shared_lock<shared_mutex> lck_session{session_m}; // Read: Allow simultaneous actions on session map
-        Session *p_session{session.at(clientId).get()};
-        loggedIn = p_session->loggedIn;
+        unique_ptr<Session> &session{activeSessions.at(clientId)};
+        loggedIn = session->loggedIn;
     }
     catch (const out_of_range &)
     {
@@ -231,10 +233,11 @@ void FtpServer::on_messageIn(const int clientId, const uint32_t command, const v
 void FtpServer::on_msg_username(const int clientId, const uint32_t command, const valarray<string> &args)
 {
     // Buffer login request. Override possible old session
+    const string &username{args[0]};
     {
-        unique_ptr<Session> sessionNew{make_unique<Session>(false, args[0], "/")}; // Not logged in yet
-        shared_lock<shared_mutex> lck_session{session_m};                          // Modify: Allow simultaneous actions on session map
-        session.at(clientId) = move(sessionNew);
+        unique_ptr<Session> sessionNew{make_unique<Session>(false, username, "/")}; // Not logged in yet
+        shared_lock<shared_mutex> lck_session{session_m};                           // Modify: Allow simultaneous actions on session map
+        activeSessions.at(clientId) = move(sessionNew);
     }
     // Request fine, require password
     tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::CONTINUE_PASSWORD_REQUIRED)) + " Password required for user "s + args[0] + "."s);
@@ -243,32 +246,26 @@ void FtpServer::on_msg_username(const int clientId, const uint32_t command, cons
 
 void FtpServer::on_msg_password(const int clientId, const uint32_t command, const valarray<string> &args)
 {
-    // Check user credentials
-    string username;
+    const string &password{args[0]};
+    string response;
     {
         shared_lock<shared_mutex> lck_session{session_m}; // Read: Allow simultaneous actions on session map
-        Session *p_session{session.at(clientId).get()};
-        username = p_session->username;
-    }
-    if (!work_checkUserCredentials(username, args[0]))
-    {
-        {
-            unique_ptr<Session> sessionNew{make_unique<Session>()}; // Clear session
-            shared_lock<shared_mutex> lck_session{session_m};       // Modify: Allow simultaneous actions on session map
-            session.at(clientId) = move(sessionNew);
-        }
-        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::FAILED_LOGIN)) + " Login failed."s);
-        return;
-    }
+        unique_ptr<Session> &session{activeSessions.at(clientId)};
+        const string &username{session->username};
 
-    // Login success
-    {
-        unique_ptr<Session> sessionNew{make_unique<Session>(true, username, "/")}; // Set username and logged in
-        shared_lock<shared_mutex> lck_session{session_m};                          // Modify: Allow simultaneous actions on session map
-        session.at(clientId) = move(sessionNew);
+        // Check user credentials
+        if (work_checkUserCredentials(username, password))
+        {
+            session.reset(new Session(true, username, "/")); // Set username and logged in
+            response = to_string(ENUM_CLASS_VALUE(Response::SUCCESS_LOGIN)) + " Login successful."s;
+        }
+        else
+        {
+            session.reset(new Session()); // Clear session
+            response = to_string(ENUM_CLASS_VALUE(Response::FAILED_LOGIN)) + " Login failed."s;
+        }
     }
-    tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_LOGIN)) + " Login successful."s);
-    return;
+    tcpControl.sendMsg(clientId, response);
 }
 
 void FtpServer::on_msg_getSystemType(const int clientId, const uint32_t command, const valarray<string> &args)
@@ -295,71 +292,62 @@ void FtpServer::on_msg_getSystemType(const int clientId, const uint32_t command,
 
 void FtpServer::on_msg_getDirectory(const int clientId, const uint32_t command, const valarray<string> &args)
 {
-    // Get current directory from session
-    string path;
+    string response;
     {
         shared_lock<shared_mutex> lck_session{session_m}; // Read: Allow simultaneous actions on session map
-        Session *p_session{session.at(clientId).get()};
-        path = p_session->currentpath;
+        unique_ptr<Session> &session{activeSessions.at(clientId)};
+        const string &path{session->currentpath};
+        response = to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DIRECTORY)) + " \""s + path + "\" is current directory."s;
     }
-
-    // Send current directory path to client
-    tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DIRECTORY)) + " \""s + path + "\" is current directory."s);
-    return;
+    tcpControl.sendMsg(clientId, response);
 }
 
 void FtpServer::on_msg_changeDirectory(const int clientId, const uint32_t command, const valarray<string> &args)
 {
-    // Get user and current directory from session
-    string username;
-    string path;
+    const string &path_req{args[0]};
+    string path_new;
+    bool accessible;
     {
         shared_lock<shared_mutex> lck_session{session_m}; // Read: Allow simultaneous actions on session map
-        Session *p_session{session.at(clientId).get()};
-        username = p_session->username;
-        path = p_session->currentpath;
+        unique_ptr<Session> &session{activeSessions.at(clientId)};
+        const string &username{session->username};
+        string &path{session->currentpath};
+        if (path_req.empty() || path_req[0] != '/') // Relative path
+        {
+            path_new = path + "/"s + path_req;
+        }
+        else // Absolute path
+        {
+            path_new = path_req;
+        }
+
+        accessible = work_checkAccessible(username, path_new);
+        if (accessible)
+        {
+            path = path_new; // Set new current path in session
+        }
     }
 
-    // Determine requested absolute path
-    string path_req;
-    if (args[0].empty() || args[0][0] != '/') // Relative path
-    {
-        path_req = path + "/"s + args[0];
-    }
-    else // Absolute path
-    {
-        path_req = args[0];
-    }
-
-    // Check if path is accessible
-    if (!work_checkAccessible(username, path_req))
-    {
-        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::FAILED_FILENOTACCESSIBLE)) + " Requested directory is not accessible."s);
-        return;
-    }
-
-    // Change directory and send positive feedback
-    {
-        shared_lock<shared_mutex> lck_session{session_m}; // Modify: Allow simultaneous actions on session map
-        Session *p_session{session.at(clientId).get()};
-        p_session->currentpath = path_req;
-    }
-    tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_ACTION)) + " Directory successfully changed."s);
-    return;
+    string response;
+    if (accessible)
+        response = to_string(ENUM_CLASS_VALUE(Response::SUCCESS_ACTION)) + " Directory successfully changed."s;
+    else
+        response = to_string(ENUM_CLASS_VALUE(Response::FAILED_FILENOTACCESSIBLE)) + " Requested directory is not accessible."s;
+    tcpControl.sendMsg(clientId, response);
 }
 
 void FtpServer::on_msg_fileTransferType(const int clientId, const uint32_t command, const valarray<string> &args)
 {
     // Get requested transfer type
-    string arg1{args[0]};
+    const string &arg1{args[0]};
     if (arg1.size() != 1)
     {
         tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_SYNTAX_ARGUMENT)) + " Exactly one character expected as file transfer type."s);
         return;
     }
-    char transferType{arg1[0]};
 
     // Set file transfer type for user
+    const char &transferType{arg1[0]};
     string modename;
     switch (transferType)
     {
@@ -379,8 +367,8 @@ void FtpServer::on_msg_fileTransferType(const int clientId, const uint32_t comma
 
     {
         shared_lock<shared_mutex> lck_session{session_m}; // Modify: Allow simultaneous actions on session map
-        Session *p_session{session.at(clientId).get()};
-        p_session->transferType = transferType;
+        unique_ptr<Session> &session{activeSessions.at(clientId)};
+        session->transferType = transferType;
     }
     tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::OK)) + " Switching to "s + modename + " mode."s);
     return;
@@ -418,8 +406,8 @@ void FtpServer::on_msg_modePassive(const int clientId, const uint32_t command, c
     underlying_type_t<FileTransferType> transferType;
     {
         shared_lock<shared_mutex> lck_session{session_m}; // Read: Allow simultaneous actions on session map
-        Session *p_session{session.at(clientId).get()};
-        transferType = p_session->transferType;
+        unique_ptr<Session> &session{activeSessions.at(clientId)};
+        transferType = session->transferType;
     }
 
     // If not transfer type is specified, return with error code
@@ -446,20 +434,23 @@ void FtpServer::on_msg_modePassive(const int clientId, const uint32_t command, c
         // Create new data server and start listening on free port
         // All incoming data is forwarded to stream to temporary buffer
         shared_lock<shared_mutex> lck_session{session_m}; // Modify: Allow simultaneous actions on session map
-        Session *p_session{session.at(clientId).get()};
-        DynamicOstream<STREAM_DYNAMICOSTREAM_BUFFERSIZE> **pp_incomingStreamFwd{&p_session->incomingStreamFwd};
-        mutex *p_established_m{&p_session->established_m};
-        mutex *p_processed_m{&p_session->processed_m};
-        mutex *p_closed_m{&p_session->closed_m};
+        unique_ptr<Session> &session{activeSessions.at(clientId)};
+        DynamicOstream<STREAM_DYNAMICOSTREAM_BUFFERSIZE> **pp_incomingStreamFwd{&session->incomingStreamFwd};
+        shared_mutex *p_session_m{&session_m};
+        mutex *p_established_m{&session->established_m};
+        mutex *p_processed_m{&session->processed_m};
+        mutex *p_closed_m{&session->closed_m};
         unique_ptr<TcpServer> dataServer{make_unique<TcpServer>()}; // Continuous mode
-        dataServer->setCreateForwardStream([pp_incomingStreamFwd, p_established_m](const int dataClientId) -> DynamicOstream<STREAM_DYNAMICOSTREAM_BUFFERSIZE> *
+        dataServer->setCreateForwardStream([pp_incomingStreamFwd, p_established_m, p_session_m](const int dataClientId) -> DynamicOstream<STREAM_DYNAMICOSTREAM_BUFFERSIZE> *
                                            {
+                                               shared_lock<shared_mutex> lck_session{*p_session_m}; // Modify: Allow simultaneous actions on session map
                                                *pp_incomingStreamFwd = new DynamicOstream<STREAM_DYNAMICOSTREAM_BUFFERSIZE>();
                                                p_established_m->unlock();
                                                return *pp_incomingStreamFwd; //
                                            });
-        dataServer->setWorkOnClosed([p_processed_m, p_closed_m](const int dataClientId) -> void
+        dataServer->setWorkOnClosed([p_processed_m, p_closed_m, p_session_m](const int dataClientId) -> void
                                     {
+                                        shared_lock<shared_mutex> lck_session{*p_session_m}; // Modify: Allow simultaneous actions on session map
                                         p_processed_m->lock();
                                         p_closed_m->unlock(); //
                                     });
@@ -472,7 +463,7 @@ void FtpServer::on_msg_modePassive(const int clientId, const uint32_t command, c
         _ = p_established_m->try_lock(); // Lock mutex until stream is created in lambda
         _ = p_processed_m->try_lock();   // Lock mutex until data transfer is processed in lambda
         _ = p_closed_m->try_lock();      // Lock mutex until connection is closed in lambda
-        p_session->tcpData = move(dataServer);
+        session->tcpData = move(dataServer);
     }
 
     string msg;
@@ -507,13 +498,13 @@ void FtpServer::on_msg_listDirectory(const int clientId, const uint32_t command,
     // Get user, current directory and data server from session
     string username;
     string path;
-    unique_ptr<TcpServer> dataServer; // TODO: Use process mutex sequence and keep data server in session
+    unique_ptr<TcpServer> dataServer;
     {
         shared_lock<shared_mutex> lck_session{session_m}; // Read: Allow simultaneous actions on session map
-        Session *p_session{session.at(clientId).get()};
-        username = p_session->username;
-        path = p_session->currentpath;
-        dataServer = move(p_session->tcpData); // Remove data server from session as should be closed after this action
+        unique_ptr<Session> &session{activeSessions.at(clientId)};
+        username = session->username;
+        path = session->currentpath;
+        dataServer = move(session->tcpData); // Remove data server from session as should be closed after this action
     }
 
     // Check data server exists and is running
@@ -555,11 +546,11 @@ void FtpServer::on_msg_fileDownload(const int clientId, const uint32_t command, 
     unique_ptr<TcpServer> dataServer;
     {
         shared_lock<shared_mutex> lck_session{session_m}; // Read: Allow simultaneous actions on session map
-        Session *p_session{session.at(clientId).get()};
-        username = p_session->username;
-        path = p_session->currentpath;
-        transferType = p_session->transferType; // No check needed as already done in on_msg_modePassive
-        dataServer = move(p_session->tcpData);  // Remove data server from session as should be closed after this action
+        unique_ptr<Session> &session{activeSessions.at(clientId)};
+        username = session->username;
+        path = session->currentpath;
+        transferType = session->transferType; // No check needed as already done in on_msg_modePassive
+        dataServer = move(session->tcpData);  // Remove data server from session as should be closed after this action
     }
 
     // Check data server exists and is running
@@ -611,9 +602,9 @@ void FtpServer::on_msg_createDirectory(const int clientId, const uint32_t comman
     string path;
     {
         shared_lock<shared_mutex> lck_session{session_m}; // Read: Allow simultaneous actions on session map
-        Session *p_session{session.at(clientId).get()};
-        username = p_session->username;
-        path = p_session->currentpath;
+        unique_ptr<Session> &session{activeSessions.at(clientId)};
+        username = session->username;
+        path = session->currentpath;
     }
 
     // Determine requested absolute path
@@ -656,15 +647,15 @@ void FtpServer::on_msg_fileUpload(const int clientId, const uint32_t command, co
     mutex *p_closed_m;
     {
         shared_lock<shared_mutex> lck_session{session_m}; // Read: Allow simultaneous actions on session map
-        Session *p_session{session.at(clientId).get()};
-        p_session->established_m.lock();
-        username = p_session->username;
-        path = p_session->currentpath;
-        transferType = p_session->transferType;           // No check needed as already done in on_msg_modePassive
-        dataServer = move(p_session->tcpData);            // Remove data server from session as should be closed after this action
-        incomingStreamFwd = p_session->incomingStreamFwd; // Remove stream from session as should be closed after this action
-        p_processed_m = &p_session->processed_m;
-        p_closed_m = &p_session->closed_m;
+        unique_ptr<Session> &session{activeSessions.at(clientId)};
+        session->established_m.lock();
+        username = session->username;
+        path = session->currentpath;
+        transferType = session->transferType;           // No check needed as already done in on_msg_modePassive
+        dataServer = move(session->tcpData);            // Remove data server from session as should be closed after this action
+        incomingStreamFwd = session->incomingStreamFwd; // Remove stream from session as should be closed after this action
+        p_processed_m = &session->processed_m;
+        p_closed_m = &session->closed_m;
     }
 
     // Check data server exists and is running
@@ -675,8 +666,7 @@ void FtpServer::on_msg_fileUpload(const int clientId, const uint32_t command, co
     }
 
     // Get stream to file that should be uploaded and redirect data server output to file stream
-    path += "/"s + args[0];
-    unique_ptr<ostream> outgoingStream{work_writeFile(path, getStreamOpenMode(STREAM_DIRECTION_WRITE, transferType))};
+    unique_ptr<ostream> outgoingStream{work_writeFile(path + "/"s + args[0], getStreamOpenMode(STREAM_DIRECTION_WRITE, transferType))};
     incomingStreamFwd->redirect(outgoingStream.get());
     p_processed_m->unlock(); // Allow data processing to start
 
@@ -687,6 +677,5 @@ void FtpServer::on_msg_fileUpload(const int clientId, const uint32_t command, co
 
     // Client has disconnected from data server when reaching this point
     tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DATA_CLOSE)) + " File upload OK."s);
-
     return;
 }

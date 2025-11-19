@@ -298,6 +298,7 @@ namespace ftp
         ::std::mutex established_m;                                          // Mutex to wait for data connection to be established
         ::std::mutex processed_m;                                            // Mutex to wait for data transfer to be processed
         ::std::mutex closed_m;                                               // Mutex to wait for data connection to be closed
+        ::std::mutex modify_m;                                               // Mutex to protect session data modification
 
         // Constructors
 
@@ -313,7 +314,8 @@ namespace ftp
                                                                                                   incomingStreamFwd{nullptr},
                                                                                                   established_m{},
                                                                                                   processed_m{},
-                                                                                                  closed_m{} {}
+                                                                                                  closed_m{},
+                                                                                                  modify_m{} {}
 
         // Overload operator<<
         friend ::std::ostream &operator<<(::std::ostream &os, const Session &s)
