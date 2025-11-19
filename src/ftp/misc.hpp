@@ -294,6 +294,7 @@ namespace ftp
         ::std::string currentpath;                                           // Always absolute from user home
         char transferType;                                                   // FileTransferType
         ::std::unique_ptr<::tcp::TcpServer> tcpData;                         // Data server for file transfer
+        int dataClientId;                                                    // Client ID for data connection
         DynamicOstream<STREAM_DYNAMICOSTREAM_BUFFERSIZE> *incomingStreamFwd; // Forward incoming data to this stream (file upload) - Memory managed outside of session by Server
         ::std::mutex established_m;                                          // Mutex to wait for data connection to be established
         ::std::mutex processed_m;                                            // Mutex to wait for data transfer to be processed
@@ -311,6 +312,7 @@ namespace ftp
                                                                                                   currentpath{currentpath},
                                                                                                   transferType{0},
                                                                                                   tcpData{nullptr},
+                                                                                                  dataClientId{-1},
                                                                                                   incomingStreamFwd{nullptr},
                                                                                                   established_m{},
                                                                                                   processed_m{},

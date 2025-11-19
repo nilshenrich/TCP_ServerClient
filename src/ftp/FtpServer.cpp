@@ -435,16 +435,19 @@ void FtpServer::on_msg_modePassive(const int clientId, const uint32_t command, c
         // All incoming data is forwarded to stream to temporary buffer
         shared_lock<shared_mutex> lck_session{session_m}; // Modify: Allow simultaneous actions on session map
         unique_ptr<Session> &session{activeSessions.at(clientId)};
+        int *p_dataClientId{&session->dataClientId};
         DynamicOstream<STREAM_DYNAMICOSTREAM_BUFFERSIZE> **pp_incomingStreamFwd{&session->incomingStreamFwd};
         shared_mutex *p_session_m{&session_m};
         mutex *p_established_m{&session->established_m};
         mutex *p_processed_m{&session->processed_m};
         mutex *p_closed_m{&session->closed_m};
         session->tcpData.reset(nullptr);                            // Clear old data server if existing
+        session->dataClientId = -1;                                 // Reset data client ID
         unique_ptr<TcpServer> dataServer{make_unique<TcpServer>()}; // Create new data server in continuous mode
-        dataServer->setCreateForwardStream([pp_incomingStreamFwd, p_established_m, p_session_m](const int dataClientId) -> DynamicOstream<STREAM_DYNAMICOSTREAM_BUFFERSIZE> *
+        dataServer->setCreateForwardStream([pp_incomingStreamFwd, p_established_m, p_session_m, p_dataClientId](const int dataClientId) -> DynamicOstream<STREAM_DYNAMICOSTREAM_BUFFERSIZE> *
                                            {
                                                shared_lock<shared_mutex> lck_session{*p_session_m}; // Modify: Allow simultaneous actions on session map
+                                               *p_dataClientId = dataClientId;
                                                *pp_incomingStreamFwd = new DynamicOstream<STREAM_DYNAMICOSTREAM_BUFFERSIZE>();
                                                p_established_m->unlock();
                                                cout << "Established unlocked" << endl;
@@ -507,6 +510,7 @@ void FtpServer::on_msg_listDirectory(const int clientId, const uint32_t command,
     string username;
     string path;
     unique_ptr<TcpServer> dataServer;
+    int dataClientId;
     mutex *p_processed_m;
     {
         shared_lock<shared_mutex> lck_session{session_m}; // Read: Allow simultaneous actions on session map
@@ -517,6 +521,8 @@ void FtpServer::on_msg_listDirectory(const int clientId, const uint32_t command,
         username = session->username;
         path = session->currentpath;
         dataServer = move(session->tcpData); // Remove data server from session as should be closed after this action
+        dataClientId = session->dataClientId;
+        session->dataClientId = -1; // Reset data client ID in session
         p_processed_m = &session->processed_m;
     }
 
@@ -538,13 +544,9 @@ void FtpServer::on_msg_listDirectory(const int clientId, const uint32_t command,
         msg << items[i] << endl;
     }
 
-    // Wait here for data server to accept connection
-    // TODO: Add timeout
-    vector<int> dataClients{dataServer->getAllClientIds()};
-
     // Send directory list to client
     tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DATA_OPEN)) + " Here comes the directory listing."s);
-    dataServer->sendMsg(dataClients[0], msg.str());
+    dataServer->sendMsg(dataClientId, msg.str());
     tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DATA_CLOSE)) + " Directory send OK."s);
     p_processed_m->unlock();
     cout << "Processed unlocked" << endl;
