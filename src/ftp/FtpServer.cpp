@@ -560,32 +560,34 @@ void FtpServer::on_msg_fileDownload(const int clientId, const uint32_t command, 
     string path;
     underlying_type_t<FileTransferType> transferType;
     unique_ptr<TcpServer> dataServer;
+    int dataClientId;
+    mutex *p_processed_m;
     {
         shared_lock<shared_mutex> lck_session{session_m}; // Read: Allow simultaneous actions on session map
         unique_ptr<Session> &session{activeSessions.at(clientId)};
+        cout << "Wait for established unlock" << endl;
+        session->established_m.lock();
+        cout << "Established acquired" << endl;
         username = session->username;
         path = session->currentpath;
         transferType = session->transferType; // No check needed as already done in on_msg_modePassive
         dataServer = move(session->tcpData);  // Remove data server from session as should be closed after this action
+        dataClientId = session->dataClientId;
+        session->dataClientId = -1; // Reset data client ID in session
+        p_processed_m = &session->processed_m;
     }
 
     // Check data server exists and is running
     if (!(dataServer && dataServer->isRunning())) // INFO: If left evaluated false, right will not be evaluated at all
     {
         tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_WRONG_ORDER)) + " Data connection must be opened first via PASV"s);
+        p_processed_m->unlock();
+        cout << "Processed unlocked" << endl;
         return;
     }
 
     // Get stream to file that should be downloaded
-    path += "/"s + args[0];
-    unique_ptr<istream> is{work_readFile(path, getStreamOpenMode(STREAM_DIRECTION_READ, transferType))};
-
-    // Wait here for data server to accept connection
-    // FIXME: Not ideal performance
-    // TODO: Add timeout
-    vector<int> dataClients;
-    while ((dataClients = dataServer->getAllClientIds()).empty())
-        this_thread::sleep_for(chrono::milliseconds(10));
+    unique_ptr<istream> is{work_readFile(path + "/"s + args[0], getStreamOpenMode(STREAM_DIRECTION_READ, transferType))};
 
     // Send file content to client
     tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DATA_OPEN)) + " Here comes the content of file "s + args[0] + "."s);
@@ -593,9 +595,11 @@ void FtpServer::on_msg_fileDownload(const int clientId, const uint32_t command, 
     while (!is->eof())
     {
         is->read(chunk.data(), FILETRANSFER_CHUNKSIZE);
-        dataServer->sendMsg(dataClients[0], chunk.substr(0, is->gcount()));
+        dataServer->sendMsg(dataClientId, chunk.substr(0, is->gcount()));
     }
     tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DATA_CLOSE)) + " File send OK."s);
+    p_processed_m->unlock();
+    cout << "Processed unlocked" << endl;
     return;
 }
 
