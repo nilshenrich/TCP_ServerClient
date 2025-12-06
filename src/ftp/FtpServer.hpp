@@ -149,11 +149,11 @@ namespace ftp
 
         // Pointer to functions on incoming message
         ::std::function<bool(const ::std::string &, const ::std::string &)> work_checkUserCredentials;       // Check user credentials: name, password -> bool
-        ::std::function<bool(const ::std::string &, const ::std::string &)> work_checkAccessible;            // Check if path is accessible (directory or file) for user: username, path -> bool
-        ::std::function<::std::valarray<Item>(const ::std::string &)> work_listDirectory;                    // List directory content: path -> items
-        ::std::function<bool(const ::std::string &)> work_createDirectory;                                   // Create directory: path -> bool
-        ::std::function<::std::istream *(const ::std::string &, const ::std::ios::openmode)> work_readFile;  // Read file content: path -> reading stream
-        ::std::function<::std::ostream *(const ::std::string &, const ::std::ios::openmode)> work_writeFile; // Write content to file: path -> writing stream
+        ::std::function<bool(const ::std::string &, const ::std::string &)> work_checkAccessible;            // Check if path is accessible (directory or file) for user: username, path (Absolute from user home) -> bool
+        ::std::function<::std::valarray<Item>(const ::std::string &)> work_listDirectory;                    // List directory content: path -> items // TODO: Change to username, path (Absolute from user path) -> items
+        ::std::function<bool(const ::std::string &)> work_createDirectory;                                   // Create directory: path -> bool // TODO: Change to username, path (Absolute from user path) -> bool
+        ::std::function<::std::istream *(const ::std::string &, const ::std::ios::openmode)> work_readFile;  // Read file content: path -> reading stream // TODO: Change to username, path (Absolute from user path) -> reading stream
+        ::std::function<::std::ostream *(const ::std::string &, const ::std::ios::openmode)> work_writeFile; // Write content to file: path -> writing stream // TODO: Change to username, path (Absolute from user path) -> writing stream
 
         //////////////////////////////////////////////////
         // Worker methods on incoming messages

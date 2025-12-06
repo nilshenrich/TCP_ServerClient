@@ -299,7 +299,7 @@ namespace ftp
         ::std::mutex established_m;                                          // Mutex to wait for data connection to be established
         ::std::mutex processed_m;                                            // Mutex to wait for data transfer to be processed
         ::std::mutex closed_m;                                               // Mutex to wait for data connection to be closed
-        ::std::mutex modify_m;                                               // Mutex to protect session data modification
+        ::std::shared_mutex modify_m;                                        // Mutex to protect session data modification
 
         // Constructors
 
