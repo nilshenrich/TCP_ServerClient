@@ -85,7 +85,7 @@ namespace ftp
          * @param msg
          * @return Reqp
          */
-        Reqp parseRequest(const ::std::string &msg) const;
+        Reqp parseRequest(::std::string msg) const;
 
         /**
          * @brief Remove illegal characters from a request string
@@ -174,23 +174,25 @@ namespace ftp
          * @param work          Worker method
          * @param mustLoggedIn  Must user be logged in? Default: true
          */
-        void on_messageIn(const int clientId, const uint32_t command, const ::std::valarray<::std::string> &args, size_t numArgsExp,
-                          void (FtpServer::*work)(const int, const uint32_t, const ::std::valarray<::std::string> &),
+        void on_messageIn(const int clientId, const uint32_t command,
+                          void (FtpServer::*work)(const int, const uint32_t, const ::std::string &),
+                          const ::std::string &arg = ::std::string{},
+                          const bool hasArg = false,
                           const bool mustLoggedIn = true);
 
         // Worker methods
-        void on_msg_username(const int clientId, const uint32_t command, const ::std::valarray<::std::string> &args);
-        void on_msg_password(const int clientId, const uint32_t command, const ::std::valarray<::std::string> &args);
-        void on_msg_getSystemType(const int clientId, const uint32_t command, const ::std::valarray<::std::string> &args);
-        void on_msg_listFeatures(const int clientId, const uint32_t command, const ::std::valarray<::std::string> &args);
-        void on_msg_listDirectory(const int clientId, const uint32_t command, const ::std::valarray<::std::string> &args);
-        void on_msg_changeDirectory(const int clientId, const uint32_t command, const ::std::valarray<::std::string> &args);
-        void on_msg_getDirectory(const int clientId, const uint32_t command, const ::std::valarray<::std::string> &args);
-        void on_msg_createDirectory(const int clientId, const uint32_t command, const ::std::valarray<::std::string> &args);
-        void on_msg_fileTransferType(const int clientId, const uint32_t command, const ::std::valarray<::std::string> &args);
-        void on_msg_modePassive(const int clientId, const uint32_t command, const ::std::valarray<::std::string> &args);
-        void on_msg_fileDownload(const int clientId, const uint32_t command, const ::std::valarray<::std::string> &args);
-        void on_msg_fileUpload(const int clientId, const uint32_t command, const ::std::valarray<::std::string> &args);
+        void on_msg_username(const int clientId, const uint32_t command, const ::std::string &arg);
+        void on_msg_password(const int clientId, const uint32_t command, const ::std::string &arg);
+        void on_msg_getSystemType(const int clientId, const uint32_t command, const ::std::string &arg);
+        void on_msg_listFeatures(const int clientId, const uint32_t command, const ::std::string &arg);
+        void on_msg_listDirectory(const int clientId, const uint32_t command, const ::std::string &arg);
+        void on_msg_changeDirectory(const int clientId, const uint32_t command, const ::std::string &arg);
+        void on_msg_getDirectory(const int clientId, const uint32_t command, const ::std::string &arg);
+        void on_msg_createDirectory(const int clientId, const uint32_t command, const ::std::string &arg);
+        void on_msg_fileTransferType(const int clientId, const uint32_t command, const ::std::string &arg);
+        void on_msg_modePassive(const int clientId, const uint32_t command, const ::std::string &arg);
+        void on_msg_fileDownload(const int clientId, const uint32_t command, const ::std::string &arg);
+        void on_msg_fileUpload(const int clientId, const uint32_t command, const ::std::string &arg);
 
         //////////////////////////////////////////////////
         // Constants

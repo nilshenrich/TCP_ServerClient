@@ -283,7 +283,7 @@ namespace ftp
     struct Reqp
     {
         uint32_t command;
-        ::std::valarray<::std::string> args;
+        ::std::string argument;
     };
 
     // Session data

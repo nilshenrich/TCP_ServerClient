@@ -54,32 +54,27 @@ void FtpServer::setWork_writeFile(function<ostream *(const string, const ios::op
 
 bool FtpServer::isRunning() const { return tcpControl.isRunning(); }
 
-Reqp FtpServer::parseRequest(const string &msg) const
+Reqp FtpServer::parseRequest(string msg) const
 {
     // First word is the command with 3-4 bytes
-    // Following words are arguments separated by spaces
+    // Following word is the argument separated by a space
 
     // Get all space positions and end of string
     size_t lenMsg{msg.size()};
-    vector<size_t> posSpaces;
-    posSpaces.reserve(lenMsg + 1);
-    for (size_t i = 0; i < lenMsg; i += 1)
+    size_t lenCmd{max<size_t>(4, lenMsg)};
+    for (size_t i = 0; i < lenCmd; i += 1)
     {
         if (msg[i] == ' ')
         {
-            posSpaces.push_back(i);
+            msg[i] = 0; // Null-termination for C-style string here
+            lenCmd = i;
+            break;
         }
     }
-    size_t numArgs{posSpaces.size()};
-    posSpaces.push_back(msg.size());
-
-    // Extract command and arguments from between spaces
-    valarray<string> args{numArgs};
-    for (size_t i{0}; i < numArgs; i += 1)
-    {
-        args[i] = msg.substr(posSpaces[i] + 1, posSpaces[i + 1] - posSpaces[i] - 1);
-    }
-    return Reqp{hashCommand(msg.substr(0, posSpaces[0]).c_str()), args};
+    return Reqp{
+        hashCommand(string_view{msg.c_str(), lenCmd}.data()),
+        (lenCmd < lenMsg) ? string{msg.c_str() + lenCmd + 1, lenMsg - lenCmd - 1} : string{} // TODO: Optimize. The string constructor copies the data again
+    };
 }
 
 string FtpServer::sanitizeRequest(const string &request) const
@@ -139,42 +134,42 @@ void FtpServer::on_msg(const int clientId, const string &msg)
     switch (request.command)
     {
     case ENUM_CLASS_VALUE(Request::USERNAME):
-        on_messageIn(clientId, request.command, request.args, 1, &FtpServer::on_msg_username, false);
+        on_messageIn(clientId, request.command, &FtpServer::on_msg_username, request.argument, true, false);
         break;
     case ENUM_CLASS_VALUE(Request::PASSWORD):
-        on_messageIn(clientId, request.command, request.args, 1, &FtpServer::on_msg_password, false);
+        on_messageIn(clientId, request.command, &FtpServer::on_msg_password, request.argument, true, false);
         break;
     case ENUM_CLASS_VALUE(Request::SYSTEMTYPE):
-        on_messageIn(clientId, request.command, request.args, 0, &FtpServer::on_msg_getSystemType);
+        on_messageIn(clientId, request.command, &FtpServer::on_msg_getSystemType);
         break;
     case ENUM_CLASS_VALUE(Request::FEATURES_LIST):
-        on_messageIn(clientId, request.command, request.args, 0, &FtpServer::on_msg_listFeatures);
+        on_messageIn(clientId, request.command, &FtpServer::on_msg_listFeatures);
         break;
     case ENUM_CLASS_VALUE(Request::DIRECTORY_LIST):
-        on_messageIn(clientId, request.command, request.args, 0, &FtpServer::on_msg_listDirectory);
+        on_messageIn(clientId, request.command, &FtpServer::on_msg_listDirectory);
         break;
     case ENUM_CLASS_VALUE(Request::DIRECTORY_CHANGE):
-        on_messageIn(clientId, request.command, request.args, 1, &FtpServer::on_msg_changeDirectory);
+        on_messageIn(clientId, request.command, &FtpServer::on_msg_changeDirectory, request.argument, true);
         break;
     case ENUM_CLASS_VALUE(Request::DIRECTORY_GETCURRENT):
-        on_messageIn(clientId, request.command, request.args, 0, &FtpServer::on_msg_getDirectory);
+        on_messageIn(clientId, request.command, &FtpServer::on_msg_getDirectory);
         break;
     case ENUM_CLASS_VALUE(Request::DIRECTORY_CREATE):
-        on_messageIn(clientId, request.command, request.args, 1, &FtpServer::on_msg_createDirectory);
+        on_messageIn(clientId, request.command, &FtpServer::on_msg_createDirectory, request.argument, true);
         break;
     case ENUM_CLASS_VALUE(Request::FILE_TRANSFER_TYPE):
-        on_messageIn(clientId, request.command, request.args, 1, &FtpServer::on_msg_fileTransferType);
+        on_messageIn(clientId, request.command, &FtpServer::on_msg_fileTransferType, request.argument, true);
         break;
     case ENUM_CLASS_VALUE(Request::MODE_PASSIVE_ALL):   // Always enter passive mode
     case ENUM_CLASS_VALUE(Request::MODE_PASSIVE_SHORT): // Always enter passive mode
     case ENUM_CLASS_VALUE(Request::MODE_PASSIVE_LONG):  // Always enter passive mode
-        on_messageIn(clientId, request.command, request.args, 0, &FtpServer::on_msg_modePassive);
+        on_messageIn(clientId, request.command, &FtpServer::on_msg_modePassive);
         break;
     case ENUM_CLASS_VALUE(Request::FILE_DOWNLOAD):
-        on_messageIn(clientId, request.command, request.args, 1, &FtpServer::on_msg_fileDownload);
+        on_messageIn(clientId, request.command, &FtpServer::on_msg_fileDownload, request.argument, true);
         break;
     case ENUM_CLASS_VALUE(Request::FILE_UPLOAD):
-        on_messageIn(clientId, request.command, request.args, 1, &FtpServer::on_msg_fileUpload);
+        on_messageIn(clientId, request.command, &FtpServer::on_msg_fileUpload, request.argument, true);
         break;
     default:
         tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_NOTIMPLEMENTED)) + " Command not implemented."s);
@@ -194,8 +189,10 @@ void FtpServer::on_closed(const int clientId)
 // Worker mehods on incoming messages
 //////////////////////////////////////////////////
 
-void FtpServer::on_messageIn(const int clientId, const uint32_t command, const valarray<string> &args, size_t numArgsExp,
-                             void (FtpServer::*work)(const int, const uint32_t, const valarray<string> &),
+void FtpServer::on_messageIn(const int clientId, const uint32_t command,
+                             void (FtpServer::*work)(const int, const uint32_t, const string &),
+                             const string &arg,
+                             const bool hasArg,
                              const bool mustLoggedIn)
 {
     // Check if user is logged in
@@ -222,35 +219,34 @@ void FtpServer::on_messageIn(const int clientId, const uint32_t command, const v
     }
 
     // Check num of arguments
-    size_t numArgs{args.size()};
-    if (numArgsExp != numArgs)
+    if (arg.empty() == hasArg)
     {
-        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_SYNTAX_ARGUMENT)) + " "s + to_string(numArgsExp) + " arguments expected, but "s + to_string(numArgs) + " given."s);
+        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_SYNTAX_ARGUMENT)) + " "s + (hasArg ? "Argument required, but none passed."s : "No argument expected, but one passed."s));
         return;
     }
 
     // Call worker method
-    (this->*work)(clientId, command, args);
+    (this->*work)(clientId, command, arg);
     return;
 }
 
-void FtpServer::on_msg_username(const int clientId, const uint32_t command, const valarray<string> &args)
+void FtpServer::on_msg_username(const int clientId, const uint32_t command, const string &arg)
 {
     // Buffer login request. Override possible old session
-    const string &username{args[0]};
+    const string &username{arg};
     {
         unique_ptr<Session> sessionNew{make_unique<Session>(false, username, "/")}; // Not logged in yet
         shared_lock<shared_mutex> lck_session{session_m};                           // Modify: Allow simultaneous actions on session map
         activeSessions.at(clientId) = move(sessionNew);
     }
     // Request fine, require password
-    tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::CONTINUE_PASSWORD_REQUIRED)) + " Password required for user "s + args[0] + "."s);
+    tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::CONTINUE_PASSWORD_REQUIRED)) + " Password required for user "s + username + "."s);
     return;
 }
 
-void FtpServer::on_msg_password(const int clientId, const uint32_t command, const valarray<string> &args)
+void FtpServer::on_msg_password(const int clientId, const uint32_t command, const string &arg)
 {
-    const string &password{args[0]};
+    const string &password{arg};
     string response;
     {
         shared_lock<shared_mutex> lck_session{session_m}; // Read: Allow simultaneous actions on session map
@@ -273,7 +269,7 @@ void FtpServer::on_msg_password(const int clientId, const uint32_t command, cons
     tcpControl.sendMsg(clientId, response);
 }
 
-void FtpServer::on_msg_getSystemType(const int clientId, const uint32_t command, const valarray<string> &args)
+void FtpServer::on_msg_getSystemType(const int clientId, const uint32_t command, const string &arg)
 {
 #ifdef _WIN32
     string sysType{"WIN32"};
@@ -295,7 +291,7 @@ void FtpServer::on_msg_getSystemType(const int clientId, const uint32_t command,
     return;
 }
 
-void FtpServer::on_msg_getDirectory(const int clientId, const uint32_t command, const valarray<string> &args)
+void FtpServer::on_msg_getDirectory(const int clientId, const uint32_t command, const string &arg)
 {
     string response;
     {
@@ -308,9 +304,9 @@ void FtpServer::on_msg_getDirectory(const int clientId, const uint32_t command, 
     tcpControl.sendMsg(clientId, response);
 }
 
-void FtpServer::on_msg_changeDirectory(const int clientId, const uint32_t command, const valarray<string> &args)
+void FtpServer::on_msg_changeDirectory(const int clientId, const uint32_t command, const string &arg)
 {
-    const string &path_req{args[0]};
+    const string &path_req{arg};
     bool accessible;
     {
         string path_new;
@@ -321,7 +317,7 @@ void FtpServer::on_msg_changeDirectory(const int clientId, const uint32_t comman
         string &path{session->currentpath};
         if (path_req.empty() || path_req[0] != '/') // Relative path
             path_new = path + "/"s + path_req;      // FIXME: .. is just appended, so the path always grows
-        else // Absolute path
+        else                                        // Absolute path
             path_new = path_req;
 
         accessible = work_checkAccessible(username, path_new);
@@ -341,18 +337,18 @@ void FtpServer::on_msg_changeDirectory(const int clientId, const uint32_t comman
     tcpControl.sendMsg(clientId, response);
 }
 
-void FtpServer::on_msg_fileTransferType(const int clientId, const uint32_t command, const valarray<string> &args)
+void FtpServer::on_msg_fileTransferType(const int clientId, const uint32_t command, const string &arg)
 {
     // Get requested transfer type
-    const string &arg1{args[0]};
-    if (arg1.size() != 1)
+    if (arg.size() != 1)
     {
         tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_SYNTAX_ARGUMENT)) + " Exactly one character expected as file transfer type."s);
         return;
     }
 
+    char transferType{arg[0]};
+
     // Set file transfer type for user
-    const char &transferType{arg1[0]};
     string modename;
     switch (transferType)
     {
@@ -380,7 +376,7 @@ void FtpServer::on_msg_fileTransferType(const int clientId, const uint32_t comma
     return;
 }
 
-void FtpServer::on_msg_modePassive(const int clientId, const uint32_t command, const valarray<string> &args)
+void FtpServer::on_msg_modePassive(const int clientId, const uint32_t command, const string &arg)
 {
     // Get server IP address the client is connected to
     string myIp;
@@ -411,7 +407,7 @@ void FtpServer::on_msg_modePassive(const int clientId, const uint32_t command, c
     // Get file transfer type from session
     underlying_type_t<FileTransferType> transferType;
     {
-        shared_lock<shared_mutex> lck_session{session_m}; // Read: Allow simultaneous actions on session map
+        shared_lock<shared_mutex> lck_session{session_m};                                    // Read: Allow simultaneous actions on session map
         shared_lock<shared_mutex> lck_session_modify{activeSessions.at(clientId)->modify_m}; // Read: Allow simultaneous actions on session data
         unique_ptr<Session> &session{activeSessions.at(clientId)};
         transferType = session->transferType;
@@ -451,9 +447,9 @@ void FtpServer::on_msg_modePassive(const int clientId, const uint32_t command, c
         mutex *p_closed_m{&session->closed_m};
         lck_session_modify.unlock();
         unique_lock<shared_mutex> lck_session_modify_unique{session->modify_m}; // Modify: Block simultaneous actions on session data
-        session->tcpData.reset(nullptr);                            // Clear old data server if existing
-        session->dataClientId = -1;                                 // Reset data client ID
-        unique_ptr<TcpServer> dataServer{make_unique<TcpServer>()}; // Create new data server in continuous mode
+        session->tcpData.reset(nullptr);                                        // Clear old data server if existing
+        session->dataClientId = -1;                                             // Reset data client ID
+        unique_ptr<TcpServer> dataServer{make_unique<TcpServer>()};             // Create new data server in continuous mode
         dataServer->setCreateForwardStream([pp_incomingStreamFwd, p_established_m, p_session_m, p_dataClientId](const int dataClientId) -> DynamicOstream<STREAM_DYNAMICOSTREAM_BUFFERSIZE> *
                                            {
                                                shared_lock<shared_mutex> lck_session{*p_session_m}; // Modify: Allow simultaneous actions on session map
@@ -507,7 +503,7 @@ void FtpServer::on_msg_modePassive(const int clientId, const uint32_t command, c
     return;
 }
 
-void FtpServer::on_msg_listDirectory(const int clientId, const uint32_t command, const valarray<string> &args)
+void FtpServer::on_msg_listDirectory(const int clientId, const uint32_t command, const string &arg)
 {
     // Get user, current directory and data server from session
     string username;
@@ -556,8 +552,10 @@ void FtpServer::on_msg_listDirectory(const int clientId, const uint32_t command,
     return; // Close data connection by deleting the data server. Disconnect to be done by transfer master (server in this case)
 }
 
-void FtpServer::on_msg_fileDownload(const int clientId, const uint32_t command, const valarray<string> &args)
+void FtpServer::on_msg_fileDownload(const int clientId, const uint32_t command, const string &arg)
 {
+    const string &filename{arg};
+
     // Get user, current directory and data server from session
     string username;
     string path;
@@ -593,10 +591,10 @@ void FtpServer::on_msg_fileDownload(const int clientId, const uint32_t command, 
     }
 
     // Get stream to file that should be downloaded
-    unique_ptr<istream> is{work_readFile(path + "/"s + args[0], getStreamOpenMode(STREAM_DIRECTION_READ, transferType))};
+    unique_ptr<istream> is{work_readFile(path + "/"s + filename, getStreamOpenMode(STREAM_DIRECTION_READ, transferType))};
 
     // Send file content to client
-    tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DATA_OPEN)) + " Here comes the content of file "s + args[0] + "."s);
+    tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DATA_OPEN)) + " Here comes the content of file "s + filename + "."s);
     string chunk{string(FILETRANSFER_CHUNKSIZE, 0)};
     while (!is->eof())
     {
@@ -608,7 +606,7 @@ void FtpServer::on_msg_fileDownload(const int clientId, const uint32_t command, 
     return; // Close data connection by deleting the data server. Disconnect to be done by transfer master (server in this case)
 }
 
-void FtpServer::on_msg_listFeatures(const int clientId, const uint32_t command, const valarray<string> &args)
+void FtpServer::on_msg_listFeatures(const int clientId, const uint32_t command, const string &arg)
 {
     // Send feature list to client
     tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_STATUS)) + "-Features:"s);
@@ -620,9 +618,9 @@ void FtpServer::on_msg_listFeatures(const int clientId, const uint32_t command, 
     return;
 }
 
-void FtpServer::on_msg_createDirectory(const int clientId, const uint32_t command, const valarray<string> &args)
+void FtpServer::on_msg_createDirectory(const int clientId, const uint32_t command, const string &arg)
 {
-    const string &path_req{args[0]};
+    const string &path_req{arg};
     bool accessible;
     bool success;
     {
@@ -657,8 +655,10 @@ void FtpServer::on_msg_createDirectory(const int clientId, const uint32_t comman
     return;
 }
 
-void FtpServer::on_msg_fileUpload(const int clientId, const uint32_t command, const valarray<string> &args)
+void FtpServer::on_msg_fileUpload(const int clientId, const uint32_t command, const string &arg)
 {
+    const string &filename{arg};
+
     // Get user, current directory and data server from session
     string username;
     string path;
@@ -695,7 +695,7 @@ void FtpServer::on_msg_fileUpload(const int clientId, const uint32_t command, co
     }
 
     // Get stream to file that should be uploaded and redirect data server output to file stream
-    unique_ptr<ostream> outgoingStream{work_writeFile(path + "/"s + args[0], getStreamOpenMode(STREAM_DIRECTION_WRITE, transferType))};
+    unique_ptr<ostream> outgoingStream{work_writeFile(path + "/"s + filename, getStreamOpenMode(STREAM_DIRECTION_WRITE, transferType))};
     incomingStreamFwd->redirect(outgoingStream.get());
     p_processed_m->unlock(); // Allow data processing to start
 
