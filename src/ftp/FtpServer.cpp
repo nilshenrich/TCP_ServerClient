@@ -130,7 +130,7 @@ void FtpServer::on_newClient(const int clientId)
 }
 void FtpServer::on_msg(const int clientId, const string &msg)
 {
-    Reqp request{parseRequest(sanitizeRequest(msg))};
+    Reqp request{parseRequest(sanitizeRequest(msg))}; // INFO: No string copy from inner function call due to move of temporary return value 
     switch (request.command)
     {
     case ENUM_CLASS_VALUE(Request::USERNAME):
