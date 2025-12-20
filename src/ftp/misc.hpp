@@ -40,8 +40,9 @@
 #define STREAM_DIRECTION_READ true
 #define STREAM_DIRECTION_WRITE false
 
-// Dynamic stream buffer size
-#define STREAM_DYNAMICOSTREAM_BUFFERSIZE 65536
+// Size of dynamic ostream buffers (in bytes)
+// Always allocated on heap, as TCP data-server takes new-allocated streams
+#define STREAM_DYNAMICOSTREAM_BUFFERSIZE 0x100000 // 1 MB (1048576 bytes)
 
 namespace ftp
 {
