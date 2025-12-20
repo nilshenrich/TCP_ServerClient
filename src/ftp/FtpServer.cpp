@@ -198,12 +198,11 @@ void FtpServer::on_messageIn(const int clientId, const uint32_t command,
     // Check if user is logged in
     {
         bool loggedIn;
-        unique_ptr<shared_lock<shared_mutex>> lck_session_modify;
         try
         {
             shared_lock<shared_mutex> lck_session{session_m}; // Read: Allow simultaneous actions on session map
             unique_ptr<Session> &session{activeSessions.at(clientId)};
-            lck_session_modify = make_unique<shared_lock<shared_mutex>>(session->modify_m); // Read: Allow simultaneous actions on session data
+            shared_lock<shared_mutex> lck_session_modify{session->modify_m}; // Read: Allow simultaneous actions on session data
             loggedIn = session->loggedIn;
         }
         catch (const out_of_range &)
@@ -505,105 +504,94 @@ void FtpServer::on_msg_modePassive(const int clientId, const uint32_t command, c
 
 void FtpServer::on_msg_listDirectory(const int clientId, const uint32_t command, const string &arg)
 {
-    // Get user, current directory and data server from session
-    string username;
-    string path;
-    unique_ptr<TcpServer> dataServer;
-    int dataClientId;
-    mutex *p_processed_m;
-    unique_ptr<unique_lock<shared_mutex>> lck_session_modify_unique;
     {
+        // Get user, current directory and data server from session
         shared_lock<shared_mutex> lck_session{session_m}; // Read: Allow simultaneous actions on session map
         unique_ptr<Session> &session{activeSessions.at(clientId)};
         shared_lock<shared_mutex> lck_session_modify{session->modify_m}; // Read: Allow simultaneous actions on session data
         session->established_m.lock();
-        username = session->username;
-        path = session->currentpath;
-        dataClientId = session->dataClientId;
-        p_processed_m = &session->processed_m;
+        string &username{session->username};
+        int dataClientId{session->dataClientId};
+        mutex &p_processed_m{session->processed_m};
         lck_session_modify.unlock();
-        lck_session_modify_unique = make_unique<unique_lock<shared_mutex>>(session->modify_m); // Modify: Block simultaneous actions on session data
-        dataServer = move(session->tcpData);                                                   // Remove data server from session as should be closed after this action
-        session->dataClientId = -1;                                                            // Reset data client ID in session
+        unique_lock<shared_mutex> lck_session_modify_unique{session->modify_m}; // Modify: Block simultaneous actions on session data
+        unique_ptr<TcpServer> dataServer{move(session->tcpData)};               // Remove data server from session as should be closed after this action
+        session->dataClientId = -1;                                             // Reset data client ID in session
+
+        // Check data server exists and is running
+        if (!(dataServer && dataServer->isRunning())) // INFO: If left evaluated false, right will not be evaluated at all
+        {
+            p_processed_m.unlock();
+            tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_WRONG_ORDER)) + " Data connection must be opened first via PASV"s);
+            return;
+        }
+
+        // Get directory list into string
+        ostringstream msg;
+        valarray<Item> items = work_listDirectory(username);
+        size_t numItems{items.size()};
+        for (size_t i{0}; i < numItems; i += 1)
+        {
+            msg << items[i] << endl;
+        }
+
+        // Send directory list to client
+        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DATA_OPEN)) + " Here comes the directory listing."s);
+        dataServer->sendMsg(dataClientId, msg.str());
+        p_processed_m.unlock();
+        // Close data connection by deleting the data server. Disconnect to be done by transfer master (server in this case)
     }
 
-    // Check data server exists and is running
-    if (!(dataServer && dataServer->isRunning())) // INFO: If left evaluated false, right will not be evaluated at all
-    {
-        p_processed_m->unlock();
-        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_WRONG_ORDER)) + " Data connection must be opened first via PASV"s);
-        return;
-    }
-
-    // Get directory list into string
-    ostringstream msg;
-    valarray<Item> items = work_listDirectory(username);
-    size_t numItems{items.size()};
-    for (size_t i{0}; i < numItems; i += 1)
-    {
-        msg << items[i] << endl;
-    }
-
-    // Send directory list to client
-    tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DATA_OPEN)) + " Here comes the directory listing."s);
-    dataServer->sendMsg(dataClientId, msg.str());
-    p_processed_m->unlock();
     tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DATA_CLOSE)) + " Directory send OK."s);
-    return; // Close data connection by deleting the data server. Disconnect to be done by transfer master (server in this case)
+    return;
 }
 
 void FtpServer::on_msg_fileDownload(const int clientId, const uint32_t command, const string &arg)
 {
     const string &filename{arg};
 
-    // Get user, current directory and data server from session
-    string username;
-    string path;
-    underlying_type_t<FileTransferType> transferType;
-    unique_ptr<TcpServer> dataServer;
-    int dataClientId;
-    mutex *p_processed_m;
-    unique_ptr<shared_lock<shared_mutex>> lck_session_modify;
     {
+        // Get user, current directory and data server from session
         shared_lock<shared_mutex> lck_session{session_m}; // Read: Allow simultaneous actions on session map
         unique_ptr<Session> &session{activeSessions.at(clientId)};
-        lck_session_modify = make_unique<shared_lock<shared_mutex>>(session->modify_m); // Read: Allow simultaneous actions on session data
+        shared_lock<shared_mutex> lck_session_modify{session->modify_m}; // Read: Allow simultaneous actions on session data
         session->established_m.lock();
-        username = session->username;
-        path = session->currentpath;
-        transferType = session->transferType; // No check needed as already done in on_msg_modePassive
-        dataClientId = session->dataClientId;
-        p_processed_m = &session->processed_m;
-        lck_session_modify->unlock();
+        string &path{session->currentpath};
+        underlying_type_t<FileTransferType> transferType{session->transferType}; // No check needed as already done in on_msg_modePassive
+        int dataClientId{session->dataClientId};
+        mutex &p_processed_m{session->processed_m};
+        lck_session_modify.unlock();
         unique_lock<shared_mutex> lck_session_modify_unique{session->modify_m}; // Modify: Block simultaneous actions on session data
-        dataServer = move(session->tcpData);                                    // Remove data server from session as should be closed after this action
+        unique_ptr<TcpServer> dataServer{move(session->tcpData)};               // Remove data server from session as should be closed after this action
         session->dataClientId = -1;                                             // Reset data client ID in session
         lck_session_modify_unique.unlock();
-        lck_session_modify->lock();
+        lck_session_modify.lock();
+
+        // Check data server exists and is running
+        if (!(dataServer && dataServer->isRunning())) // INFO: If left evaluated false, right will not be evaluated at all
+        {
+            p_processed_m.unlock();
+            tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_WRONG_ORDER)) + " Data connection must be opened first via PASV"s);
+            return;
+        }
+
+        // Get stream to file that should be downloaded
+        unique_ptr<istream> is{work_readFile(path + "/"s + filename, getStreamOpenMode(STREAM_DIRECTION_READ, transferType))};
+
+        // Send file content to client
+        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DATA_OPEN)) + " Here comes the content of file "s + filename + "."s);
+        string chunk{string(FILETRANSFER_CHUNKSIZE, 0)};
+        while (!is->eof())
+        {
+            is->read(chunk.data(), FILETRANSFER_CHUNKSIZE);
+            dataServer->sendMsg(dataClientId, chunk.substr(0, is->gcount()));
+        }
+        p_processed_m.unlock();
+        // Close data connection by deleting the data server. Disconnect to be done by transfer master (server in this case)
     }
 
-    // Check data server exists and is running
-    if (!(dataServer && dataServer->isRunning())) // INFO: If left evaluated false, right will not be evaluated at all
-    {
-        p_processed_m->unlock();
-        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_WRONG_ORDER)) + " Data connection must be opened first via PASV"s);
-        return;
-    }
-
-    // Get stream to file that should be downloaded
-    unique_ptr<istream> is{work_readFile(path + "/"s + filename, getStreamOpenMode(STREAM_DIRECTION_READ, transferType))};
-
-    // Send file content to client
-    tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DATA_OPEN)) + " Here comes the content of file "s + filename + "."s);
-    string chunk{string(FILETRANSFER_CHUNKSIZE, 0)};
-    while (!is->eof())
-    {
-        is->read(chunk.data(), FILETRANSFER_CHUNKSIZE);
-        dataServer->sendMsg(dataClientId, chunk.substr(0, is->gcount()));
-    }
-    p_processed_m->unlock();
     tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DATA_CLOSE)) + " File send OK."s);
-    return; // Close data connection by deleting the data server. Disconnect to be done by transfer master (server in this case)
+    return;
 }
 
 void FtpServer::on_msg_listFeatures(const int clientId, const uint32_t command, const string &arg)
@@ -660,49 +648,40 @@ void FtpServer::on_msg_fileUpload(const int clientId, const uint32_t command, co
     const string &filename{arg};
 
     // Get user, current directory and data server from session
-    string username;
-    string path;
-    underlying_type_t<FileTransferType> transferType;
-    unique_ptr<TcpServer> dataServer;
-    DynamicOstream<STREAM_DYNAMICOSTREAM_BUFFERSIZE> *incomingStreamFwd;
-    mutex *p_processed_m;
-    mutex *p_closed_m;
-    unique_ptr<shared_lock<shared_mutex>> lck_session_modify;
     {
         shared_lock<shared_mutex> lck_session{session_m}; // Read: Allow simultaneous actions on session map
         unique_ptr<Session> &session{activeSessions.at(clientId)};
-        lck_session_modify = make_unique<shared_lock<shared_mutex>>(session->modify_m); // Read: Allow simultaneous actions on session data
+        shared_lock<shared_mutex> lck_session_modify{session->modify_m}; // Read: Allow simultaneous actions on session data
         session->established_m.lock();
-        username = session->username;
-        path = session->currentpath;
-        transferType = session->transferType; // No check needed as already done in on_msg_modePassive
-        p_processed_m = &session->processed_m;
-        p_closed_m = &session->closed_m;
-        lck_session_modify->unlock();
-        unique_lock<shared_mutex> lck_session_modify_unique{session->modify_m}; // Modify: Block simultaneous actions on session data
-        dataServer = move(session->tcpData);                                    // Remove data server from session as should be closed after this action
-        incomingStreamFwd = session->incomingStreamFwd;                         // Remove stream from session as should be closed after this action
+        string &path{session->currentpath};
+        underlying_type_t<FileTransferType> transferType{session->transferType}; // No check needed as already done in on_msg_modePassive
+        mutex &p_processed_m{session->processed_m};
+        mutex &p_closed_m{session->closed_m};
+        lck_session_modify.unlock();
+        unique_lock<shared_mutex> lck_session_modify_unique{session->modify_m};                          // Modify: Block simultaneous actions on session data
+        unique_ptr<TcpServer> dataServer{move(session->tcpData)};                                        // Remove data server from session as should be closed after this action
+        DynamicOstream<STREAM_DYNAMICOSTREAM_BUFFERSIZE> *incomingStreamFwd{session->incomingStreamFwd}; // Remove stream from session as should be closed after this action
         lck_session_modify_unique.unlock();
-        lck_session_modify->lock();
+        lck_session_modify.lock();
+
+        // Check data server exists and is running
+        if (!(dataServer && dataServer->isRunning())) // INFO: If left evaluated false, right will not be evaluated at all
+        {
+            tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_WRONG_ORDER)) + " Data connection must be opened first via PASV"s);
+            p_processed_m.unlock(); // Clean up
+            return;
+        }
+
+        // Get stream to file that should be uploaded and redirect data server output to file stream
+        unique_ptr<ostream> outgoingStream{work_writeFile(path + "/"s + filename, getStreamOpenMode(STREAM_DIRECTION_WRITE, transferType))};
+        incomingStreamFwd->redirect(outgoingStream.get());
+        p_processed_m.unlock(); // Allow data processing to start
+
+        // Data server is now ready to accept data
+        // Data will be written to temporary file and moved to final destination after upload is complete
+        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DATA_OPEN)) + " Ready to receive data."s);
+        p_closed_m.lock(); // Wait here until data server has closed connection and all data is received. Disconnect to be done by transfer master (client in this case)
     }
-
-    // Check data server exists and is running
-    if (!(dataServer && dataServer->isRunning())) // INFO: If left evaluated false, right will not be evaluated at all
-    {
-        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_WRONG_ORDER)) + " Data connection must be opened first via PASV"s);
-        p_processed_m->unlock(); // Clean up
-        return;
-    }
-
-    // Get stream to file that should be uploaded and redirect data server output to file stream
-    unique_ptr<ostream> outgoingStream{work_writeFile(path + "/"s + filename, getStreamOpenMode(STREAM_DIRECTION_WRITE, transferType))};
-    incomingStreamFwd->redirect(outgoingStream.get());
-    p_processed_m->unlock(); // Allow data processing to start
-
-    // Data server is now ready to accept data
-    // Data will be written to temporary file and moved to final destination after upload is complete
-    tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DATA_OPEN)) + " Ready to receive data."s);
-    p_closed_m->lock(); // Wait here until data server has closed connection and all data is received. Disconnect to be done by transfer master (client in this case)
 
     // Client has disconnected from data server when reaching this point
     tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DATA_CLOSE)) + " File upload OK."s);
