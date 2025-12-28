@@ -174,14 +174,8 @@ namespace ftp
         virtual ~DynamicOstream() {}
 
         // Redirect the stream buffer to the given stream buffer or stream
-        void redirect(::std::streambuf *buf)
-        {
-            streambuf.setStreambuf(buf);
-        }
-        void redirect(::std::ostream *os)
-        {
-            streambuf.setStreambuf(os->rdbuf());
-        }
+        void redirect(::std::streambuf *buf) { streambuf.setStreambuf(buf); }
+        void redirect(::std::ostream *os) { streambuf.setStreambuf(os->rdbuf()); }
 
         // Get the stream buffer
         DynamicStreambuf<BUFFER_SIZE> *rdbuf() { return &streambuf; }
