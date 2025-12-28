@@ -184,10 +184,7 @@ namespace ftp
         }
 
         // Get the stream buffer
-        DynamicStreambuf<BUFFER_SIZE> *rdbuf() const
-        {
-            return const_cast<DynamicStreambuf<BUFFER_SIZE> *>(&streambuf);
-        }
+        DynamicStreambuf<BUFFER_SIZE> *rdbuf() { return &streambuf; }
 
     private:
         DynamicStreambuf<BUFFER_SIZE> streambuf;
