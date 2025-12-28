@@ -58,19 +58,18 @@ namespace ftp
      * @param command
      * @return uint32
      */
-    // TODO: Increase performance by parallelizing byte calculations
-    constexpr uint32_t hashCommand(const char *const command)
+    constexpr uint32_t hashCommand(const ::std::string_view &command)
     {
-        size_t len{::std::min<size_t>(::std::strlen(command), 4)};
+        size_t len{command.size()}; // Longer commands are truncated
 
-        uint32_t id{0};
-        for (size_t i = 0; i < len; i += 1)
-        {
-            char c{command[i]};
-            id |= static_cast<uint32_t>(c * (c >= 0x20)) << (24 - (i * 8));
-        }
-        return id;
+        const char *p{command.data()};
+        char _1{p[0]}, _2{p[1]}, _3{p[2]}, _4{p[3]};
+        return uint32_t{(static_cast<uint32_t>(_1 * (len > 0) * (_1 >= 0x20)) << 0x18) |
+                        (static_cast<uint32_t>(_2 * (len > 1) * (_2 >= 0x20)) << 0x10) |
+                        (static_cast<uint32_t>(_3 * (len > 2) * (_3 >= 0x20)) << 0x08) |
+                        (static_cast<uint32_t>(_4 * (len > 3) * (_4 >= 0x20)) << 0x00)};
     }
+    constexpr uint32_t hashCommand(const char *const command) { return hashCommand(::std::string_view{command}); }
 
     //////////////////////////////////////////////////
     // Classes

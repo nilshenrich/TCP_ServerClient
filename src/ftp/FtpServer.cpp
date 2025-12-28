@@ -72,7 +72,7 @@ Reqp FtpServer::parseRequest(string msg) const
         }
     }
     return Reqp{
-        hashCommand(string_view{msg.c_str(), lenCmd}.data()),
+        hashCommand(string_view{msg.c_str(), lenCmd}),
         (lenCmd < lenMsg) ? string{msg.c_str() + lenCmd + 1, lenMsg - lenCmd - 1} : string{} // TODO: Optimize. The string constructor copies the data again
     };
 }
