@@ -130,7 +130,7 @@ void FtpServer::on_newClient(const int clientId)
 }
 void FtpServer::on_msg(const int clientId, const string &msg)
 {
-    Reqp request{parseRequest(sanitizeRequest(msg))}; // INFO: No string copy from inner function call due to move of temporary return value 
+    Reqp request{parseRequest(sanitizeRequest(msg))}; // INFO: No string copy from inner function call due to move of temporary return value
     switch (request.command)
     {
     case ENUM_CLASS_VALUE(Request::USERNAME):
@@ -406,9 +406,9 @@ void FtpServer::on_msg_modePassive(const int clientId, const uint32_t command, c
     // Get file transfer type from session
     underlying_type_t<FileTransferType> transferType;
     {
-        shared_lock<shared_mutex> lck_session{session_m};                                    // Read: Allow simultaneous actions on session map
-        shared_lock<shared_mutex> lck_session_modify{activeSessions.at(clientId)->modify_m}; // Read: Allow simultaneous actions on session data
+        shared_lock<shared_mutex> lck_session{session_m}; // Read: Allow simultaneous actions on session map
         unique_ptr<Session> &session{activeSessions.at(clientId)};
+        shared_lock<shared_mutex> lck_session_modify{session->modify_m}; // Read: Allow simultaneous actions on session data
         transferType = session->transferType;
     }
 
