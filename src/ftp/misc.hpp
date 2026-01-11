@@ -14,6 +14,7 @@
 #include <array>
 #include <cstdint>
 #include <ctime>
+#include <filesystem>
 #include <iomanip>
 #include <memory>
 #include <ostream>
@@ -282,7 +283,7 @@ namespace ftp
     {
         bool loggedIn;                                                       // Is user logged in?
         ::std::string username;                                              // Username
-        ::std::string currentpath;                                           // Always absolute from user home
+        ::std::filesystem::path currentpath;                                 // Always absolute from user home
         char transferType;                                                   // FileTransferType
         ::std::unique_ptr<::tcp::TcpServer> tcpData;                         // Data server for file transfer
         int dataClientId;                                                    // Client ID for data connection
