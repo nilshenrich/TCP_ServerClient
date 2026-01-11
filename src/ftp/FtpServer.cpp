@@ -308,23 +308,19 @@ void FtpServer::on_msg_changeDirectory(const int clientId, const uint32_t comman
     const path path_req{arg};
     bool accessible;
     {
-        path path_new;
         shared_lock<shared_mutex> lck_session{session_m}; // Read: Allow simultaneous actions on session map
         unique_ptr<Session> &session{activeSessions.at(clientId)};
         shared_lock<shared_mutex> lck_session_modify{session->modify_m}; // Read: Allow simultaneous actions on session data
         const string &username{session->username};
         path &path_current{session->currentpath};
-        if (path_req.is_relative())                 // Relative path (Including empty path)
-            path_new = path_current / path_req;     // FIXME: .. is just appended, so the path always grows -> Use filesystem::path und canonical/weak_canonical
-        else                                        // Absolute path
-            path_new = path_req;
+        const path path_new{path_current / path_req}; // Append requested path to current path. Absolute requested path automatically overrides current path // FIXME: .. is just appended, so the path always grows -> Use filesystem::path und canonical/weak_canonical
 
         accessible = work_checkAccessible(username, path_new);
         if (accessible)
         {
             lck_session_modify.unlock();
             unique_lock<shared_mutex> lck_session_modify_unique{session->modify_m}; // Modify: Block simultaneous actions on session data
-            path_current = path_new;                                                // Set new current path in session
+            path_current = move(path_new);                                          // Set new current path in session
         }
     }
 
@@ -612,18 +608,12 @@ void FtpServer::on_msg_createDirectory(const int clientId, const uint32_t comman
     bool accessible;
     bool success;
     {
-        path path_new;
         shared_lock<shared_mutex> lck_session{session_m}; // Read: Allow simultaneous actions on session map
         unique_ptr<Session> &session{activeSessions.at(clientId)};
         shared_lock<shared_mutex> lck_session_modify{session->modify_m}; // Read: Allow simultaneous actions on session data
         const string &username{session->username};
         const path &path_current{session->currentpath};
-
-        // Determine requested absolute path
-        if (path_req.is_relative()) // Relative path (Including empty path)
-            path_new = path_current / path_req;
-        else // Absolute path
-            path_new = path_req;
+        const path path_new{path_current / path_req}; // Append requested path to current path. Absolute requested path automatically overrides current path // FIXME: .. is just appended, so the path always grows -> Use filesystem::path and canonical/weak_canonical
 
         accessible = work_checkAccessible(username, path_new);
         if (accessible)
