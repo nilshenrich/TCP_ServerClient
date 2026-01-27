@@ -313,7 +313,7 @@ void FtpServer::on_msg_changeDirectory(const int clientId, const uint32_t comman
         shared_lock<shared_mutex> lck_session_modify{session->modify_m}; // Read: Allow simultaneous actions on session data
         const string &username{session->username};
         path &path_current{session->currentpath};
-        const path path_new{path_current / path_req}; // Append requested path to current path. Absolute requested path automatically overrides current path // FIXME: .. is just appended, so the path always grows -> Use filesystem::path und canonical/weak_canonical
+        const path path_new{weakly_canonical(path_current / path_req)}; // Append requested path to current path. Absolute requested path automatically overrides current path
 
         accessible = work_checkAccessible(username, path_new);
         if (accessible)
@@ -613,7 +613,7 @@ void FtpServer::on_msg_createDirectory(const int clientId, const uint32_t comman
         shared_lock<shared_mutex> lck_session_modify{session->modify_m}; // Read: Allow simultaneous actions on session data
         const string &username{session->username};
         const path &path_current{session->currentpath};
-        const path path_new{path_current / path_req}; // Append requested path to current path. Absolute requested path automatically overrides current path // FIXME: .. is just appended, so the path always grows -> Use filesystem::path and canonical/weak_canonical
+        const path path_new{weakly_canonical(path_current / path_req)}; // Append requested path to current path. Absolute requested path automatically overrides current path
 
         accessible = work_checkAccessible(username, path_new);
         if (accessible)
