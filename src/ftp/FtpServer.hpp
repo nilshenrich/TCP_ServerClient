@@ -85,7 +85,7 @@ namespace ftp
          * @param msg
          * @return Reqp
          */
-        Reqp parseRequest(::std::string msg) const;
+        Reqp parseRequest(const ::std::string &msg) const;
 
         /**
          * @brief Remove illegal characters from a request string

@@ -54,7 +54,7 @@ void FtpServer::setWork_writeFile(function<ostream *(const string &, const strin
 
 bool FtpServer::isRunning() const { return tcpControl.isRunning(); }
 
-Reqp FtpServer::parseRequest(string msg) const
+Reqp FtpServer::parseRequest(const string &msg) const
 {
     // First word is the command with 3-4 bytes
     // Following word is the argument separated by a space
@@ -66,14 +66,13 @@ Reqp FtpServer::parseRequest(string msg) const
     {
         if (msg[i] == ' ')
         {
-            msg[i] = 0; // Null-termination for C-style string here
             lenCmd = i;
             break;
         }
     }
     return Reqp{
         hashCommand(string_view{msg.c_str(), lenCmd}),
-        (lenCmd < lenMsg) ? string{msg.c_str() + lenCmd + 1, lenMsg - lenCmd - 1} : string{} // TODO: Optimize. The string constructor copies the data again
+        (lenCmd < lenMsg) ? string{msg.c_str() + lenCmd + 1, lenMsg - lenCmd - 1} : string{} // INFO: String size limited to 4 bytes
     };
 }
 
