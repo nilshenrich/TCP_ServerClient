@@ -139,19 +139,19 @@ void FtpServer::on_msg(const int clientId, const string &msg)
         on_messageIn(clientId, request.command, &FtpServer::on_msg_password, request.argument, true, false);
         break;
     case ENUM_CLASS_VALUE(Request::SYSTEMTYPE):
-        on_messageIn(clientId, request.command, &FtpServer::on_msg_getSystemType);
+        on_messageIn(clientId, request.command, &FtpServer::on_msg_getSystemType, request.argument);
         break;
     case ENUM_CLASS_VALUE(Request::FEATURES_LIST):
-        on_messageIn(clientId, request.command, &FtpServer::on_msg_listFeatures);
+        on_messageIn(clientId, request.command, &FtpServer::on_msg_listFeatures, request.argument);
         break;
     case ENUM_CLASS_VALUE(Request::DIRECTORY_LIST):
-        on_messageIn(clientId, request.command, &FtpServer::on_msg_listDirectory);
+        on_messageIn(clientId, request.command, &FtpServer::on_msg_listDirectory, request.argument);
         break;
     case ENUM_CLASS_VALUE(Request::DIRECTORY_CHANGE):
         on_messageIn(clientId, request.command, &FtpServer::on_msg_changeDirectory, request.argument, true);
         break;
     case ENUM_CLASS_VALUE(Request::DIRECTORY_GETCURRENT):
-        on_messageIn(clientId, request.command, &FtpServer::on_msg_getDirectory);
+        on_messageIn(clientId, request.command, &FtpServer::on_msg_getDirectory, request.argument);
         break;
     case ENUM_CLASS_VALUE(Request::DIRECTORY_CREATE):
         on_messageIn(clientId, request.command, &FtpServer::on_msg_createDirectory, request.argument, true);
@@ -191,7 +191,7 @@ void FtpServer::on_closed(const int clientId)
 void FtpServer::on_messageIn(const int clientId, const uint32_t command,
                              void (FtpServer::*work)(const int, const uint32_t, const string &),
                              const string &arg,
-                             const bool hasArg,
+                             const bool mustHaveArg,
                              const bool mustLoggedIn)
 {
     // Check if user is logged in
@@ -217,9 +217,9 @@ void FtpServer::on_messageIn(const int clientId, const uint32_t command,
     }
 
     // Check num of arguments
-    if (arg.empty() == hasArg)
+    if (arg.empty() && mustHaveArg)
     {
-        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_SYNTAX_ARGUMENT)) + " "s + (hasArg ? "Argument required, but none passed."s : "No argument expected, but one passed."s));
+        tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_SYNTAX_ARGUMENT)) + " Argument required, but none passed."s);
         return;
     }
 
@@ -497,6 +497,9 @@ void FtpServer::on_msg_modePassive(const int clientId, const uint32_t command, c
     return;
 }
 
+// FIXME: LIST command accepts an optional argument <pathname>. Handle that
+// FIXME: Some devices support display format options (-a, -l, ...) (-> forward to worker)
+//        -> Possible command: 'LIST /some/path -al'
 void FtpServer::on_msg_listDirectory(const int clientId, const uint32_t command, const string &arg)
 {
     {
@@ -541,6 +544,7 @@ void FtpServer::on_msg_listDirectory(const int clientId, const uint32_t command,
     return;
 }
 
+// FIXME: Some devices support transfer mode options (-b, -a, ...)
 void FtpServer::on_msg_fileDownload(const int clientId, const uint32_t command, const string &arg)
 {
     const string &filename{arg};
@@ -633,6 +637,7 @@ void FtpServer::on_msg_createDirectory(const int clientId, const uint32_t comman
     return;
 }
 
+// FIXME: Some devices support transfer mode options (-b, -a, ...)
 void FtpServer::on_msg_fileUpload(const int clientId, const uint32_t command, const string &arg)
 {
     const string &filename{arg};

@@ -177,7 +177,7 @@ namespace ftp
         void on_messageIn(const int clientId, const uint32_t command,
                           void (FtpServer::*work)(const int, const uint32_t, const ::std::string &),
                           const ::std::string &arg = ::std::string{},
-                          const bool hasArg = false,
+                          const bool mustHaveArg = false,
                           const bool mustLoggedIn = true);
 
         // Worker methods
