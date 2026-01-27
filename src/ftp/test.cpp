@@ -152,15 +152,15 @@ int main()
                                  { return valarray<Item>{Item{ItemType::directory, "MyDir", {6, 4, 4}, 0, 10, 11, 4096, 1722164144},
                                                          Item{ItemType::directory, "MyDir2", {6, 4, 4}, 0, 10, 11, 4096000, 1722164144},
                                                          Item{ItemType::file, "MyFile", {6, 4, 4}, 0, 10, 11, 4096, 1722164144}}; });
-    server.setWork_createDirectory([](const string &) -> bool
+    server.setWork_createDirectory([](const string &, const string &) -> bool
                                    { return true; });
-    server.setWork_readFile([](const string &path, const ios::openmode mode) -> istringstream *
+    server.setWork_readFile([](const string &username, const string &path, const ios::openmode mode) -> istringstream *
                             {
-                                cout << "[Test] Start reading file '"s + path + "' in mode '"s + to_string(mode) + "'"s;
+                                cout << "[Test] Start reading "<<username<<"'s file '"s + path + "' in mode '"s + to_string(mode) + "'"s;
                                 return new istringstream{"My file content for file '"s + path + "'"s, mode}; });
-    server.setWork_writeFile([](const string &path, const ios::openmode mode) -> ostream *
+    server.setWork_writeFile([](const string &username, const string &path, const ios::openmode mode) -> ostream *
                              {
-                                cout << "[Test] Start writing to file '"s + path + "' in mode '"s + to_string(mode) + "'"s;
+                                cout << "[Test] Start writing to "<<username<<"'s file '"s + path + "' in mode '"s + to_string(mode) + "'"s;
                                 return new ofstream{"./" + path, mode}; });
 
     if (server.start())

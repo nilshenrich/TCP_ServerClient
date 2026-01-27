@@ -56,12 +56,12 @@ namespace ftp
         /**
          * @brief Link worker methods
          */
-        void setWork_checkUserCredentials(::std::function<bool(const ::std::string, const ::std::string)> work);
-        void setWork_checkAccessible(::std::function<bool(const ::std::string, const ::std::string)> work);
-        void setWork_listDirectory(::std::function<::std::valarray<Item>(const ::std::string)> work);
-        void setWork_createDirectory(::std::function<bool(const ::std::string)> work);
-        void setWork_readFile(::std::function<::std::istream *(const ::std::string, const ::std::ios::openmode)> work);
-        void setWork_writeFile(::std::function<::std::ostream *(const ::std::string, const ::std::ios::openmode)> work);
+        void setWork_checkUserCredentials(::std::function<bool(const ::std::string &, const ::std::string &)> work);                              // See description of work_checkUserCredentials
+        void setWork_checkAccessible(::std::function<bool(const ::std::string &, const ::std::string &)> work);                                   // See description of work_checkAccessible
+        void setWork_listDirectory(::std::function<::std::valarray<Item>(const ::std::string &)> work);                                           // See description of work_listDirectory
+        void setWork_createDirectory(::std::function<bool(const ::std::string &, const ::std::string &)> work);                                   // See description of work_createDirectory
+        void setWork_readFile(::std::function<::std::istream *(const ::std::string &, const ::std::string &, const ::std::ios::openmode)> work);  // See description of work_readFile
+        void setWork_writeFile(::std::function<::std::ostream *(const ::std::string &, const ::std::string &, const ::std::ios::openmode)> work); // See description of work_writeFile
 
         /**
          * @brief Return if the FTP server is running (means if underlying TCP server is running)
@@ -148,12 +148,12 @@ namespace ftp
         ::std::mutex tcpPort_m{};        // Mutex for TCP port availability
 
         // Pointer to functions on incoming message
-        ::std::function<bool(const ::std::string &, const ::std::string &)> work_checkUserCredentials;       // Check user credentials: name, password -> bool
-        ::std::function<bool(const ::std::string &, const ::std::string &)> work_checkAccessible;            // Check if path is accessible (directory or file) for user: username, path (Absolute from user home) -> bool
-        ::std::function<::std::valarray<Item>(const ::std::string &)> work_listDirectory;                    // List directory content: path -> items // TODO: Change to username, path (Absolute from user path) -> items
-        ::std::function<bool(const ::std::string &)> work_createDirectory;                                   // Create directory: path -> bool // TODO: Change to username, path (Absolute from user path) -> bool
-        ::std::function<::std::istream *(const ::std::string &, const ::std::ios::openmode)> work_readFile;  // Read file content: path -> reading stream // TODO: Change to username, path (Absolute from user path) -> reading stream
-        ::std::function<::std::ostream *(const ::std::string &, const ::std::ios::openmode)> work_writeFile; // Write content to file: path -> writing stream // TODO: Change to username, path (Absolute from user path) -> writing stream
+        ::std::function<bool(const ::std::string &, const ::std::string &)> work_checkUserCredentials;                              // Check user credentials: name, password -> bool
+        ::std::function<bool(const ::std::string &, const ::std::string &)> work_checkAccessible;                                   // Check if path is accessible (directory or file) for user: username, path (Absolute from user home) -> bool
+        ::std::function<::std::valarray<Item>(const ::std::string &)> work_listDirectory;                                           // List content of current directory: username -> items
+        ::std::function<bool(const ::std::string &, const ::std::string &)> work_createDirectory;                                   // Create directory: username, path (Absolute from user home) -> bool
+        ::std::function<::std::istream *(const ::std::string &, const ::std::string &, const ::std::ios::openmode)> work_readFile;  // Read file content: username, path (Absolute from user home), open mode -> reading stream
+        ::std::function<::std::ostream *(const ::std::string &, const ::std::string &, const ::std::ios::openmode)> work_writeFile; // Write content to file: username, path (Absolute from user home), open mode -> writing stream
 
         //////////////////////////////////////////////////
         // Worker methods on incoming messages

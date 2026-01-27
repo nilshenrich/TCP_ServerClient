@@ -19,17 +19,17 @@ using namespace ::ftp;
 using namespace ::std::filesystem;
 
 FtpServer::FtpServer() : tcpControl{'\n', "\r", MAXIMUM_MESSAGE_LENGTH},
-                         work_checkUserCredentials{[](const string, const string) -> bool
+                         work_checkUserCredentials{[](const string &, const string &) -> bool
                                                    { return false; }}, // Default: Refuse all user credentials
-                         work_checkAccessible{[](const string, const string) -> bool
+                         work_checkAccessible{[](const string &, const string &) -> bool
                                               { return false; }}, // Default: Refuse all paths
-                         work_listDirectory{[](const string) -> valarray<Item>
+                         work_listDirectory{[](const string &) -> valarray<Item>
                                             { return valarray<Item>{}; }}, // Default: Return empty directory
-                         work_createDirectory{[](const string) -> bool
+                         work_createDirectory{[](const string &, const string &) -> bool
                                               { return false; }}, // Default: Refuse all directory creations
-                         work_readFile{[](const string, const ios::openmode) -> istream *
+                         work_readFile{[](const string &, const string &, const ios::openmode) -> istream *
                                        { return nullptr; }}, // Default: Return null-stream
-                         work_writeFile{[](const string, const ios::openmode) -> ostream *
+                         work_writeFile{[](const string &, const string &, const ios::openmode) -> ostream *
                                         { return nullptr; }} // Default: Return null-stream
 {
     // Initialize random number generator
@@ -45,12 +45,12 @@ FtpServer::~FtpServer() { stop(); }
 int FtpServer::start() { return tcpControl.start(PORT_CONTROL); }
 void FtpServer::stop() { tcpControl.stop(); }
 
-void FtpServer::setWork_checkUserCredentials(function<bool(const string, const string)> worker) { work_checkUserCredentials = worker; }
-void FtpServer::setWork_checkAccessible(function<bool(const string, const string)> worker) { work_checkAccessible = worker; }
-void FtpServer::setWork_listDirectory(function<valarray<Item>(const string)> worker) { work_listDirectory = worker; }
-void FtpServer::setWork_createDirectory(function<bool(const string)> worker) { work_createDirectory = worker; }
-void FtpServer::setWork_readFile(function<istream *(const string, const ios::openmode)> worker) { work_readFile = worker; }
-void FtpServer::setWork_writeFile(function<ostream *(const string, const ios::openmode)> worker) { work_writeFile = worker; }
+void FtpServer::setWork_checkUserCredentials(function<bool(const string &, const string &)> worker) { work_checkUserCredentials = worker; }
+void FtpServer::setWork_checkAccessible(function<bool(const string &, const string &)> worker) { work_checkAccessible = worker; }
+void FtpServer::setWork_listDirectory(function<valarray<Item>(const string &)> worker) { work_listDirectory = worker; }
+void FtpServer::setWork_createDirectory(function<bool(const string &, const string &)> worker) { work_createDirectory = worker; }
+void FtpServer::setWork_readFile(function<istream *(const string &, const string &, const ios::openmode)> worker) { work_readFile = worker; }
+void FtpServer::setWork_writeFile(function<ostream *(const string &, const string &, const ios::openmode)> worker) { work_writeFile = worker; }
 
 bool FtpServer::isRunning() const { return tcpControl.isRunning(); }
 
@@ -506,7 +506,7 @@ void FtpServer::on_msg_listDirectory(const int clientId, const uint32_t command,
         unique_ptr<Session> &session{activeSessions.at(clientId)};
         shared_lock<shared_mutex> lck_session_modify{session->modify_m}; // Read: Allow simultaneous actions on session data
         session->established_m.lock();
-        string &username{session->username};
+        const string &username{session->username};
         int dataClientId{session->dataClientId};
         mutex &p_processed_m{session->processed_m};
         lck_session_modify.unlock();
@@ -552,6 +552,7 @@ void FtpServer::on_msg_fileDownload(const int clientId, const uint32_t command, 
         unique_ptr<Session> &session{activeSessions.at(clientId)};
         shared_lock<shared_mutex> lck_session_modify{session->modify_m}; // Read: Allow simultaneous actions on session data
         session->established_m.lock();
+        const string &username{session->username};
         const path &path_current{session->currentpath};
         underlying_type_t<FileTransferType> transferType{session->transferType}; // No check needed as already done in on_msg_modePassive
         int dataClientId{session->dataClientId};
@@ -572,7 +573,7 @@ void FtpServer::on_msg_fileDownload(const int clientId, const uint32_t command, 
         }
 
         // Get stream to file that should be downloaded
-        unique_ptr<istream> is{work_readFile((path_current / filename).string(), getStreamOpenMode(STREAM_DIRECTION_READ, transferType))};
+        unique_ptr<istream> is{work_readFile(username, (path_current / filename).string(), getStreamOpenMode(STREAM_DIRECTION_READ, transferType))};
 
         // Send file content to client
         tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DATA_OPEN)) + " Here comes the content of file "s + filename + "."s);
@@ -617,7 +618,7 @@ void FtpServer::on_msg_createDirectory(const int clientId, const uint32_t comman
 
         accessible = work_checkAccessible(username, path_new);
         if (accessible)
-            success = work_createDirectory(path_new);
+            success = work_createDirectory(username, path_new);
         // If not accessible, value of success is irrelevant
     }
 
@@ -643,7 +644,8 @@ void FtpServer::on_msg_fileUpload(const int clientId, const uint32_t command, co
         unique_ptr<Session> &session{activeSessions.at(clientId)};
         shared_lock<shared_mutex> lck_session_modify{session->modify_m}; // Read: Allow simultaneous actions on session data
         session->established_m.lock();
-        path &path_current{session->currentpath};
+        const string &username{session->username};
+        const path &path_current{session->currentpath};
         underlying_type_t<FileTransferType> transferType{session->transferType}; // No check needed as already done in on_msg_modePassive
         mutex &p_processed_m{session->processed_m};
         mutex &p_closed_m{session->closed_m};
@@ -663,7 +665,7 @@ void FtpServer::on_msg_fileUpload(const int clientId, const uint32_t command, co
         }
 
         // Get stream to file that should be uploaded and redirect data server output to file stream
-        unique_ptr<ostream> outgoingStream{work_writeFile((path_current / filename).string(), getStreamOpenMode(STREAM_DIRECTION_WRITE, transferType))};
+        unique_ptr<ostream> outgoingStream{work_writeFile(username, (path_current / filename).string(), getStreamOpenMode(STREAM_DIRECTION_WRITE, transferType))};
         incomingStreamFwd->redirect(outgoingStream.get());
         p_processed_m.unlock(); // Allow data processing to start
 
