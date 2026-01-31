@@ -256,12 +256,14 @@ namespace ftp
             os << ' ' << ::std::setw(4) << i.gid;
             os << ' ' << ::std::setw(12) << i.size;
 
-            // Modification time using format: yyyy mmm dd hh:mm
+            // Modification time using format: 'mmm dd yyyy' if file older than 6 months, else 'mmm dd hh:mm'
             os.fill('0');
-            ::std::time_t time{i.mtime};
-            size_t tSize{::std::size("yyyy mmm dd hh:mm")};
+            ::std::time_t tItem{i.mtime};
+            ::std::time_t tNow{::std::time(nullptr)};
+            const size_t tSize{::std::size("MMM DD HH:MM")}; // Reserver space for the longest format possible
+            ::std::string tTemplate{(::std::difftime(tNow, tItem) > 6 * 30 * 24 * 60 * 60) ? "%b %d %Y" : "%b %d %H:%M"};
             char tBuffer[tSize];
-            ::std::strftime(tBuffer, tSize, "%Y %b %d %H:%M", ::std::localtime(&time));
+            ::std::strftime(tBuffer, tSize, tTemplate.c_str(), ::std::localtime(&tItem));
             os << ' ' << tBuffer;
 
             // Item name
