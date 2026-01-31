@@ -277,7 +277,7 @@ namespace ftp
     struct Reqp
     {
         uint32_t command;
-        ::std::string argument;
+        ::std::string_view argument;
     };
 
     // Session data

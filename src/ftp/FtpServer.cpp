@@ -59,7 +59,9 @@ Reqp FtpServer::parseRequest(const string &msg) const
     // First word is the command with 3-4 bytes
     // Following word is the argument separated by a space
 
-    // Get all space positions and end of string
+    // Search for the first space (limited to 4 bytes). Before is the command, everything after is the argument
+    // INFO: A required command is allowed to contain a space, so only the first space is used as a separator
+    // INFO: Some commands with no required argument are allowed to have an optional argument. This is then passed directly to the command worker
     size_t lenMsg{msg.size()};
     size_t lenCmd{max<size_t>(4, lenMsg)};
     for (size_t i = 0; i < lenCmd; i += 1)
@@ -72,8 +74,7 @@ Reqp FtpServer::parseRequest(const string &msg) const
     }
     return Reqp{
         hashCommand(string_view{msg.c_str(), lenCmd}),
-        (lenCmd < lenMsg) ? string{msg.c_str() + lenCmd + 1, lenMsg - lenCmd - 1} : string{} // INFO: String size limited to 4 bytes
-    };
+        (lenCmd < lenMsg) ? string_view{msg.c_str() + lenCmd + 1, lenMsg - lenCmd - 1} : string_view{}};
 }
 
 string FtpServer::sanitizeRequest(const string &request) const
@@ -129,7 +130,8 @@ void FtpServer::on_newClient(const int clientId)
 }
 void FtpServer::on_msg(const int clientId, const string &msg)
 {
-    Reqp request{parseRequest(sanitizeRequest(msg))}; // INFO: No string copy from inner function call due to move of temporary return value
+    const string msgSanitized{sanitizeRequest(msg)}; // INFO: Method nesting not working as working with string_view and so, the sanitized message must stay in stack until end of this worker
+    Reqp request{parseRequest(msgSanitized)};
     switch (request.command)
     {
     case ENUM_CLASS_VALUE(Request::USERNAME):
@@ -162,7 +164,7 @@ void FtpServer::on_msg(const int clientId, const string &msg)
     case ENUM_CLASS_VALUE(Request::MODE_PASSIVE_ALL):   // Always enter passive mode
     case ENUM_CLASS_VALUE(Request::MODE_PASSIVE_SHORT): // Always enter passive mode
     case ENUM_CLASS_VALUE(Request::MODE_PASSIVE_LONG):  // Always enter passive mode
-        on_messageIn(clientId, request.command, &FtpServer::on_msg_modePassive);
+        on_messageIn(clientId, request.command, &FtpServer::on_msg_modePassive, request.argument);
         break;
     case ENUM_CLASS_VALUE(Request::FILE_DOWNLOAD):
         on_messageIn(clientId, request.command, &FtpServer::on_msg_fileDownload, request.argument, true);
@@ -189,8 +191,8 @@ void FtpServer::on_closed(const int clientId)
 //////////////////////////////////////////////////
 
 void FtpServer::on_messageIn(const int clientId, const uint32_t command,
-                             void (FtpServer::*work)(const int, const uint32_t, const string &),
-                             const string &arg,
+                             void (FtpServer::*work)(const int, const uint32_t, const string_view &),
+                             const string_view &arg,
                              const bool mustHaveArg,
                              const bool mustLoggedIn)
 {
@@ -228,23 +230,24 @@ void FtpServer::on_messageIn(const int clientId, const uint32_t command,
     return;
 }
 
-void FtpServer::on_msg_username(const int clientId, const uint32_t command, const string &arg)
+void FtpServer::on_msg_username(const int clientId, const uint32_t command, const string_view &arg)
 {
     // Buffer login request. Override possible old session
-    const string &username{arg};
+    const string username{arg};
+    const string response{to_string(ENUM_CLASS_VALUE(Response::CONTINUE_PASSWORD_REQUIRED)) + " Password required for user "s + username + "."s};
     {
-        unique_ptr<Session> sessionNew{make_unique<Session>(false, username, "/")}; // Not logged in yet
-        shared_lock<shared_mutex> lck_session{session_m};                           // Modify: Allow simultaneous actions on session map
+        unique_ptr<Session> sessionNew{make_unique<Session>(false, move(username), "/")}; // Not logged in yet
+        shared_lock<shared_mutex> lck_session{session_m};                                 // Modify: Allow simultaneous actions on session map
         activeSessions.at(clientId) = move(sessionNew);
     }
     // Request fine, require password
-    tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::CONTINUE_PASSWORD_REQUIRED)) + " Password required for user "s + username + "."s);
+    tcpControl.sendMsg(clientId, response);
     return;
 }
 
-void FtpServer::on_msg_password(const int clientId, const uint32_t command, const string &arg)
+void FtpServer::on_msg_password(const int clientId, const uint32_t command, const string_view &arg)
 {
-    const string &password{arg};
+    const string password{arg};
     string response;
     {
         shared_lock<shared_mutex> lck_session{session_m}; // Read: Allow simultaneous actions on session map
@@ -267,7 +270,7 @@ void FtpServer::on_msg_password(const int clientId, const uint32_t command, cons
     tcpControl.sendMsg(clientId, response);
 }
 
-void FtpServer::on_msg_getSystemType(const int clientId, const uint32_t command, const string &arg)
+void FtpServer::on_msg_getSystemType(const int clientId, const uint32_t command, const string_view &arg)
 {
 #ifdef _WIN32
     string sysType{"WIN32"};
@@ -289,7 +292,7 @@ void FtpServer::on_msg_getSystemType(const int clientId, const uint32_t command,
     return;
 }
 
-void FtpServer::on_msg_getDirectory(const int clientId, const uint32_t command, const string &arg)
+void FtpServer::on_msg_getDirectory(const int clientId, const uint32_t command, const string_view &arg)
 {
     string response;
     {
@@ -297,12 +300,12 @@ void FtpServer::on_msg_getDirectory(const int clientId, const uint32_t command, 
         unique_ptr<Session> &session{activeSessions.at(clientId)};
         shared_lock<shared_mutex> lck_session_modify{session->modify_m}; // Read: Allow simultaneous actions on session data
         const path &path_current{session->currentpath};
-        response = to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DIRECTORY)) + " \""s + path_current.string() + "\" is current directory."s;
+        response = to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DIRECTORY)) + " \""s + path_current.string() + "\" is the current directory."s;
     }
     tcpControl.sendMsg(clientId, response);
 }
 
-void FtpServer::on_msg_changeDirectory(const int clientId, const uint32_t command, const string &arg)
+void FtpServer::on_msg_changeDirectory(const int clientId, const uint32_t command, const string_view &arg)
 {
     const path path_req{arg};
     bool accessible;
@@ -331,7 +334,7 @@ void FtpServer::on_msg_changeDirectory(const int clientId, const uint32_t comman
     tcpControl.sendMsg(clientId, response);
 }
 
-void FtpServer::on_msg_fileTransferType(const int clientId, const uint32_t command, const string &arg)
+void FtpServer::on_msg_fileTransferType(const int clientId, const uint32_t command, const string_view &arg)
 {
     // Get requested transfer type
     if (arg.size() != 1)
@@ -370,7 +373,7 @@ void FtpServer::on_msg_fileTransferType(const int clientId, const uint32_t comma
     return;
 }
 
-void FtpServer::on_msg_modePassive(const int clientId, const uint32_t command, const string &arg)
+void FtpServer::on_msg_modePassive(const int clientId, const uint32_t command, const string_view &arg)
 {
     // Get server IP address the client is connected to
     string myIp;
@@ -497,10 +500,7 @@ void FtpServer::on_msg_modePassive(const int clientId, const uint32_t command, c
     return;
 }
 
-// FIXME: LIST command accepts an optional argument <pathname>. Handle that
-// FIXME: Some devices support display format options (-a, -l, ...) (-> forward to worker)
-//        -> Possible command: 'LIST /some/path -al'
-void FtpServer::on_msg_listDirectory(const int clientId, const uint32_t command, const string &arg)
+void FtpServer::on_msg_listDirectory(const int clientId, const uint32_t command, const string_view &arg)
 {
     {
         // Get user, current directory and data server from session
@@ -544,11 +544,9 @@ void FtpServer::on_msg_listDirectory(const int clientId, const uint32_t command,
     return;
 }
 
-// FIXME: Some devices support transfer mode options (-b, -a, ...)
-void FtpServer::on_msg_fileDownload(const int clientId, const uint32_t command, const string &arg)
+void FtpServer::on_msg_fileDownload(const int clientId, const uint32_t command, const string_view &arg)
 {
-    const string &filename{arg};
-
+    const string filename{arg};
     {
         // Get user, current directory and data server from session
         shared_lock<shared_mutex> lck_session{session_m}; // Read: Allow simultaneous actions on session map
@@ -594,7 +592,7 @@ void FtpServer::on_msg_fileDownload(const int clientId, const uint32_t command, 
     return;
 }
 
-void FtpServer::on_msg_listFeatures(const int clientId, const uint32_t command, const string &arg)
+void FtpServer::on_msg_listFeatures(const int clientId, const uint32_t command, const string_view &arg)
 {
     // Send feature list to client
     tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_STATUS)) + "-Features:"s);
@@ -606,7 +604,7 @@ void FtpServer::on_msg_listFeatures(const int clientId, const uint32_t command, 
     return;
 }
 
-void FtpServer::on_msg_createDirectory(const int clientId, const uint32_t command, const string &arg)
+void FtpServer::on_msg_createDirectory(const int clientId, const uint32_t command, const string_view &arg)
 {
     const path path_req{arg};
     bool accessible;
@@ -637,12 +635,9 @@ void FtpServer::on_msg_createDirectory(const int clientId, const uint32_t comman
     return;
 }
 
-// FIXME: Some devices support transfer mode options (-b, -a, ...)
-void FtpServer::on_msg_fileUpload(const int clientId, const uint32_t command, const string &arg)
+void FtpServer::on_msg_fileUpload(const int clientId, const uint32_t command, const string_view &arg)
 {
-    const string &filename{arg};
-
-    // Get user, current directory and data server from session
+    const string filename{arg};
     {
         shared_lock<shared_mutex> lck_session{session_m}; // Read: Allow simultaneous actions on session map
         unique_ptr<Session> &session{activeSessions.at(clientId)};
