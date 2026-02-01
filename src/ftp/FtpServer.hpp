@@ -60,6 +60,7 @@ namespace ftp
         void setWork_checkAccessible(::std::function<bool(const ::std::string &, const ::std::string &)> work);                                   // See description of work_checkAccessible
         void setWork_listDirectory(::std::function<::std::valarray<Item>(const ::std::string &)> work);                                           // See description of work_listDirectory
         void setWork_createDirectory(::std::function<bool(const ::std::string &, const ::std::string &)> work);                                   // See description of work_createDirectory
+        void setWork_deleteDirectory(::std::function<bool(const ::std::string &, const ::std::string &)> work);                                   // See description of work_deleteDirectory
         void setWork_readFile(::std::function<::std::istream *(const ::std::string &, const ::std::string &, const ::std::ios::openmode)> work);  // See description of work_readFile
         void setWork_writeFile(::std::function<::std::ostream *(const ::std::string &, const ::std::string &, const ::std::ios::openmode)> work); // See description of work_writeFile
 
@@ -152,6 +153,7 @@ namespace ftp
         ::std::function<bool(const ::std::string &, const ::std::string &)> work_checkAccessible;                                   // Check if path is accessible (directory or file) for user: username, path (Absolute from user home) -> bool
         ::std::function<::std::valarray<Item>(const ::std::string &)> work_listDirectory;                                           // List content of current directory: username -> items
         ::std::function<bool(const ::std::string &, const ::std::string &)> work_createDirectory;                                   // Create directory: username, path (Absolute from user home) -> bool
+        ::std::function<bool(const ::std::string &, const ::std::string &)> work_deleteDirectory;                                   // Delete directory: username, path (Absolute from user home) -> bool
         ::std::function<::std::istream *(const ::std::string &, const ::std::string &, const ::std::ios::openmode)> work_readFile;  // Read file content: username, path (Absolute from user home), open mode -> reading stream
         ::std::function<::std::ostream *(const ::std::string &, const ::std::string &, const ::std::ios::openmode)> work_writeFile; // Write content to file: username, path (Absolute from user home), open mode -> writing stream
 
@@ -185,13 +187,14 @@ namespace ftp
         void on_msg_password(const int clientId, const uint32_t command, const ::std::string_view &arg);
         void on_msg_getSystemType(const int clientId, const uint32_t command, const ::std::string_view &arg);
         void on_msg_listFeatures(const int clientId, const uint32_t command, const ::std::string_view &arg);
+        void on_msg_fileTransferType(const int clientId, const uint32_t command, const ::std::string_view &arg);
+        void on_msg_modePassive(const int clientId, const uint32_t command, const ::std::string_view &arg);
         void on_msg_listDirectory(const int clientId, const uint32_t command, const ::std::string_view &arg);
         void on_msg_changeDirectory(const int clientId, const uint32_t command, const ::std::string_view &arg);
         void on_msg_changeDirectory_parent(const int clientId, const uint32_t command, const ::std::string_view &arg);
         void on_msg_getDirectory(const int clientId, const uint32_t command, const ::std::string_view &arg);
         void on_msg_createDirectory(const int clientId, const uint32_t command, const ::std::string_view &arg);
-        void on_msg_fileTransferType(const int clientId, const uint32_t command, const ::std::string_view &arg);
-        void on_msg_modePassive(const int clientId, const uint32_t command, const ::std::string_view &arg);
+        void on_msg_deleteDirectory(const int clientId, const uint32_t command, const ::std::string_view &arg);
         void on_msg_fileDownload(const int clientId, const uint32_t command, const ::std::string_view &arg);
         void on_msg_fileUpload(const int clientId, const uint32_t command, const ::std::string_view &arg);
         void on_msg_nop(const int clientId);

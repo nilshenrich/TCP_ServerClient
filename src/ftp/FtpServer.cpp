@@ -27,6 +27,8 @@ FtpServer::FtpServer() : tcpControl{'\n', "\r", MAXIMUM_MESSAGE_LENGTH},
                                             { return valarray<Item>{}; }}, // Default: Return empty directory
                          work_createDirectory{[](const string &, const string &) -> bool
                                               { return false; }}, // Default: Refuse all directory creations
+                         work_deleteDirectory{[](const string &, const string &) -> bool
+                                              { return false; }}, // Default: Refuse all directory deletions
                          work_readFile{[](const string &, const string &, const ios::openmode) -> istream *
                                        { return nullptr; }}, // Default: Return null-stream
                          work_writeFile{[](const string &, const string &, const ios::openmode) -> ostream *
@@ -49,6 +51,7 @@ void FtpServer::setWork_checkUserCredentials(function<bool(const string &, const
 void FtpServer::setWork_checkAccessible(function<bool(const string &, const string &)> worker) { work_checkAccessible = worker; }
 void FtpServer::setWork_listDirectory(function<valarray<Item>(const string &)> worker) { work_listDirectory = worker; }
 void FtpServer::setWork_createDirectory(function<bool(const string &, const string &)> worker) { work_createDirectory = worker; }
+void FtpServer::setWork_deleteDirectory(function<bool(const string &, const string &)> worker) { work_deleteDirectory = worker; }
 void FtpServer::setWork_readFile(function<istream *(const string &, const string &, const ios::openmode)> worker) { work_readFile = worker; }
 void FtpServer::setWork_writeFile(function<ostream *(const string &, const string &, const ios::openmode)> worker) { work_writeFile = worker; }
 
@@ -146,21 +149,6 @@ void FtpServer::on_msg(const int clientId, const string &msg)
     case ENUM_CLASS_VALUE(Request::FEATURES_LIST):
         on_messageIn(clientId, request.command, &FtpServer::on_msg_listFeatures, request.argument);
         break;
-    case ENUM_CLASS_VALUE(Request::DIRECTORY_LIST):
-        on_messageIn(clientId, request.command, &FtpServer::on_msg_listDirectory, request.argument);
-        break;
-    case ENUM_CLASS_VALUE(Request::DIRECTORY_CHANGE):
-        on_messageIn(clientId, request.command, &FtpServer::on_msg_changeDirectory, request.argument, true);
-        break;
-    case ENUM_CLASS_VALUE(Request::DIRECTORY_GETCURRENT):
-        on_messageIn(clientId, request.command, &FtpServer::on_msg_getDirectory, request.argument);
-        break;
-    case ENUM_CLASS_VALUE(Request::DIRECTORY_CREATE):
-        on_messageIn(clientId, request.command, &FtpServer::on_msg_createDirectory, request.argument, true);
-        break;
-    case ENUM_CLASS_VALUE(Request::DIRECTORY_CHANGE_PARENT):
-        on_messageIn(clientId, request.command, &FtpServer::on_msg_changeDirectory_parent, request.argument);
-        break;
     case ENUM_CLASS_VALUE(Request::FILE_TRANSFER_TYPE):
         on_messageIn(clientId, request.command, &FtpServer::on_msg_fileTransferType, request.argument, true);
         break;
@@ -168,6 +156,24 @@ void FtpServer::on_msg(const int clientId, const string &msg)
     case ENUM_CLASS_VALUE(Request::MODE_PASSIVE_SHORT): // Always enter passive mode
     case ENUM_CLASS_VALUE(Request::MODE_PASSIVE_LONG):  // Always enter passive mode
         on_messageIn(clientId, request.command, &FtpServer::on_msg_modePassive, request.argument);
+        break;
+    case ENUM_CLASS_VALUE(Request::DIRECTORY_LIST):
+        on_messageIn(clientId, request.command, &FtpServer::on_msg_listDirectory, request.argument);
+        break;
+    case ENUM_CLASS_VALUE(Request::DIRECTORY_CHANGE):
+        on_messageIn(clientId, request.command, &FtpServer::on_msg_changeDirectory, request.argument, true);
+        break;
+    case ENUM_CLASS_VALUE(Request::DIRECTORY_CHANGE_PARENT):
+        on_messageIn(clientId, request.command, &FtpServer::on_msg_changeDirectory_parent, request.argument);
+        break;
+    case ENUM_CLASS_VALUE(Request::DIRECTORY_GETCURRENT):
+        on_messageIn(clientId, request.command, &FtpServer::on_msg_getDirectory, request.argument);
+        break;
+    case ENUM_CLASS_VALUE(Request::DIRECTORY_CREATE):
+        on_messageIn(clientId, request.command, &FtpServer::on_msg_createDirectory, request.argument, true);
+        break;
+    case ENUM_CLASS_VALUE(Request::DIRECTORY_DELETE):
+        on_messageIn(clientId, request.command, &FtpServer::on_msg_deleteDirectory, request.argument, true);
         break;
     case ENUM_CLASS_VALUE(Request::FILE_DOWNLOAD):
         on_messageIn(clientId, request.command, &FtpServer::on_msg_fileDownload, request.argument, true);
@@ -298,54 +304,16 @@ void FtpServer::on_msg_getSystemType(const int clientId, const uint32_t command,
     return;
 }
 
-void FtpServer::on_msg_getDirectory(const int clientId, const uint32_t command, const string_view &arg)
+void FtpServer::on_msg_listFeatures(const int clientId, const uint32_t command, const string_view &arg)
 {
-    string response;
+    // Send feature list to client
+    tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_STATUS)) + "-Features:"s);
+    for (const string &feature : features)
     {
-        shared_lock<shared_mutex> lck_session{session_m}; // Read: Allow simultaneous actions on session map
-        unique_ptr<Session> &session{activeSessions.at(clientId)};
-        shared_lock<shared_mutex> lck_session_modify{session->modify_m}; // Read: Allow simultaneous actions on session data
-        const path &path_current{session->currentpath};
-        response = to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DIRECTORY)) + " \""s + path_current.string() + "\" is the current directory."s;
+        tcpControl.sendMsg(clientId, " "s + feature);
     }
-    tcpControl.sendMsg(clientId, response);
-}
-
-void FtpServer::on_msg_changeDirectory(const int clientId, const uint32_t command, const string_view &arg)
-{
-    const path path_req{arg};
-    bool accessible;
-    {
-        shared_lock<shared_mutex> lck_session{session_m}; // Read: Allow simultaneous actions on session map
-        unique_ptr<Session> &session{activeSessions.at(clientId)};
-        shared_lock<shared_mutex> lck_session_modify{session->modify_m}; // Read: Allow simultaneous actions on session data
-        const string &username{session->username};
-        path &path_current{session->currentpath};
-        const path path_new{weakly_canonical(path_current / path_req)}; // Append requested path to current path. Absolute requested path automatically overrides current path
-
-        accessible = work_checkAccessible(username, path_new);
-        if (accessible)
-        {
-            lck_session_modify.unlock();
-            unique_lock<shared_mutex> lck_session_modify_unique{session->modify_m}; // Modify: Block simultaneous actions on session data
-            path_current = move(path_new);                                          // Set new current path in session
-        }
-    }
-
-    string response;
-    if (accessible)
-        response = to_string(ENUM_CLASS_VALUE(Response::SUCCESS_ACTION)) + " Directory successfully changed."s;
-    else
-        response = to_string(ENUM_CLASS_VALUE(Response::FAILED_FILENOTACCESSIBLE)) + " Requested directory is not accessible."s;
-    tcpControl.sendMsg(clientId, response);
-}
-
-void FtpServer::on_msg_changeDirectory_parent(const int clientId, const uint32_t command, const string_view &arg)
-{
-    string arg_ext{".."};
-    if (arg.size() != 0)
-        arg_ext += " "s + string(arg);
-    on_msg_changeDirectory(clientId, command, arg_ext);
+    tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_STATUS)) + " End of features."s);
+    return;
 }
 
 void FtpServer::on_msg_fileTransferType(const int clientId, const uint32_t command, const string_view &arg)
@@ -558,6 +526,118 @@ void FtpServer::on_msg_listDirectory(const int clientId, const uint32_t command,
     return;
 }
 
+void FtpServer::on_msg_changeDirectory(const int clientId, const uint32_t command, const string_view &arg)
+{
+    const path path_req{arg};
+    bool accessible;
+    {
+        shared_lock<shared_mutex> lck_session{session_m}; // Read: Allow simultaneous actions on session map
+        unique_ptr<Session> &session{activeSessions.at(clientId)};
+        shared_lock<shared_mutex> lck_session_modify{session->modify_m}; // Read: Allow simultaneous actions on session data
+        const string &username{session->username};
+        path &path_current{session->currentpath};
+        const path path_new{weakly_canonical(path_current / path_req)}; // Append requested path to current path. Absolute requested path automatically overrides current path
+
+        accessible = work_checkAccessible(username, path_new);
+        if (accessible)
+        {
+            lck_session_modify.unlock();
+            unique_lock<shared_mutex> lck_session_modify_unique{session->modify_m}; // Modify: Block simultaneous actions on session data
+            path_current = move(path_new);                                          // Set new current path in session
+        }
+    }
+
+    string response;
+    if (accessible)
+        response = to_string(ENUM_CLASS_VALUE(Response::SUCCESS_ACTION)) + " Directory successfully changed."s;
+    else
+        response = to_string(ENUM_CLASS_VALUE(Response::FAILED_FILENOTACCESSIBLE)) + " Requested directory is not accessible."s;
+    tcpControl.sendMsg(clientId, response);
+}
+
+void FtpServer::on_msg_changeDirectory_parent(const int clientId, const uint32_t command, const string_view &arg)
+{
+    string arg_ext{".."};
+    if (arg.size() != 0)
+        arg_ext += " "s + string(arg);
+    on_msg_changeDirectory(clientId, command, arg_ext);
+}
+
+void FtpServer::on_msg_getDirectory(const int clientId, const uint32_t command, const string_view &arg)
+{
+    string response;
+    {
+        shared_lock<shared_mutex> lck_session{session_m}; // Read: Allow simultaneous actions on session map
+        unique_ptr<Session> &session{activeSessions.at(clientId)};
+        shared_lock<shared_mutex> lck_session_modify{session->modify_m}; // Read: Allow simultaneous actions on session data
+        const path &path_current{session->currentpath};
+        response = to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DIRECTORY)) + " \""s + path_current.string() + "\" is the current directory."s;
+    }
+    tcpControl.sendMsg(clientId, response);
+}
+
+void FtpServer::on_msg_createDirectory(const int clientId, const uint32_t command, const string_view &arg)
+{
+    const path path_req{arg};
+    bool accessible;
+    bool success;
+    {
+        shared_lock<shared_mutex> lck_session{session_m}; // Read: Allow simultaneous actions on session map
+        unique_ptr<Session> &session{activeSessions.at(clientId)};
+        shared_lock<shared_mutex> lck_session_modify{session->modify_m}; // Read: Allow simultaneous actions on session data
+        const string &username{session->username};
+        const path &path_current{session->currentpath};
+        const path path_new{weakly_canonical(path_current / path_req)}; // Append requested path to current path. Absolute requested path automatically overrides current path
+
+        accessible = work_checkAccessible(username, path_new);
+        if (accessible)
+            success = work_createDirectory(username, path_new);
+        // If not accessible, value of success is irrelevant
+    }
+
+    string response;
+    if (!accessible)
+        response = to_string(ENUM_CLASS_VALUE(Response::FAILED_FILENOTACCESSIBLE)) + " Requested directory is not accessible."s;
+    else if (!success)
+        response = to_string(ENUM_CLASS_VALUE(Response::FAILED_FILENOTACCESSIBLE)) + " Failed to create directory."s;
+    else
+        response = to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DIRECTORY)) + " \""s + path_req.string() + "\" created."s;
+
+    tcpControl.sendMsg(clientId, response);
+    return;
+}
+
+void FtpServer::on_msg_deleteDirectory(const int clientId, const uint32_t command, const string_view &arg)
+{
+    const path path_req{arg};
+    bool accessible;
+    bool success;
+    {
+        shared_lock<shared_mutex> lck_session{session_m}; // Read: Allow simultaneous actions on session map
+        unique_ptr<Session> &session{activeSessions.at(clientId)};
+        shared_lock<shared_mutex> lck_session_modify{session->modify_m}; // Read: Allow simultaneous actions on session data
+        const string &username{session->username};
+        const path &path_current{session->currentpath};
+        const path path_new{weakly_canonical(path_current / path_req)}; // Append requested path to current path. Absolute requested path automatically overrides current path
+
+        accessible = work_checkAccessible(username, path_new);
+        if (accessible)
+            success = work_deleteDirectory(username, path_new);
+        // If not accessible, value of success is irrelevant
+    }
+
+    string response;
+    if (!accessible)
+        response = to_string(ENUM_CLASS_VALUE(Response::FAILED_FILENOTACCESSIBLE)) + " Requested directory is not accessible."s;
+    else if (!success)
+        response = to_string(ENUM_CLASS_VALUE(Response::FAILED_FILENOTACCESSIBLE)) + " Failed to delete directory."s;
+    else
+        response = to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DIRECTORY)) + " \""s + path_req.string() + "\" deleted."s;
+
+    tcpControl.sendMsg(clientId, response);
+    return;
+}
+
 void FtpServer::on_msg_fileDownload(const int clientId, const uint32_t command, const string_view &arg)
 {
     const string filename{arg};
@@ -603,49 +683,6 @@ void FtpServer::on_msg_fileDownload(const int clientId, const uint32_t command, 
     }
 
     tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DATA_CLOSE)) + " File send OK."s);
-    return;
-}
-
-void FtpServer::on_msg_listFeatures(const int clientId, const uint32_t command, const string_view &arg)
-{
-    // Send feature list to client
-    tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_STATUS)) + "-Features:"s);
-    for (const string &feature : features)
-    {
-        tcpControl.sendMsg(clientId, " "s + feature);
-    }
-    tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_STATUS)) + " End of features."s);
-    return;
-}
-
-void FtpServer::on_msg_createDirectory(const int clientId, const uint32_t command, const string_view &arg)
-{
-    const path path_req{arg};
-    bool accessible;
-    bool success;
-    {
-        shared_lock<shared_mutex> lck_session{session_m}; // Read: Allow simultaneous actions on session map
-        unique_ptr<Session> &session{activeSessions.at(clientId)};
-        shared_lock<shared_mutex> lck_session_modify{session->modify_m}; // Read: Allow simultaneous actions on session data
-        const string &username{session->username};
-        const path &path_current{session->currentpath};
-        const path path_new{weakly_canonical(path_current / path_req)}; // Append requested path to current path. Absolute requested path automatically overrides current path
-
-        accessible = work_checkAccessible(username, path_new);
-        if (accessible)
-            success = work_createDirectory(username, path_new);
-        // If not accessible, value of success is irrelevant
-    }
-
-    string response;
-    if (!accessible)
-        response = to_string(ENUM_CLASS_VALUE(Response::FAILED_FILENOTACCESSIBLE)) + " Requested directory is not accessible."s;
-    else if (!success)
-        response = to_string(ENUM_CLASS_VALUE(Response::FAILED_FILENOTACCESSIBLE)) + " Failed to create directory."s;
-    else
-        response = to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DIRECTORY)) + " \""s + path_req.string() + "\" created."s;
-
-    tcpControl.sendMsg(clientId, response);
     return;
 }
 
