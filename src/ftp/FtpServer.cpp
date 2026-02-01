@@ -172,6 +172,9 @@ void FtpServer::on_msg(const int clientId, const string &msg)
     case ENUM_CLASS_VALUE(Request::FILE_UPLOAD):
         on_messageIn(clientId, request.command, &FtpServer::on_msg_fileUpload, request.argument, true);
         break;
+    case ENUM_CLASS_VALUE(Request::NOOPERATION):
+        on_msg_nop(clientId); // INFO: No need to check for login or any arguments
+        break;
     default:
         tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::ERROR_NOTIMPLEMENTED)) + " Command not implemented."s);
         break;
@@ -676,5 +679,11 @@ void FtpServer::on_msg_fileUpload(const int clientId, const uint32_t command, co
 
     // Client has disconnected from data server when reaching this point
     tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DATA_CLOSE)) + " File upload OK."s);
+    return;
+}
+
+void FtpServer::on_msg_nop(const int clientId)
+{
+    tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::OK)) + " OK."s);
     return;
 }

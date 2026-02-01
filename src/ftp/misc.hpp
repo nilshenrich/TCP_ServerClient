@@ -353,6 +353,7 @@ namespace ftp
         MODE_PASSIVE_LONG = hashCommand("LPSV"),   // Enter passive mode (For IPv6 only)
         FILE_DOWNLOAD = hashCommand("RETR"),       // Download file
         FILE_UPLOAD = hashCommand("STOR"),         // Upload file
+        NOOPERATION = hashCommand("NOOP"),         // No operation
     };
 
     // Response codes
