@@ -260,8 +260,8 @@ namespace ftp
             os.fill('0');
             ::std::time_t tItem{i.mtime};
             ::std::time_t tNow{::std::time(nullptr)};
-            const size_t tSize{::std::size("MMM DD HH:MM")}; // Reserver space for the longest format possible
             ::std::string tTemplate{(::std::difftime(tNow, tItem) > 6 * 30 * 24 * 60 * 60) ? "%b %d %Y" : "%b %d %H:%M"};
+            const size_t tSize{::std::size("MMM DD HH:MM")}; // Reserver space for the longest format possible
             char tBuffer[tSize];
             ::std::strftime(tBuffer, tSize, tTemplate.c_str(), ::std::localtime(&tItem));
             os << ' ' << tBuffer;
