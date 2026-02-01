@@ -174,6 +174,10 @@ int main()
                              {
                                 cout << "[Test] Start writing to "<<username<<"'s file '"s + path + "' in mode '"s + to_string(mode) + "'"s;
                                 return new ofstream{"./" + path, mode}; });
+    server.setWork_deleteFile([](const string &, const string &) -> bool
+                              {
+                                cout << "[Test] Deleting file"<<endl;
+                                return true; });
 
     if (server.start())
         return -1;

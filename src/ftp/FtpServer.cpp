@@ -32,7 +32,9 @@ FtpServer::FtpServer() : tcpControl{'\n', "\r", MAXIMUM_MESSAGE_LENGTH},
                          work_readFile{[](const string &, const string &, const ios::openmode) -> istream *
                                        { return nullptr; }}, // Default: Return null-stream
                          work_writeFile{[](const string &, const string &, const ios::openmode) -> ostream *
-                                        { return nullptr; }} // Default: Return null-stream
+                                        { return nullptr; }}, // Default: Return null-stream
+                         work_deleteFile{[](const string &, const string &) -> bool
+                                         { return false; }} // Default: Refuse all file deletions
 {
     // Initialize random number generator
     srand((unsigned int)time(nullptr));
@@ -54,6 +56,7 @@ void FtpServer::setWork_createDirectory(function<bool(const string &, const stri
 void FtpServer::setWork_deleteDirectory(function<bool(const string &, const string &)> worker) { work_deleteDirectory = worker; }
 void FtpServer::setWork_readFile(function<istream *(const string &, const string &, const ios::openmode)> worker) { work_readFile = worker; }
 void FtpServer::setWork_writeFile(function<ostream *(const string &, const string &, const ios::openmode)> worker) { work_writeFile = worker; }
+void FtpServer::setWork_deleteFile(function<bool(const string &, const string &)> worker) { work_deleteFile = worker; }
 
 bool FtpServer::isRunning() const { return tcpControl.isRunning(); }
 
@@ -180,6 +183,9 @@ void FtpServer::on_msg(const int clientId, const string &msg)
         break;
     case ENUM_CLASS_VALUE(Request::FILE_UPLOAD):
         on_messageIn(clientId, request.command, &FtpServer::on_msg_fileUpload, request.argument, true);
+        break;
+    case ENUM_CLASS_VALUE(Request::FILE_DELETE):
+        on_messageIn(clientId, request.command, &FtpServer::on_msg_deleteFile, request.argument, true);
         break;
     case ENUM_CLASS_VALUE(Request::NOOPERATION):
         on_msg_nop(clientId); // INFO: No need to check for login or any arguments
@@ -632,7 +638,7 @@ void FtpServer::on_msg_deleteDirectory(const int clientId, const uint32_t comman
     else if (!success)
         response = to_string(ENUM_CLASS_VALUE(Response::FAILED_FILENOTACCESSIBLE)) + " Failed to delete directory."s;
     else
-        response = to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DIRECTORY)) + " \""s + path_req.string() + "\" deleted."s;
+        response = to_string(ENUM_CLASS_VALUE(Response::SUCCESS_ACTION)) + " \""s + path_req.string() + "\" deleted."s;
 
     tcpControl.sendMsg(clientId, response);
     return;
@@ -668,7 +674,7 @@ void FtpServer::on_msg_fileDownload(const int clientId, const uint32_t command, 
         }
 
         // Get stream to file that should be downloaded
-        unique_ptr<istream> is{work_readFile(username, (path_current / filename).string(), getStreamOpenMode(STREAM_DIRECTION_READ, transferType))};
+        unique_ptr<istream> is{work_readFile(username, (path_current / filename).string(), getStreamOpenMode(STREAM_DIRECTION_READ, transferType))}; // FIXME: File could be out of accessible directory
 
         // Send file content to client
         tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DATA_OPEN)) + " Here comes the content of file "s + filename + "."s);
@@ -715,7 +721,7 @@ void FtpServer::on_msg_fileUpload(const int clientId, const uint32_t command, co
         }
 
         // Get stream to file that should be uploaded and redirect data server output to file stream
-        unique_ptr<ostream> outgoingStream{work_writeFile(username, (path_current / filename).string(), getStreamOpenMode(STREAM_DIRECTION_WRITE, transferType))};
+        unique_ptr<ostream> outgoingStream{work_writeFile(username, (path_current / filename).string(), getStreamOpenMode(STREAM_DIRECTION_WRITE, transferType))}; // FIXME: File could be out of accessible directory
         incomingStreamFwd->redirect(outgoingStream.get());
         p_processed_m.unlock(); // Allow data processing to start
 
@@ -727,6 +733,37 @@ void FtpServer::on_msg_fileUpload(const int clientId, const uint32_t command, co
 
     // Client has disconnected from data server when reaching this point
     tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::SUCCESS_DATA_CLOSE)) + " File upload OK."s);
+    return;
+}
+
+void FtpServer::on_msg_deleteFile(const int clientId, const uint32_t command, const string_view &arg)
+{
+    const string filename{arg};
+    bool accessible;
+    bool success;
+    {
+        shared_lock<shared_mutex> lck_session{session_m}; // Read: Allow simultaneous actions on session map
+        unique_ptr<Session> &session{activeSessions.at(clientId)};
+        shared_lock<shared_mutex> lck_session_modify{session->modify_m}; // Read: Allow simultaneous actions on session data
+        const string &username{session->username};
+        const path &path_current{session->currentpath};
+        const path path_file{path_current / filename};
+
+        accessible = work_checkAccessible(username, path_file);
+        if (accessible)
+            success = work_deleteFile(username, path_file);
+        // If not accessible, value of success is irrelevant
+    }
+
+    string response;
+    if (!accessible)
+        response = to_string(ENUM_CLASS_VALUE(Response::FAILED_FILENOTACCESSIBLE)) + " Requested file is not accessible."s;
+    else if (!success)
+        response = to_string(ENUM_CLASS_VALUE(Response::FAILED_FILENOTACCESSIBLE)) + " Failed to delete file."s;
+    else
+        response = to_string(ENUM_CLASS_VALUE(Response::SUCCESS_ACTION)) + " \""s + filename + "\" deleted."s;
+
+    tcpControl.sendMsg(clientId, response);
     return;
 }
 

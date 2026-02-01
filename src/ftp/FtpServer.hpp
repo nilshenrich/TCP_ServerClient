@@ -63,6 +63,7 @@ namespace ftp
         void setWork_deleteDirectory(::std::function<bool(const ::std::string &, const ::std::string &)> work);                                   // See description of work_deleteDirectory
         void setWork_readFile(::std::function<::std::istream *(const ::std::string &, const ::std::string &, const ::std::ios::openmode)> work);  // See description of work_readFile
         void setWork_writeFile(::std::function<::std::ostream *(const ::std::string &, const ::std::string &, const ::std::ios::openmode)> work); // See description of work_writeFile
+        void setWork_deleteFile(::std::function<bool(const ::std::string &, const ::std::string &)> work);                                        // See description of work_deleteFile
 
         /**
          * @brief Return if the FTP server is running (means if underlying TCP server is running)
@@ -156,6 +157,7 @@ namespace ftp
         ::std::function<bool(const ::std::string &, const ::std::string &)> work_deleteDirectory;                                   // Delete directory: username, path (Absolute from user home) -> bool
         ::std::function<::std::istream *(const ::std::string &, const ::std::string &, const ::std::ios::openmode)> work_readFile;  // Read file content: username, path (Absolute from user home), open mode -> reading stream
         ::std::function<::std::ostream *(const ::std::string &, const ::std::string &, const ::std::ios::openmode)> work_writeFile; // Write content to file: username, path (Absolute from user home), open mode -> writing stream
+        ::std::function<bool(const ::std::string &, const ::std::string &)> work_deleteFile;                                        // Delete file: username, path (Absolute from user home) -> bool
 
         //////////////////////////////////////////////////
         // Worker methods on incoming messages
@@ -197,6 +199,7 @@ namespace ftp
         void on_msg_deleteDirectory(const int clientId, const uint32_t command, const ::std::string_view &arg);
         void on_msg_fileDownload(const int clientId, const uint32_t command, const ::std::string_view &arg);
         void on_msg_fileUpload(const int clientId, const uint32_t command, const ::std::string_view &arg);
+        void on_msg_deleteFile(const int clientId, const uint32_t command, const ::std::string_view &arg);
         void on_msg_nop(const int clientId);
 
         //////////////////////////////////////////////////

@@ -355,6 +355,7 @@ namespace ftp
         DIRECTORY_DELETE = hashCommand("RMD"),         // Delete directory
         FILE_DOWNLOAD = hashCommand("RETR"),           // Download file
         FILE_UPLOAD = hashCommand("STOR"),             // Upload file
+        FILE_DELETE = hashCommand("DELE"),             // Delete file
         NOOPERATION = hashCommand("NOOP"),             // No operation
     };
 
