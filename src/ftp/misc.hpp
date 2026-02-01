@@ -339,21 +339,22 @@ namespace ftp
     // https://en.wikipedia.org/wiki/List_of_FTP_commands
     enum class Request : uint32_t
     {
-        SYSTEMTYPE = hashCommand("SYST"),          // System type of server (e.g. UNIX Type: L8)
-        USERNAME = hashCommand("USER"),            // Username for login
-        PASSWORD = hashCommand("PASS"),            // Password for login
-        DIRECTORY_GETCURRENT = hashCommand("PWD"), // Get current directory path
-        FEATURES_LIST = hashCommand("FEAT"),       // List of features supported by server
-        DIRECTORY_LIST = hashCommand("LIST"),      // List directory content
-        DIRECTORY_CHANGE = hashCommand("CWD"),     // Change directory
-        DIRECTORY_CREATE = hashCommand("MKD"),     // Create directory
-        FILE_TRANSFER_TYPE = hashCommand("TYPE"),  // Set file transfer type
-        MODE_PASSIVE_ALL = hashCommand("EPSV"),    // Enter passive mode (For both IPv4 and IPv6)
-        MODE_PASSIVE_SHORT = hashCommand("PASV"),  // Enter passive mode (For IPv4 only)
-        MODE_PASSIVE_LONG = hashCommand("LPSV"),   // Enter passive mode (For IPv6 only)
-        FILE_DOWNLOAD = hashCommand("RETR"),       // Download file
-        FILE_UPLOAD = hashCommand("STOR"),         // Upload file
-        NOOPERATION = hashCommand("NOOP"),         // No operation
+        SYSTEMTYPE = hashCommand("SYST"),              // System type of server (e.g. UNIX Type: L8)
+        USERNAME = hashCommand("USER"),                // Username for login
+        PASSWORD = hashCommand("PASS"),                // Password for login
+        DIRECTORY_GETCURRENT = hashCommand("PWD"),     // Get current directory path
+        FEATURES_LIST = hashCommand("FEAT"),           // List of features supported by server
+        DIRECTORY_LIST = hashCommand("LIST"),          // List directory content
+        DIRECTORY_CHANGE = hashCommand("CWD"),         // Change directory
+        DIRECTORY_CHANGE_PARENT = hashCommand("CDUP"), // Change to parent directory
+        DIRECTORY_CREATE = hashCommand("MKD"),         // Create directory
+        FILE_TRANSFER_TYPE = hashCommand("TYPE"),      // Set file transfer type
+        MODE_PASSIVE_ALL = hashCommand("EPSV"),        // Enter passive mode (For both IPv4 and IPv6)
+        MODE_PASSIVE_SHORT = hashCommand("PASV"),      // Enter passive mode (For IPv4 only)
+        MODE_PASSIVE_LONG = hashCommand("LPSV"),       // Enter passive mode (For IPv6 only)
+        FILE_DOWNLOAD = hashCommand("RETR"),           // Download file
+        FILE_UPLOAD = hashCommand("STOR"),             // Upload file
+        NOOPERATION = hashCommand("NOOP"),             // No operation
     };
 
     // Response codes

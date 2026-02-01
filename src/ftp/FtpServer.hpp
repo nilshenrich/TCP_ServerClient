@@ -187,6 +187,7 @@ namespace ftp
         void on_msg_listFeatures(const int clientId, const uint32_t command, const ::std::string_view &arg);
         void on_msg_listDirectory(const int clientId, const uint32_t command, const ::std::string_view &arg);
         void on_msg_changeDirectory(const int clientId, const uint32_t command, const ::std::string_view &arg);
+        void on_msg_changeDirectory_parent(const int clientId, const uint32_t command, const ::std::string_view &arg);
         void on_msg_getDirectory(const int clientId, const uint32_t command, const ::std::string_view &arg);
         void on_msg_createDirectory(const int clientId, const uint32_t command, const ::std::string_view &arg);
         void on_msg_fileTransferType(const int clientId, const uint32_t command, const ::std::string_view &arg);

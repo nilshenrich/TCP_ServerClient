@@ -158,6 +158,9 @@ void FtpServer::on_msg(const int clientId, const string &msg)
     case ENUM_CLASS_VALUE(Request::DIRECTORY_CREATE):
         on_messageIn(clientId, request.command, &FtpServer::on_msg_createDirectory, request.argument, true);
         break;
+    case ENUM_CLASS_VALUE(Request::DIRECTORY_CHANGE_PARENT):
+        on_messageIn(clientId, request.command, &FtpServer::on_msg_changeDirectory_parent, request.argument);
+        break;
     case ENUM_CLASS_VALUE(Request::FILE_TRANSFER_TYPE):
         on_messageIn(clientId, request.command, &FtpServer::on_msg_fileTransferType, request.argument, true);
         break;
@@ -335,6 +338,14 @@ void FtpServer::on_msg_changeDirectory(const int clientId, const uint32_t comman
     else
         response = to_string(ENUM_CLASS_VALUE(Response::FAILED_FILENOTACCESSIBLE)) + " Requested directory is not accessible."s;
     tcpControl.sendMsg(clientId, response);
+}
+
+void FtpServer::on_msg_changeDirectory_parent(const int clientId, const uint32_t command, const string_view &arg)
+{
+    string arg_ext{".."};
+    if (arg.size() != 0)
+        arg_ext += " "s + string(arg);
+    on_msg_changeDirectory(clientId, command, arg_ext);
 }
 
 void FtpServer::on_msg_fileTransferType(const int clientId, const uint32_t command, const string_view &arg)
