@@ -1,0 +1,47 @@
+---
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+KeepEmptyLines:
+  AtEndOfFile: true
+  AtStartOfBlock: false
+  AtStartOfFile: false
+RemoveEmptyLinesInUnwrappedLines: true
+---
+Language: Cpp
+ColumnLimit: 200
+BreakBeforeBraces: Allman
+PointerAlignment: Left
+AlignArrayOfStructures: Left
+AlignTrailingComments: true
+AlignConsecutiveAssignments: Consecutive
+AlignConsecutiveBitFields: Consecutive
+AlignConsecutiveDeclarations: Consecutive
+AlignConsecutiveMacros: Consecutive
+AlignConsecutiveTableGenBreakingDAGArgColons: Consecutive
+AlignConsecutiveTableGenCondOperatorColons: Consecutive
+AlignConsecutiveTableGenDefinitionColons: Consecutive
+BreakBeforeConceptDeclarations: Always
+BreakBeforeTemplateCloser: false
+BreakBeforeBinaryOperators: NonAssignment
+BreakBeforeTernaryOperators: true
+BreakInheritanceList: AfterComma
+BreakStringLiterals: true
+AlignOperands: AlignAfterOperator
+BinPackArguments: false
+BinPackLongBracedList: false
+BinPackParameters: OnePerLine
+AllowShortBlocksOnASingleLine: Always
+AllowShortCaseExpressionOnASingleLine: true
+AllowShortCaseLabelsOnASingleLine: true
+AllowShortEnumsOnASingleLine: true
+AllowShortFunctionsOnASingleLine: All
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLambdasOnASingleLine: All
+AllowShortLoopsOnASingleLine: false
+AllowShortNamespacesOnASingleLine: false
+EmptyLineBeforeAccessModifier: LogicalBlock
+EmptyLineAfterAccessModifier: Never
+IndentAccessModifiers: false
+AccessModifierOffset: -4
+...
