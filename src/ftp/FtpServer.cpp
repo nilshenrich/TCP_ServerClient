@@ -727,6 +727,7 @@ void FtpServer::on_msg_fileUpload(const int clientId, const uint32_t command, co
         }
         catch (Server_error& e)
         {
+            // INFO: No need to clean the forwarding stream as it is deleted automatically when returning this method
             tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::FAILED_STORAGE_SPACE)) + " Failed to buffer file stream before referencing file storage location");
             p_processed_m.unlock(); // Clean up
             return;
