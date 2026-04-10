@@ -3,5 +3,32 @@
     "editor.formatOnSave": true,
     "editor.formatOnPaste": true,
     "editor.formatOnSaveMode": "modificationsIfAvailable",
-    "editor.inlayHints.enabled": "offUnlessPressed"
+    "editor.inlayHints.enabled": "offUnlessPressed",
+    "todo-tree.general.enableFileWatcher": true,
+    "todo-tree.highlights.useColourScheme": true,
+    "todo-tree.filtering.ignoreGitSubmodules": true,
+    "todo-tree.general.tags": [
+        "BUG",
+        "HACK",
+        "FIXME",
+        "TODO",
+        "XXX",
+        "INFO"
+    ],
+    "todo-tree.highlights.backgroundColourScheme": [
+        "red",
+        "orange",
+        "yellow",
+        "green",
+        "blue",
+        "white"
+    ],
+    "todo-tree.highlights.foregroundColourScheme": [
+        "white",
+        "black",
+        "black",
+        "white",
+        "white",
+        "black"
+    ]
 }
