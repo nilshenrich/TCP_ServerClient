@@ -5,7 +5,6 @@
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
-#include <fstream>
 #include <memory>
 #include <sstream>
 #include <vector>
@@ -722,7 +721,16 @@ void FtpServer::on_msg_fileUpload(const int clientId, const uint32_t command, co
 
         // Get stream to file that should be uploaded and redirect data server output to file stream
         unique_ptr<ostream> outgoingStream{work_writeFile(username, (path_current / filename).string(), getStreamOpenMode(STREAM_DIRECTION_WRITE, transferType))}; // FIXME: File could be out of accessible directory
-        incomingStreamFwd->redirect(outgoingStream.get());
+        try
+        {
+            incomingStreamFwd->redirect(outgoingStream.get());
+        }
+        catch (Server_error& e)
+        {
+            tcpControl.sendMsg(clientId, to_string(ENUM_CLASS_VALUE(Response::FAILED_STORAGE_SPACE)) + " Failed to buffer file stream before referencing file storage location");
+            p_processed_m.unlock(); // Clean up
+            return;
+        }
         p_processed_m.unlock(); // Allow data processing to start
 
         // Data server is now ready to accept data

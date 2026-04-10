@@ -19,7 +19,6 @@
 #include <memory>
 #include <ostream>
 #include <string>
-#include <valarray>
 
 #include "../basic/TcpServer.hpp"
 #include "../basic/TlsServer.hpp"
@@ -363,29 +362,30 @@ namespace ftp
     // https://en.wikipedia.org/wiki/List_of_FTP_server_return_codes
     enum class Response : int
     {
-        SUCCESS_DATA_OPEN = 150,
-        OK = 200,
-        SUCCESS_STATUS = 211,
-        SUCCESS_SYSTEMTYPE = 215,
-        SUCCESS_WELCOME = 220,
-        SUCCESS_DATA_CLOSE = 226,
-        SUCCESS_PASSIVE_ALL = 229,
-        SUCCESS_PASSIVE_SHORT = 227,
-        SUCCESS_PASSIVE_LONG = 228,
-        SUCCESS_LOGIN = 230,
-        SUCCESS_ACTION = 250,
-        SUCCESS_DIRECTORY = 257,
-        CONTINUE_PASSWORD_REQUIRED = 331,
-        FAILED_OPEN_DATACONN = 425,
-        FAILED_LOGIN = 430,
-        FAILED_FILENOTACCESSIBLE = 450,
-        FAILED_UNKNOWN_ERROR = 451,
-        ERROR_SYNTAX_COMMAND = 500,
-        ERROR_SYNTAX_ARGUMENT = 501,
-        ERROR_NOTIMPLEMENTED = 502,
-        ERROR_WRONG_ORDER = 503,
+        SUCCESS_DATA_OPEN           = 150,
+        OK                          = 200,
+        SUCCESS_STATUS              = 211,
+        SUCCESS_SYSTEMTYPE          = 215,
+        SUCCESS_WELCOME             = 220,
+        SUCCESS_DATA_CLOSE          = 226,
+        SUCCESS_PASSIVE_ALL         = 229,
+        SUCCESS_PASSIVE_SHORT       = 227,
+        SUCCESS_PASSIVE_LONG        = 228,
+        SUCCESS_LOGIN               = 230,
+        SUCCESS_ACTION              = 250,
+        SUCCESS_DIRECTORY           = 257,
+        CONTINUE_PASSWORD_REQUIRED  = 331,
+        FAILED_OPEN_DATACONN        = 425,
+        FAILED_LOGIN                = 430,
+        FAILED_FILENOTACCESSIBLE    = 450,
+        FAILED_UNKNOWN_ERROR        = 451,
+        FAILED_STORAGE_SPACE        = 452,
+        ERROR_SYNTAX_COMMAND        = 500,
+        ERROR_SYNTAX_ARGUMENT       = 501,
+        ERROR_NOTIMPLEMENTED        = 502,
+        ERROR_WRONG_ORDER           = 503,
         ERROR_ARGUMENT_NOTSUPPORTED = 504,
-        ERROR_LOGIN = 530,
+        ERROR_LOGIN                 = 530,
     };
 }
 #endif // MISC_HPP_
