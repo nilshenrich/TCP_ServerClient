@@ -696,20 +696,25 @@ void FtpServer::on_msg_fileUpload(const int clientId, const uint32_t command, co
     const string filename{arg};
     {
         shared_lock<shared_mutex> lck_session{session_m}; // Read: Allow simultaneous actions on session map
+        cout << "DEBUG 1-" << clientId << endl;
         unique_ptr<Session> &session{activeSessions.at(clientId)};
         shared_lock<shared_mutex> lck_session_modify{session->modify_m}; // Read: Allow simultaneous actions on session data
+        cout << "DEBUG 2-" << clientId << endl;
         session->established_m.lock();
+        cout << "DEBUG 3-" << clientId << endl;
         const string &username{session->username};
         const path &path_current{session->currentpath};
         underlying_type_t<FileTransferType> transferType{session->transferType}; // No check needed as already done in on_msg_modePassive
         mutex &p_processed_m{session->processed_m};
         mutex &p_closed_m{session->closed_m};
         lck_session_modify.unlock();
-        unique_lock<shared_mutex> lck_session_modify_unique{session->modify_m};                          // Modify: Block simultaneous actions on session data
+        unique_lock<shared_mutex> lck_session_modify_unique{session->modify_m}; // Modify: Block simultaneous actions on session data
+        cout << "DEBUG 4-" << clientId << endl;
         unique_ptr<TcpServer> dataServer{move(session->tcpData)};                                        // Remove data server from session as should be closed after this action
         DynamicOstream<STREAM_DYNAMICOSTREAM_BUFFERSIZE> *incomingStreamFwd{session->incomingStreamFwd}; // Remove stream from session as should be closed after this action
         lck_session_modify_unique.unlock();
         lck_session_modify.lock();
+        cout << "DEBUG 5-" << clientId << endl;
 
         // Check data server exists and is running
         if (!(dataServer && dataServer->isRunning())) // INFO: If left evaluated false, right will not be evaluated at all

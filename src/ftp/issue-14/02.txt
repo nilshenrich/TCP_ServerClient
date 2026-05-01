@@ -1,0 +1,152 @@
+# File stat stuck: small-parallel_5.txt
+
+
+(PN3tcp6ServerIiSt14default_deleteIiEEE at 0x7ffd5b4d17e0)::listenMessage: Message from client 5: TYPE A
+(PN3tcp9TcpServerE at 0x7ffd5b4d17e0)::writeMsg: Send to client 5: 200 Switching to ASCII mode.
+
+(PN3tcp6ServerIiSt14default_deleteIiEEE at 0x7ffd5b4d17e0)::listenMessage: Message from client 5: PASV
+(PN3tcp6ServerIiSt14default_deleteIiEEE at 0x7fbc68000c60)::start: Server started on port 44942
+(PN3tcp9TcpServerE at 0x7ffd5b4d17e0)::writeMsg: Send to client 5: 227 Entering Passive Mode (127,0,0,1,175,142).
+
+(PN3tcp6ServerIiSt14default_deleteIiEEE at 0x7ffd5b4d17e0)::listenMessage: Message from client 5: STOR small-parallel_1.txt
+DEBUG 1-5
+DEBUG 2-5
+(PN3tcp6ServerIiSt14default_deleteIiEEE at 0x7fbc68000c60)::listenConnection: New client connected: 11
+DEBUG 3-5
+DEBUG 4-5
+DEBUG 5-5
+[Test] Start writing to <user>(PN3tcp6ServerIiSt14default_deleteIiEEE at 's file '/small-parallel_1.txt' in mode '16'0x7fbc68000c60)::listenMessage: Connection to client 11 broken
+(PN3tcp9TcpServerE at 0x7ffd5b4d17e0)::writeMsg: Send to client 5: 150 Ready to receive data.
+
+(PN3tcp6ServerIiSt14default_deleteIiEEE at 0x7fbc68000c60)::stop: Server stopped
+(PN3tcp9TcpServerE at 0x7ffd5b4d17e0)::writeMsg: Send to client 5: 226 File upload OK.
+
+(PN3tcp6ServerIiSt14default_deleteIiEEE at 0x7ffd5b4d17e0)::listenMessage: Message from client 5: PASV
+(PN3tcp6ServerIiSt14default_deleteIiEEE at 0x7fbc68000c00)::start: Server started on port 20873
+(PN3tcp9TcpServerE at 0x7ffd5b4d17e0)::writeMsg: Send to client 5: 227 Entering Passive Mode (127,0,0,1,81,137).
+
+(PN3tcp6ServerIiSt14default_deleteIiEEE at 0x7ffd5b4d17e0)::listenMessage: Message from client 5: STOR small-parallel_2.txt
+DEBUG 1-5
+DEBUG 2-5
+(PN3tcp6ServerIiSt14default_deleteIiEEE at 0x7fbc68000c00)::listenConnection: New client connected: 11
+DEBUG 3-5
+DEBUG 4-5
+DEBUG 5-5
+(PN3tcp6ServerIiSt14default_deleteIiEEE at 0x7fbc68000c00)::listenMessage: Connection to client 11 broken[Test] Start writing to 
+<user>'s file '/small-parallel_2.txt' in mode '16'(PN3tcp9TcpServerE at 0x7ffd5b4d17e0)::writeMsg: Send to client 5: 150 Ready to receive data.
+
+(PN3tcp6ServerIiSt14default_deleteIiEEE at 0x7fbc68000c00)::stop: Server stopped
+(PN3tcp9TcpServerE at 0x7ffd5b4d17e0)::writeMsg: Send to client 5: 226 File upload OK.
+
+(PN3tcp6ServerIiSt14default_deleteIiEEE at 0x7ffd5b4d17e0)::listenMessage: Message from client 5: PASV
+(PN3tcp6ServerIiSt14default_deleteIiEEE at 0x7fbc68000c00)::start: Server started on port 42692
+(PN3tcp9TcpServerE at 0x7ffd5b4d17e0)::writeMsg: Send to client 5: 227 Entering Passive Mode (127,0,0,1,166,196).
+
+(PN3tcp6ServerIiSt14default_deleteIiEEE at 0x7ffd5b4d17e0)::listenMessage: Message from client 5: STOR small-parallel_3.txt
+DEBUG 1-5
+DEBUG 2-5
+(PN3tcp6ServerIiSt14default_deleteIiEEE at 0x7fbc68000c00)::listenConnection: New client connected: 11
+DEBUG 3-5
+(DEBUG 4-PN3tcp6ServerIiSt14default_deleteIiEEE at 50x7fbc68000c00
+DEBUG 5-5
+)::listenMessage: Connection to client 11 broken[Test] Start writing to <user>
+'s file '/small-parallel_3.txt' in mode '16'(PN3tcp9TcpServerE at 0x7ffd5b4d17e0)::writeMsg: Send to client 5: 150 Ready to receive data.
+
+(PN3tcp6ServerIiSt14default_deleteIiEEE at 0x7fbc68000c00)::stop: Server stopped
+(PN3tcp9TcpServerE at 0x7ffd5b4d17e0)::writeMsg: Send to client 5: 226 File upload OK.
+
+(PN3tcp6ServerIiSt14default_deleteIiEEE at 0x7ffd5b4d17e0)::listenMessage: Message from client 5: PASV
+(PN3tcp6ServerIiSt14default_deleteIiEEE at 0x7fbc68000c00)::start: Server started on port 35375
+(PN3tcp9TcpServerE at 0x7ffd5b4d17e0)::writeMsg: Send to client 5: 227 Entering Passive Mode (127,0,0,1,138,47).
+
+(PN3tcp6ServerIiSt14default_deleteIiEEE at 0x7ffd5b4d17e0)::listenMessage: Message from client 5: STOR small-parallel_4.txt
+DEBUG 1-5
+DEBUG 2-5
+(PN3tcp6ServerIiSt14default_deleteIiEEE at 0x7fbc68000c00)::listenConnection: New client connected: 11
+DEBUG 3-5
+DEBUG 4-5
+DEBUG 5-5
+([Test] Start writing to PN3tcp6ServerIiSt14default_deleteIiEEE<user> at 's file '/small-parallel_4.txt' in mode '16'0x7fbc68000c00)::listenMessage: Connection to client 11 broken
+(PN3tcp9TcpServerE at 0x7ffd5b4d17e0)::writeMsg: Send to client 5: 150 Ready to receive data.
+
+(PN3tcp6ServerIiSt14default_deleteIiEEE at 0x7fbc68000c00)::stop: Server stopped
+(PN3tcp9TcpServerE at 0x7ffd5b4d17e0)::writeMsg: Send to client 5: 226 File upload OK.
+
+(PN3tcp6ServerIiSt14default_deleteIiEEE at 0x7ffd5b4d17e0)::listenMessage: Message from client 5: PASV
+(PN3tcp6ServerIiSt14default_deleteIiEEE at 0x7fbc68000c00)::start: Server started on port 65306
+(PN3tcp9TcpServerE at 0x7ffd5b4d17e0)::writeMsg: Send to client 5: 227 Entering Passive Mode (127,0,0,1,255,26).
+
+(PN3tcp6ServerIiSt14default_deleteIiEEE at 0x7ffd5b4d17e0)::listenMessage: Message from client 5: STOR small-parallel_5.txt
+DEBUG 1-5
+DEBUG 2-5
+(PN3tcp6ServerIiSt14default_deleteIiEEE at 0x7fbc68000c00)::listenConnection: New client connected: 11
+DEBUG 3-5
+DEBUG 4-5
+(PN3tcp6ServerIiSt14default_deleteIiEEEDEBUG 5-5
+ at 0x7fbc68000c00)::listenMessage: Connection to client 11 broken
+[Test] Start writing to <user>'s file '/small-parallel_5.txt' in mode '16'(PN3tcp9TcpServerE at 0x7ffd5b4d17e0)::writeMsg: Send to client 5: 150 Ready to receive data.
+
+(PN3tcp6ServerIiSt14default_deleteIiEEE at 0x7fbc68000c00)::stop: Server stopped
+(PN3tcp9TcpServerE at 0x7ffd5b4d17e0)::writeMsg: Send to client 5: 226 File upload OK.
+
+(PN3tcp6ServerIiSt14default_deleteIiEEE at 0x7ffd5b4d17e0)::listenMessage: Message from client 5: PASV
+(PN3tcp6ServerIiSt14default_deleteIiEEE at 0x7fbc68000c00)::start: Server started on port 1473
+(PN3tcp9TcpServerE at 0x7ffd5b4d17e0)::writeMsg: Send to client 5: 227 Entering Passive Mode (127,0,0,1,5,193).
+
+(PN3tcp6ServerIiSt14default_deleteIiEEE at 0x7ffd5b4d17e0)::listenMessage: Message from client 5: STOR small-parallel_6.txt
+DEBUG 1-5
+DEBUG 2-5
+(PN3tcp6ServerIiSt14default_deleteIiEEE at 0x7fbc68000c00)::listenConnection: New client connected: 11
+(PN3tcp6ServerIiSt14default_deleteIiEEE at DEBUG 3-0x7fbc68000c00)::listenMessage: Connection to client 511
+DEBUG 4-5
+ brokenDEBUG 5-5
+
+[Test] Start writing to <user>'s file '/small-parallel_6.txt' in mode '16'(PN3tcp9TcpServerE at 0x7ffd5b4d17e0)::writeMsg: Send to client 5: 150 Ready to receive data.
+
+(PN3tcp6ServerIiSt14default_deleteIiEEE at 0x7fbc68000c00)::stop: Server stopped
+(PN3tcp9TcpServerE at 0x7ffd5b4d17e0)::writeMsg: Send to client 5: 226 File upload OK.
+
+(PN3tcp6ServerIiSt14default_deleteIiEEE at 0x7ffd5b4d17e0)::listenMessage: Message from client 5: PASV
+(PN3tcp6ServerIiSt14default_deleteIiEEE at 0x7fbc68000c00)::start: Server started on port 5984
+(PN3tcp9TcpServerE at 0x7ffd5b4d17e0)::writeMsg: Send to client 5: 227 Entering Passive Mode (127,0,0,1,23,96).
+
+(PN3tcp6ServerIiSt14default_deleteIiEEE at 0x7ffd5b4d17e0)::listenMessage: Message from client 5: STOR small-parallel_7.txt
+DEBUG 1-5
+DEBUG 2-5
+(PN3tcp6ServerIiSt14default_deleteIiEEE at 0x7fbc68000c00)::listenConnection: New client connected: 11
+DEBUG 3-5
+DEBUG 4-5
+DEBUG 5-5
+([Test] Start writing to <user>PN3tcp6ServerIiSt14default_deleteIiEEE at 0x7fbc68000c00)::listenMessage: Connection to client 's file '/small-parallel_7.txt' in mode '16'11 broken
+(PN3tcp9TcpServerE at 0x7ffd5b4d17e0)::writeMsg: Send to client 5: 150 Ready to receive data.
+
+(PN3tcp6ServerIiSt14default_deleteIiEEE at 0x7fbc68000c00)::stop: Server stopped
+(PN3tcp9TcpServerE at 0x7ffd5b4d17e0)::writeMsg: Send to client 5: 226 File upload OK.
+
+(PN3tcp6ServerIiSt14default_deleteIiEEE at 0x7ffd5b4d17e0)::listenMessage: Message from client 5: PASV
+(PN3tcp6ServerIiSt14default_deleteIiEEE at 0x7fbc68000c00)::start: Server started on port 30339
+(PN3tcp9TcpServerE at 0x7ffd5b4d17e0)::writeMsg: Send to client 5: 227 Entering Passive Mode (127,0,0,1,118,131).
+
+(PN3tcp6ServerIiSt14default_deleteIiEEE at 0x7ffd5b4d17e0)::listenMessage: Message from client 5: STOR small-parallel_8.txt
+DEBUG 1-5
+DEBUG 2-5
+(PN3tcp6ServerIiSt14default_deleteIiEEE at 0x7fbc68000c00)::listenConnection: New client connected: 11
+DEBUG 3-5
+DEBUG 4-5
+DEBUG 5-5
+([Test] Start writing to <user>PN3tcp6ServerIiSt14default_deleteIiEEE at 's file '/small-parallel_8.txt' in mode '16'0x7fbc68000c00)::listenMessage: Connection to client 11 broken
+(PN3tcp9TcpServerE at 0x7ffd5b4d17e0)::writeMsg: Send to client 5: 150 Ready to receive data.
+
+(PN3tcp6ServerIiSt14default_deleteIiEEE at 0x7fbc68000c00)::stop: Server stopped
+(PN3tcp9TcpServerE at 0x7ffd5b4d17e0)::writeMsg: Send to client 5: 226 File upload OK.
+
+(PN3tcp6ServerIiSt14default_deleteIiEEE at 0x7ffd5b4d17e0)::listenMessage: Message from client 5: TYPE I
+(PN3tcp9TcpServerE at 0x7ffd5b4d17e0)::writeMsg: Send to client 5: 200 Switching to BINARY mode.
+
+(PN3tcp6ServerIiSt14default_deleteIiEEE at 0x7ffd5b4d17e0)::listenMessage: Message from client 5: PASV
+(PN3tcp6ServerIiSt14default_deleteIiEEE at 0x7fbc68000cb0)::start: Server started on port 30344
+(PN3tcp9TcpServerE at 0x7ffd5b4d17e0)::writeMsg: Send to client 5: 227 Entering Passive Mode (127,0,0,1,118,136).
+
+(PN3tcp6ServerIiSt14default_deleteIiEEE at 0x7ffd5b4d17e0)::listenMessage: Message from client 5: LIST
+
+--> Stuck somewhere in on_msg_listDirectory
