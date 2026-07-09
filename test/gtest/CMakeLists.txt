@@ -8,8 +8,11 @@ cmake_minimum_required(VERSION 3.13)
 # Project name: test
 project(test)
 
-# Include directories
-include_directories(include include/api ../../src/basic)
+include_directories(
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/api
+    ${CMAKE_SOURCE_DIR}/src/basic
+)
 
 # Add source files (All files in src folder)
 file(GLOB sourcefiles "src/*.cpp" "src/*/*.cpp")
@@ -18,8 +21,8 @@ add_executable(test ${sourcefiles})
 # Set compiler flags
 target_compile_options(test PRIVATE -fexceptions -Wall -O0 $<$<CONFIG:DEBUG>: -g -DDEVELOP>)
 
-# Add libraries
-target_link_libraries(test -lgtest -lssl -lcrypto)
+find_package(OpenSSL REQUIRED)
+target_link_libraries(test gtest gtest_main ${OPENSSL_LIBRARIES} Threads::Threads)
 
 # Use C++17 standard
 set_target_properties(test PROPERTIES
@@ -29,5 +32,5 @@ set_target_properties(test PROPERTIES
 # Message build type
 string(TOUPPER "${CMAKE_BUILD_TYPE}" CMAKE_BUILD_TYPE_UPPER)
 if ("${CMAKE_BUILD_TYPE_UPPER}" STREQUAL "DEBUG")
-    message(STATUS "Build type: ${CMAKE_BUILD_TYPE_UPPER}")
+    message(STATUS "GTest Build type: ${CMAKE_BUILD_TYPE_UPPER}")
 endif()

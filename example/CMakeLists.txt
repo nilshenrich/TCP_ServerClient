@@ -7,14 +7,20 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 project(example VERSION 3.2.1 DESCRIPTION "Example of using the TCP client and server classes")
 
+include_directories(
+    ${CMAKE_SOURCE_DIR}/src/basic
+)
+
 add_executable(server server.cpp)
 add_executable(client client.cpp)
 
 target_compile_options(server PRIVATE -fexceptions -Wall $<$<NOT:$<CONFIG:DEBUG>>: -O3> $<$<CONFIG:DEBUG>: -g -Og -DDEVELOP>)
 target_compile_options(client PRIVATE -fexceptions -Wall $<$<NOT:$<CONFIG:DEBUG>>: -O3> $<$<CONFIG:DEBUG>: -g -Og -DDEVELOP>)
 
-target_link_libraries(server -lssl $<$<CONFIG:DEBUG>: -lcrypto>)
-target_link_libraries(client -lssl $<$<CONFIG:DEBUG>: -lcrypto>)
+find_package(OpenSSL REQUIRED)
+find_package(Threads REQUIRED)
+target_link_libraries(server OpenSSL::SSL ${OPENSSL_LIBRARIES} Threads::Threads)
+target_link_libraries(client OpenSSL::SSL ${OPENSSL_LIBRARIES} Threads::Threads)
 
 # Message build type
 if ("${CMAKE_BUILD_TYPE}" STREQUAL "DEBUG")

@@ -143,7 +143,7 @@ void test3()
 
 int main()
 {
-    FtpServer server;
+    FtpServer server;// FIXME: Use other port for debugging that can be used without root access
     server.setWork_checkUserCredentials([](const string &, const string &) -> bool
                                         {
                                             cout<<"[Test] Checking user credentials"<<endl;

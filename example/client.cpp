@@ -13,8 +13,8 @@
 #include <chrono>
 #include <thread>
 
-#include <tcp/TcpClient.hpp>
-#include <tcp/TlsClient.hpp>
+#include <TcpClient.hpp>
+#include <TlsClient.hpp>
 
 // Define worker methods
 void tcp_fragmented_workOnMessage(::std::string msg) { ::std::cout << "Fragmented message received from TCP server: " << msg << ::std::endl; }
