@@ -204,7 +204,7 @@ void FtpServer::on_closed(const int clientId)
 }
 
 //////////////////////////////////////////////////
-// Worker mehods on incoming messages
+// Worker methods on incoming messages
 //////////////////////////////////////////////////
 
 void FtpServer::on_messageIn(const int clientId, const uint32_t command,

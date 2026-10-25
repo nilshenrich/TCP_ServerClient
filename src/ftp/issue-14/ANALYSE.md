@@ -78,325 +78,450 @@ flowchart LR
 
 ---
 
+## Exkurs: Dynamisch erzeugte Mutexe
+
+### Session-Struktur mit eigenen Mutexen
+
+Jede `Session` wird dynamisch für jeden verbundenen Client erstellt und enthält **eigene Mutex-Instanzen**:
+
+```cpp
+struct Session {
+    // ... andere Felder ...
+    std::mutex established_m;    // Pro Session!
+    std::mutex processed_m;      // Pro Session!
+    std::mutex closed_m;         // Pro Session!
+    std::shared_mutex modify_m;  // Pro Session!
+};
+```
+
+```mermaid
+flowchart TB
+    subgraph Global[Globale Mutexe]
+        SM[session_m<br/>shared_mutex]
+        PM[tcpPort_m<br/>mutex]
+    end
+
+    subgraph Sessions[Session-Map: activeSessions]
+        subgraph S1[Session Client 1]
+            E1[established_m]
+            P1[processed_m]
+            C1[closed_m]
+            M1[modify_m]
+        end
+
+        subgraph S2[Session Client 2]
+            E2[established_m]
+            P2[processed_m]
+            C2[closed_m]
+            M2[modify_m]
+        end
+
+        subgraph S3[Session Client 3]
+            E3[established_m]
+            P3[processed_m]
+            C3[closed_m]
+            M3[modify_m]
+        end
+    end
+
+    SM -->|schützt Zugriff auf| Sessions
+
+    style Global fill:#ffffcc
+    style S1 fill:#ccffcc
+    style S2 fill:#ccccff
+    style S3 fill:#ffcccc
+```
+
+### Was bedeutet das?
+
+1. **Isolation**: Client 1's `established_m` ist eine **komplett andere Mutex-Instanz** als Client 2's `established_m`
+2. **Keine Cross-Session-Blockierung**: Ein Lock auf `session1->established_m` blockiert **niemals** `session2->established_m`
+3. **Nur globale Mutexe** können Sessions gegenseitig blockieren: `session_m` und `tcpPort_m`
+
+### Lebenszyklus dynamischer Mutexe
+
+```mermaid
+sequenceDiagram
+    participant C as Client verbindet
+    participant S as FtpServer
+    participant M as Session-Map
+
+    C->>S: TCP-Verbindung
+    S->>S: on_newClient(clientId)
+    S->>M: unique_lock(session_m)
+    Note over M: Map gesperrt
+
+    create participant Sess as Neue Session
+    S->>Sess: make_unique<Session>()
+    Note over Sess: established_m wird erstellt<br/>processed_m wird erstellt<br/>closed_m wird erstellt<br/>modify_m wird erstellt
+
+    S->>M: activeSessions[clientId] = session
+    S->>M: unlock(session_m)
+    Note over M: Map freigegeben
+```
+
+### Wichtig: Pointer auf Mutexe in Lambdas
+
+Im Code werden **Pointer auf die Session-Mutexe** in Lambdas gespeichert:
+
+```cpp
+// In on_msg_modePassive (Zeile 428-431):
+mutex *p_established_m{&session->established_m};  // Pointer auf Session-Mutex!
+mutex *p_processed_m{&session->processed_m};
+mutex *p_closed_m{&session->closed_m};
+```
+
+```mermaid
+flowchart LR
+    subgraph Lambda[Lambda Closure]
+        PE[p_established_m*]
+        PP[p_processed_m*]
+        PC[p_closed_m*]
+    end
+
+    subgraph Session[Session Objekt]
+        EM[established_m]
+        PM[processed_m]
+        CM[closed_m]
+    end
+
+    PE -->|zeigt auf| EM
+    PP -->|zeigt auf| PM
+    PC -->|zeigt auf| CM
+
+    style Lambda fill:#ffeecc
+    style Session fill:#ccffee
+```
+
+**Gefahr:** Wenn die Session gelöscht oder verschoben wird, zeigen die Pointer auf ungültigen Speicher!
+
+---
+
 ## Beteiligte Komponenten
 
-### Mutex-Hierarchie in der Session
+### Mutex-Übersicht
 
 ```mermaid
 classDiagram
-    class Session {
+    class FtpServer {
         +shared_mutex session_m
-        +shared_mutex modify_m
+        +mutex tcpPort_m
+        +map~int,Session~ activeSessions
+    }
+
+    class Session {
         +mutex established_m
         +mutex processed_m
         +mutex closed_m
-        ---
+        +shared_mutex modify_m
         +TcpServer tcpData
         +int dataClientId
-        +DynamicOstream incomingStreamFwd
     }
 
-    note for Session "session_m: Zugriff auf Session-Map (shared_mutex)
-    modify_m: Änderungen an Session-Daten (shared_mutex)
-    established_m: Datenverbindung etabliert (mutex)
-    processed_m: Datenverarbeitung fertig (mutex)
-    closed_m: Verbindung geschlossen (mutex)"
+    FtpServer "1" --> "*" Session : enthält
+
+    note for FtpServer "session_m: Global, schützt activeSessions-Map\ntcpPort_m: Global, schützt Port-Suche"
+    note for Session "Alle Mutexe sind Session-lokal!\nKeine Cross-Session-Blockierung möglich"
 ```
-
-### Lock-Verwendung im Code
-
-| Stelle | Mutex | Lock-Typ | Blockiert andere shared_locks? |
-|--------|-------|----------|-------------------------------|
-| `on_msg_fileUpload:698` | `session_m` | `shared_lock` | ❌ Nein |
-| `on_msg_fileUpload:701` | `modify_m` | `shared_lock` | ❌ Nein |
-| `on_msg_fileUpload:703` | `established_m` | `.lock()` | ✅ Ja (normaler mutex) |
-| `on_msg_fileUpload:711` | `modify_m` | `unique_lock` | ✅ Ja |
-| Lambda:439 | `session_m` | `shared_lock` | ❌ Nein |
 
 ---
 
 ## Korrigierte Deadlock-Analyse
 
-Da `session_m` nur mit `shared_lock` gesperrt wird, kann der Deadlock **nicht** durch `session_m` entstehen. Das Problem liegt woanders:
+Da jede Session ihre eigenen Mutexe hat, kann der Deadlock **nur innerhalb einer einzelnen Session** entstehen - zwischen dem STOR-Handler-Thread und dem Data-Connection-Lambda-Thread **desselben Clients**.
 
-### Der wahre Deadlock-Mechanismus
+### Der Deadlock-Mechanismus
 
 ```mermaid
 sequenceDiagram
-    participant C as FTP Client
-    participant CS as Control-Server<br/>(Thread A)
-    participant DS as Data-Server<br/>(Thread B)
+    participant C as FTP Client 5
+    participant STOR as STOR-Handler<br/>(Thread A)
+    participant DC as Data-Connection<br/>(Thread B)
 
-    C->>CS: 1. PASV
-    CS->>DS: 2. established_m.try_lock()
-    Note over DS: established_m GESPERRT
+    Note over C,DC: Beide Threads arbeiten mit derselben Session!
 
-    CS-->>C: 3. 227 Entering Passive Mode
+    C->>STOR: PASV
+    STOR->>STOR: established_m.try_lock()
+    Note over STOR: established_m GESPERRT<br/>(für Client 5)
+
+    STOR-->>C: 227 Entering Passive Mode
 
     Note over C: Client sendet STOR<br/>BEVOR Datenverbindung steht!
-    C->>CS: 4. STOR file.txt (SCHNELL!)
+    C->>STOR: STOR file.txt
 
-    CS->>CS: 5. session_m.shared_lock() ✅
-    CS->>CS: 6. modify_m.shared_lock() ✅
+    STOR->>STOR: session_m.shared_lock() ✅
+    STOR->>STOR: modify_m.shared_lock() ✅
+    STOR->>STOR: established_m.lock()
+    Note over STOR: WARTET auf established_m...<br/>(derselbe Mutex wie oben!)
 
-    CS->>CS: 7. established_m.lock()
-    Note over CS: WARTET auf established_m...<br/>(wurde in PASV gesperrt)
+    C->>DC: Verbinde zu Data-Server
 
-    C->>DS: 8. Verbinde zu Data-Server
+    DC->>DC: session_m.shared_lock() ✅
+    DC->>DC: established_m.unlock()
+    Note over DC: Entsperrt established_m
 
-    DS->>DS: 9. Lambda wird aufgerufen
-    DS->>DS: 10. session_m.shared_lock() ✅
-    DS->>DS: 11. established_m.unlock()
-    Note over DS: ✅ Sollte funktionieren!
+    STOR->>STOR: established_m.lock() ✅
+    Note over STOR: Kann weitermachen!
 ```
 
 ### Aber warum blockiert es dann?
 
-Das Problem ist subtiler. Schauen wir uns den Code genauer an:
+Das Problem liegt im **Timing** und möglicherweise in der **Reihenfolge der Mutex-Operationen**:
 
 ```mermaid
 flowchart TD
-    subgraph PASV["on_msg_modePassive (Zeile 409-461)"]
-        P1[tcpPort_m.lock]
-        P2[session_m.shared_lock]
-        P3[modify_m.shared_lock]
-        P4[modify_m.unlock]
-        P5[modify_m.unique_lock]
-        P6[established_m.try_lock]
-        P7[Server starten]
-        P1 --> P2 --> P3 --> P4 --> P5 --> P6 --> P7
+    subgraph Problem[Mögliches Problem]
+        A[STOR-Handler wartet auf established_m]
+        B[Data-Connection-Lambda wird nie aufgerufen?]
+        C[Oder: Lambda-Aufruf blockiert woanders?]
     end
 
-    subgraph STOR["on_msg_fileUpload (Zeile 698-746)"]
-        S1[session_m.shared_lock]
-        S2[modify_m.shared_lock]
-        S3[established_m.lock - WARTET]
-        S4[modify_m.unlock]
-        S5[modify_m.unique_lock]
-        S1 --> S2 --> S3 --> S4 --> S5
-    end
+    A --> Q1{Wird Lambda<br/>überhaupt aufgerufen?}
+    Q1 -->|Nein| B
+    Q1 -->|Ja| Q2{Blockiert Lambda<br/>vor unlock?}
+    Q2 -->|Ja| C
 
-    style S3 fill:#ff6666
-    style P6 fill:#ffcc66
-```
-
-### Das eigentliche Problem: `modify_m` unique_lock
-
-Der Deadlock entsteht durch die Kombination von:
-
-1. **Thread A (STOR)**: Hält `modify_m` als `shared_lock`, wartet auf `established_m`
-2. **Thread C (anderer PASV/STOR)**: Will `modify_m` als `unique_lock`
-
-```mermaid
-sequenceDiagram
-    participant A as Thread A<br/>(STOR Client 5)
-    participant B as Thread B<br/>(Data-Conn Client 5)
-    participant C as Thread C<br/>(PASV/STOR Client 6)
-
-    Note over A: session_m.shared_lock ✅
-    Note over A: modify_m.shared_lock ✅
-    A->>A: established_m.lock()
-    Note over A: WARTET...
-
-    Note over C: session_m.shared_lock ✅
-    C->>C: modify_m.unique_lock()
-    Note over C: WARTET auf A's shared_lock!
-
-    B->>B: Lambda: session_m.shared_lock ✅
-    Note over B: Kann established_m.unlock() ausführen
-
-    rect rgb(255, 200, 200)
-        Note over A,C: Problem: A wartet auf B<br/>C blockiert möglicherweise B indirekt
-    end
+    style A fill:#ff9999
+    style B fill:#ffcc99
+    style C fill:#ffcc99
 ```
 
 ---
 
-## Hypothese: Writer-Starvation Problem
+## Hypothese: Das Lambda wird nie aufgerufen
 
-Bei `shared_mutex` gibt es ein bekanntes Problem: **Writer-Starvation** oder **Reader-Writer-Fairness**.
-
-```mermaid
-flowchart TD
-    subgraph Problem[Writer wartet auf Leser]
-        R1[Reader 1 - shared_lock aktiv]
-        R2[Reader 2 - shared_lock aktiv]
-        W1[Writer - unique_lock WARTET]
-        R3[Reader 3 - shared_lock WARTET?]
-    end
-
-    R1 -->|hält| SM[modify_m]
-    R2 -->|hält| SM
-    W1 -.->|wartet auf| SM
-    R3 -.->|wartet hinter Writer?| SM
-
-    style W1 fill:#ff9999
-    style R3 fill:#ffcc99
-```
-
-**Je nach Implementierung** kann ein wartender `unique_lock` neue `shared_lock`-Anfragen blockieren, um Writer-Starvation zu vermeiden. Das könnte erklären, warum das Lambda blockiert!
-
----
-
-## Detaillierte Code-Analyse
-
-### 1. PASV-Befehl sperrt `established_m`
-
-**Datei:** `FtpServer.cpp:456-459`
+Schauen wir uns an, wann das Lambda aufgerufen wird:
 
 ```cpp
-bool _;
-_ = p_established_m->try_lock(); // Sperrt established_m
-_ = p_processed_m->try_lock();
-_ = p_closed_m->try_lock();
+dataServer->setCreateForwardStream([...](const int dataClientId) -> DynamicOstream<...>* {
+    shared_lock<shared_mutex> lck_session{*p_session_m};
+    *p_dataClientId = dataClientId;
+    *pp_incomingStreamFwd = new DynamicOstream<...>();
+    p_established_m->unlock();  // <-- Entsperrt established_m
+    return *pp_incomingStreamFwd;
+});
 ```
 
-### 2. Lambda-Callback soll `established_m` entsperren
+Das Lambda wird aufgerufen, wenn ein **Client sich mit dem Data-Server verbindet**.
 
-**Datei:** `FtpServer.cpp:437-444`
-
-```cpp
-dataServer->setCreateForwardStream(
-    [pp_incomingStreamFwd, p_established_m, p_session_m, p_dataClientId]
-    (const int dataClientId) -> DynamicOstream<...>* {
-        shared_lock<shared_mutex> lck_session{*p_session_m}; // shared_lock auf session_m
-        *p_dataClientId = dataClientId;
-        *pp_incomingStreamFwd = new DynamicOstream<...>();
-        p_established_m->unlock();  // Entsperrt established_m
-        return *pp_incomingStreamFwd;
-    });
-```
-
-### 3. STOR-Befehl wartet auf `established_m`
-
-**Datei:** `FtpServer.cpp:698-711`
-
-```cpp
-void FtpServer::on_msg_fileUpload(...) {
-    shared_lock<shared_mutex> lck_session{session_m};         // shared_lock
-    unique_ptr<Session> &session{activeSessions.at(clientId)};
-    shared_lock<shared_mutex> lck_session_modify{session->modify_m}; // shared_lock
-
-    session->established_m.lock();  // WARTET hier!
-
-    // Nach established_m.lock():
-    lck_session_modify.unlock();
-    unique_lock<shared_mutex> lck_session_modify_unique{session->modify_m}; // unique_lock!
-    ...
-}
-```
-
----
-
-## Mögliche Deadlock-Szenarien
-
-### Szenario 1: Parallele Sessions mit shared modify_m
-
-```mermaid
-flowchart LR
-    subgraph Client5[Client 5 - STOR]
-        A1[modify_m shared_lock ✅]
-        A2[established_m.lock WARTET]
-    end
-
-    subgraph Client6[Client 6 - irgendein Befehl]
-        B1[modify_m unique_lock WARTET]
-    end
-
-    subgraph DataConn[Data Connection Lambda]
-        C1[session_m shared_lock]
-        C2[established_m.unlock]
-    end
-
-    A1 -->|blockiert| B1
-    B1 -.->|blockiert evtl.| C1
-    C2 -.->|würde entsperren| A2
-
-    style A2 fill:#ff6666
-    style B1 fill:#ffcc66
-```
-
-### Szenario 2: tcpPort_m Mutex
-
-In `on_msg_modePassive` wird `tcpPort_m` gelockt (Zeile 410):
-
-```cpp
-lock_guard<mutex> lck_port{tcpPort_m};
-```
-
-Wenn mehrere PASV-Befehle gleichzeitig verarbeitet werden, warten sie hier aufeinander.
-
----
-
-## Normaler Ablauf (funktioniert)
+### Timing-Problem
 
 ```mermaid
 sequenceDiagram
     participant C as FTP Client
     participant CS as Control-Server
-    participant DS as Data-Server (PASV)
+    participant DS as Data-Server
 
-    C->>CS: 1. PASV
-    CS->>DS: 2. established_m.try_lock()
-    Note over DS: Mutex gesperrt
-    CS-->>C: 3. 227 Entering Passive Mode
+    C->>CS: PASV
+    CS->>DS: Starte Data-Server auf Port X
+    CS->>CS: established_m.try_lock()
+    CS-->>C: 227 Entering Passive Mode (Port X)
 
-    C->>DS: 4. Verbinde zu Data-Server
-    DS->>CS: 5. established_m.unlock() (Lambda)
-    Note over CS: Mutex freigegeben
+    Note over C: Client sendet STOR sofort!
+    C->>CS: STOR file.txt
 
-    C->>CS: 6. STOR file.txt
-    CS->>CS: 7. established_m.lock()
-    Note over CS: Sofort OK!
+    CS->>CS: established_m.lock()
+    Note over CS: WARTET...<br/>Client hat sich noch nicht<br/>zum Data-Server verbunden!
 
-    C->>DS: 8. Dateiübertragung
-    Note over C,DS: Upload erfolgreich
+    Note over C: Erst JETZT verbindet<br/>sich Client zum Data-Server
+    C->>DS: TCP Connect zu Port X
+
+    DS->>DS: Lambda aufrufen
+    DS->>DS: established_m.unlock()
+
+    CS->>CS: established_m.lock() ✅
+```
+
+**Das sollte eigentlich funktionieren!** Der STOR-Handler wartet einfach, bis der Client sich verbindet.
+
+---
+
+## Neue Hypothese: tcpPort_m blockiert
+
+In `on_msg_modePassive` gibt es einen `lock_guard` auf `tcpPort_m`:
+
+```cpp
+// Zeile 410
+lock_guard<mutex> lck_port{tcpPort_m};
+```
+
+Dieser Lock wird **vor** dem Starten des Data-Servers genommen und erst am Ende des Scopes freigegeben.
+
+```mermaid
+flowchart TD
+    subgraph PASV["on_msg_modePassive Scope"]
+        L1[lock_guard tcpPort_m]
+        L2[...]
+        L3[dataServer->start]
+        L4[established_m.try_lock]
+        L5[session->tcpData = dataServer]
+        L6["} // tcpPort_m wird hier freigegeben"]
+    end
+
+    L1 --> L2 --> L3 --> L4 --> L5 --> L6
+
+    style L1 fill:#ffcc99
+    style L6 fill:#99ff99
+```
+
+### Das Problem bei parallelen PASV-Befehlen
+
+```mermaid
+sequenceDiagram
+    participant C1 as Client 1
+    participant C2 as Client 2
+    participant CS as Control-Server
+
+    C1->>CS: PASV
+    CS->>CS: tcpPort_m.lock()
+    Note over CS: Client 1 hält tcpPort_m
+
+    C2->>CS: PASV
+    CS->>CS: tcpPort_m.lock()
+    Note over CS: Client 2 WARTET auf tcpPort_m
+
+    Note over CS: Client 1 startet Data-Server...
+    Note over CS: Client 1 gibt tcpPort_m frei
+
+    Note over CS: Client 2 kann jetzt PASV verarbeiten
+```
+
+**Das erklärt aber nicht den Deadlock**, da `tcpPort_m` sequentiell verarbeitet wird.
+
+---
+
+## Kritische Erkenntnis: Data-Server-Start im tcpPort_m-Lock
+
+Das eigentliche Problem könnte sein:
+
+```mermaid
+flowchart TD
+    subgraph Scope["tcpPort_m Lock-Scope (Zeile 410-461)"]
+        A[tcpPort_m.lock]
+        B[getFreePort]
+        C[session_m.shared_lock]
+        D[modify_m.shared_lock → unique_lock]
+        E[dataServer->start]
+        F[established_m.try_lock]
+        G[session->tcpData = dataServer]
+    end
+
+    A --> B --> C --> D --> E --> F --> G
+
+    H["} // Scope Ende"]
+    G --> H
+
+    style A fill:#ff9999
+    style H fill:#99ff99
+    style E fill:#ffcc99
+```
+
+Der Data-Server wird **innerhalb** des `tcpPort_m`-Locks gestartet. Wenn das Lambda aufgerufen wird, versucht es `session_m.shared_lock()` zu bekommen.
+
+**Aber:** Der PASV-Handler hält bereits `session_m.shared_lock()` - das ist kein Problem, da beides `shared_lock` ist.
+
+---
+
+## Die wahrscheinlichste Ursache
+
+Nach genauerer Analyse: **Das Lambda wird möglicherweise im falschen Kontext aufgerufen** oder **der Data-Server ist noch nicht bereit**.
+
+Schauen wir uns die Reihenfolge an:
+
+```mermaid
+sequenceDiagram
+    participant PASV as PASV-Handler
+    participant DS as Data-Server
+    participant STOR as STOR-Handler
+
+    PASV->>DS: dataServer->start()
+    Note over DS: Server startet asynchron?
+
+    PASV->>PASV: established_m.try_lock()
+
+    PASV->>PASV: session->tcpData = move(dataServer)
+    Note over PASV: PASV-Handler fertig,<br/>tcpPort_m wird freigegeben
+
+    STOR->>STOR: session_m.shared_lock()
+    STOR->>STOR: modify_m.shared_lock()
+    STOR->>STOR: established_m.lock()
+    Note over STOR: WARTET...
+
+    Note over DS: Data-Server ist bereit?<br/>Client verbindet sich
+
+    DS->>DS: Lambda: session_m.shared_lock()
+    DS->>DS: Lambda: established_m.unlock()
+
+    STOR->>STOR: established_m.lock() ✅
+```
+
+### Mögliche Race Condition
+
+Was passiert, wenn der **Client sich sehr schnell verbindet** - noch während PASV läuft?
+
+```mermaid
+sequenceDiagram
+    participant PASV as PASV-Handler
+    participant DS as Data-Server
+    participant C as FTP Client
+
+    PASV->>DS: dataServer->start()
+    Note over DS: Server lauscht auf Port
+
+    PASV-->>C: 227 Entering Passive Mode
+    Note over PASV: Nachricht gesendet
+
+    C->>DS: TCP Connect (sehr schnell!)
+
+    DS->>DS: Lambda aufrufen
+    DS->>DS: session_m.shared_lock() ✅
+    DS->>DS: established_m.unlock()
+    Note over DS: FEHLER: established_m<br/>wurde noch nicht gesperrt!
+
+    PASV->>PASV: established_m.try_lock()
+    Note over PASV: Lock erfolgreich,<br/>aber Lambda hat schon unlock gemacht!
+
+    rect rgb(255, 200, 200)
+        Note over PASV,DS: Undefined Behavior:<br/>unlock() auf nicht-gesperrtem Mutex!
+    end
 ```
 
 ---
 
-## Warum tritt das Problem nur bei parallelen Uploads auf?
+## Fazit: Race Condition bei schneller Verbindung
 
-```mermaid
-gantt
-    title Timing-Vergleich
-    dateFormat X
-    axisFormat %s
+Das Problem ist eine **Race Condition**:
 
-    section Einzelner Upload (OK)
-    PASV           :a1, 0, 1
-    Datenverbindung:a2, 1, 3
-    STOR           :a3, 3, 4
-    Übertragung    :a4, 4, 6
+1. `dataServer->start()` wird aufgerufen (Zeile 451)
+2. Die Antwort `227 Entering Passive Mode` wird gesendet (Zeile 486)
+3. **Erst danach** wird `established_m.try_lock()` aufgerufen (Zeile 457)
 
-    section Parallele Uploads (Deadlock)
-    PASV           :b1, 0, 1
-    STOR (zu früh!):crit, b2, 1, 2
-    Datenverbindung:b3, 2, 4
-```
-
-### Erklärung
+Wenn der Client sich **zwischen Schritt 1 und 3** verbindet, ruft das Lambda `established_m.unlock()` auf einem **nicht gesperrten Mutex** auf!
 
 ```mermaid
 flowchart TD
-    subgraph Einzeln[Einzelner Upload - Funktioniert]
-        S1[PASV] --> S2[Datenverbindung etabliert]
-        S2 --> S3[STOR]
-        S3 --> S4[Übertragung]
-        style S2 fill:#90EE90
+    subgraph Richtige_Reihenfolge[Erwartete Reihenfolge]
+        R1[1. established_m.try_lock]
+        R2[2. dataServer->start]
+        R3[3. Client verbindet sich]
+        R4[4. Lambda: established_m.unlock]
+        R1 --> R2 --> R3 --> R4
     end
 
-    subgraph Parallel[Parallele Uploads - Deadlock-Risiko]
-        P1[PASV] --> P2[STOR kommt sofort]
-        P2 --> P3[Datenverbindung noch nicht da!]
-        P3 --> P4[Mutex-Konflikte durch andere Clients]
-        P4 --> P5[DEADLOCK]
-        style P3 fill:#FFB6C1
-        style P5 fill:#FF6347
+    subgraph Tatsächliche_Reihenfolge[Tatsächliche Reihenfolge im Code]
+        T1[1. dataServer->start]
+        T2[2. established_m.try_lock]
+        T3[3. Client verbindet sich]
+        T4[4. Lambda: established_m.unlock]
+        T1 --> T2
+        T1 -.->|Race!| T3
+        T3 --> T4
     end
+
+    style R1 fill:#99ff99
+    style T1 fill:#ff9999
+    style T3 fill:#ffcc99
 ```
-
-Bei parallelen Uploads konkurrieren mehrere Threads um dieselben Mutexe, was zu komplexen Warteabhängigkeiten führt.
 
 ---
 
@@ -404,12 +529,34 @@ Bei parallelen Uploads konkurrieren mehrere Threads um dieselben Mutexe, was zu 
 
 | Aspekt | Beschreibung |
 |--------|--------------|
-| **Problem** | Deadlock bei parallelen Dateiübertragungen |
+| **Problem** | Deadlock/Undefined Behavior bei parallelen Dateiübertragungen |
 | **Symptom** | Server bleibt bei `established_m.lock()` hängen |
-| **Ursache** | Komplexe Mutex-Interaktionen zwischen `established_m`, `modify_m` und möglicherweise `tcpPort_m` bei parallelen Requests |
-| **shared_mutex Verhalten** | `shared_lock` erlaubt mehrere gleichzeitige Leser, aber `unique_lock` blockiert alle |
-| **Betroffene Methoden** | `on_msg_fileUpload` (Zeile 703), `on_msg_modePassive` (Zeile 456), Lambda (Zeile 439) |
-| **Reproduzierbar** | Bei 5+ parallelen Uploads mit schnellem Client |
+| **Ursache** | Race Condition: `dataServer->start()` wird **vor** `established_m.try_lock()` aufgerufen |
+| **Folge** | Lambda kann `unlock()` auf nicht-gesperrtem Mutex aufrufen → Undefined Behavior |
+| **Betroffene Stelle** | `FtpServer.cpp:451-459` |
+| **Session-Mutexe** | Sind pro Client isoliert, keine Cross-Session-Blockierung |
+
+---
+
+## Lösung
+
+Die Reihenfolge muss korrigiert werden:
+
+```mermaid
+flowchart LR
+    subgraph Vorher[Aktueller Code - FALSCH]
+        V1[dataServer->start] --> V2[established_m.try_lock]
+    end
+
+    subgraph Nachher[Korrigiert - RICHTIG]
+        N1[established_m.try_lock] --> N2[dataServer->start]
+    end
+
+    style V1 fill:#ff9999
+    style N1 fill:#99ff99
+```
+
+**Konkret:** Zeile 457 (`established_m.try_lock()`) muss **vor** Zeile 451 (`dataServer->start()`) verschoben werden.
 
 ---
 
@@ -418,32 +565,16 @@ Bei parallelen Uploads konkurrieren mehrere Threads um dieselben Mutexe, was zu 
 ```mermaid
 flowchart LR
     subgraph Lösungen
-        L1[1. Lock-Reihenfolge<br/>standardisieren]
+        L1[1. Lock-Reihenfolge<br/>korrigieren]
         L2[2. Condition Variable<br/>statt Mutex-Signaling]
-        L3[3. Lock-free Design<br/>mit atomics]
-        L4[4. Timeout mit Retry]
-        L5[5. Session-spezifische<br/>Mutexe isolieren]
+        L3[3. atomic bool<br/>für Status]
     end
 
-    L1 --> D1[Immer gleiche Reihenfolge]
+    L1 --> D1[try_lock VOR start]
     L2 --> D2[CV für established-Signal]
-    L3 --> D3[atomic bool für Status]
-    L4 --> D4[try_lock_for mit Retry]
-    L5 --> D5[Weniger globale Locks]
+    L3 --> D3[atomic für Status-Flag]
 ```
 
-1. **Lock-Reihenfolge standardisieren**: Alle Threads müssen Mutexe in derselben Reihenfolge sperren
-2. **Condition Variable nutzen**: Statt direktem Lock auf `established_m` mit `condition_variable` warten
-3. **Lock-free Design**: Atomare Operationen (`std::atomic<bool>`) für den `established`-Status verwenden
-4. **Timeout mit Retry**: `try_lock_for()` mit Timeout und Retry-Mechanismus
-5. **Session-spezifische Mutexe isolieren**: Weniger Abhängigkeiten zwischen globalen und session-lokalen Locks
-
----
-
-## Weiterführende Untersuchung
-
-Um den genauen Deadlock zu identifizieren, wäre hilfreich:
-
-1. **Thread-Dump** während des Deadlocks (z.B. mit `gdb`)
-2. **Lock-Order-Checker** wie ThreadSanitizer (`-fsanitize=thread`)
-3. **Logging** aller Lock/Unlock-Operationen mit Thread-ID und Zeitstempel
+1. **Lock-Reihenfolge korrigieren**: `established_m.try_lock()` **vor** `dataServer->start()` aufrufen
+2. **Condition Variable nutzen**: Statt Mutex-Missbrauch eine `condition_variable` für Signaling verwenden
+3. **Atomic Flag**: `std::atomic<bool>` für den `established`-Status verwenden
