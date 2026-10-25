@@ -111,7 +111,11 @@ namespace ftp
 
         // Constants
         const size_t MAXIMUM_MESSAGE_LENGTH{4096};
+#if defined(FTP_PORT_CONTROL_OVERRIDE) && defined(DEVELOP)
+        const int PORT_CONTROL{FTP_PORT_CONTROL_OVERRIDE};
+#else
         const int PORT_CONTROL{21};
+#endif // FTP_PORT_CONTROL_OVERRIDE
         const int PORT_RANGE_DATA_PASSIVE[2]{49152, 65535};
 
         // Underlying TCP server. Control and data

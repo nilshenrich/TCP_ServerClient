@@ -13,7 +13,7 @@ include_directories(
 )
 
 add_executable(ftp-dev FtpServer.cpp test.cpp)
-target_compile_options(ftp-dev PRIVATE -fexceptions -Wall -g -Og -DDEVELOP)
+target_compile_options(ftp-dev PRIVATE -fexceptions -Wall -g -Og -DDEVELOP -DFTP_PORT_CONTROL_OVERRIDE=1024)
 
 find_package(OpenSSL REQUIRED)
 find_package(Threads REQUIRED)
