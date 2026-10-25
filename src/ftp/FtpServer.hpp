@@ -112,7 +112,7 @@ namespace ftp
         // Constants
         const size_t MAXIMUM_MESSAGE_LENGTH{4096};
         const int PORT_CONTROL{21};
-        const int PORT_RANGE_DATA[2]{1024, 65535};
+        const int PORT_RANGE_DATA_PASSIVE[2]{49152, 65535};
 
         // Underlying TCP server. Control and data
         ::tcp::TcpServer tcpControl; // Fragmented

@@ -410,7 +410,7 @@ void FtpServer::on_msg_modePassive(const int clientId, const uint32_t command, c
         lock_guard<mutex> lck_port{tcpPort_m};
         try
         {
-            port = algorithms::getFreePort(PORT_RANGE_DATA[0], PORT_RANGE_DATA[1]);
+            port = algorithms::getFreePort(PORT_RANGE_DATA_PASSIVE[0], PORT_RANGE_DATA_PASSIVE[1]);
         }
         catch (const Error &e)
         {
