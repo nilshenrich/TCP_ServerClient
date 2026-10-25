@@ -20,62 +20,52 @@ DEBUG 2-5
 
 ### Mutex-Hierarchie in der Session
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                        Session                              │
-├─────────────────────────────────────────────────────────────┤
-│  session_m (shared_mutex)     - Zugriff auf Session-Map    │
-│  modify_m  (shared_mutex)     - Änderungen an Session-Daten│
-│  established_m (mutex)        - Datenverbindung etabliert  │
-│  processed_m (mutex)          - Datenverarbeitung fertig   │
-│  closed_m (mutex)             - Verbindung geschlossen     │
-├─────────────────────────────────────────────────────────────┤
-│  tcpData (TcpServer)          - Daten-Server für PASV      │
-│  dataClientId (int)           - Client-ID der Datenverb.   │
-│  incomingStreamFwd (Stream)   - Eingehende Daten           │
-└─────────────────────────────────────────────────────────────┘
+```mermaid
+classDiagram
+    class Session {
+        +shared_mutex session_m
+        +shared_mutex modify_m
+        +mutex established_m
+        +mutex processed_m
+        +mutex closed_m
+        ---
+        +TcpServer tcpData
+        +int dataClientId
+        +DynamicOstream incomingStreamFwd
+    }
+
+    note for Session "session_m: Zugriff auf Session-Map
+    modify_m: Änderungen an Session-Daten
+    established_m: Datenverbindung etabliert
+    processed_m: Datenverarbeitung fertig
+    closed_m: Verbindung geschlossen"
 ```
 
 ---
 
 ## Normaler Ablauf (funktioniert)
 
-```
-┌──────────────┐     ┌──────────────┐     ┌──────────────┐
-│  FTP Client  │     │ Control-     │     │ Data-Server  │
-│              │     │ Server       │     │ (PASV)       │
-└──────┬───────┘     └──────┬───────┘     └──────┬───────┘
-       │                    │                    │
-       │  1. PASV           │                    │
-       │───────────────────>│                    │
-       │                    │                    │
-       │                    │ 2. established_m   │
-       │                    │    .try_lock()     │
-       │                    │ ─ ─ ─ ─ ─ ─ ─ ─ ─>│
-       │                    │                    │
-       │  3. 227 Passive    │                    │
-       │<───────────────────│                    │
-       │                    │                    │
-       │  4. Verbinde zu    │                    │
-       │     Data-Server    │                    │
-       │─────────────────────────────────────────>
-       │                    │                    │
-       │                    │ 5. established_m   │
-       │                    │    .unlock()       │
-       │                    │<─ ─ ─ ─ ─ ─ ─ ─ ─ │
-       │                    │    (Lambda)        │
-       │                    │                    │
-       │  6. STOR file.txt  │                    │
-       │───────────────────>│                    │
-       │                    │                    │
-       │                    │ 7. established_m   │
-       │                    │    .lock()         │
-       │                    │    (sofort OK!)    │
-       │                    │                    │
-       │  8. Dateiübertrag. │                    │
-       │─────────────────────────────────────────>
-       │                    │                    │
-       ▼                    ▼                    ▼
+```mermaid
+sequenceDiagram
+    participant C as FTP Client
+    participant CS as Control-Server
+    participant DS as Data-Server (PASV)
+
+    C->>CS: 1. PASV
+    CS->>DS: 2. established_m.try_lock()
+    Note over DS: Mutex gesperrt
+    CS-->>C: 3. 227 Entering Passive Mode
+
+    C->>DS: 4. Verbinde zu Data-Server
+    DS->>CS: 5. established_m.unlock() (Lambda)
+    Note over CS: Mutex freigegeben
+
+    C->>CS: 6. STOR file.txt
+    CS->>CS: 7. established_m.lock()
+    Note over CS: Sofort OK!
+
+    C->>DS: 8. Dateiübertragung
+    Note over C,DS: Upload erfolgreich
 ```
 
 ---
@@ -84,63 +74,34 @@ DEBUG 2-5
 
 Bei schnellen parallelen Anfragen kann folgendes passieren:
 
-```
-┌──────────────┐     ┌──────────────┐     ┌──────────────┐
-│  FTP Client  │     │ Control-     │     │ Data-Server  │
-│              │     │ Server       │     │ (PASV)       │
-└──────┬───────┘     └──────┬───────┘     └──────┬───────┘
-       │                    │                    │
-       │  1. PASV           │                    │
-       │───────────────────>│                    │
-       │                    │                    │
-       │                    │ 2. established_m   │
-       │                    │    .try_lock()     │
-       │                    │ ─ ─ ─ ─ ─ ─ ─ ─ ─>│
-       │                    │    [GESPERRT]      │
-       │                    │                    │
-       │  3. 227 Passive    │                    │
-       │<───────────────────│                    │
-       │                    │                    │
-       │  4. STOR file.txt  │                    │
-       │───────────────────>│  ← Client sendet  │
-       │    (SCHNELL!)      │    STOR BEVOR die │
-       │                    │    Datenverbindung│
-       │                    │    steht!         │
-       │                    │                    │
-       │                    │ 5. session_m      │
-       │                    │    .shared_lock() │
-       │                    │    [OK]           │
-       │                    │                    │
-       │                    │ 6. established_m  │
-       │                    │    .lock()        │
-       │                    │    [WARTET...]    │
-       │                    │         │         │
-       │                    │         │         │
-       │  7. Verbinde zu    │         │         │
-       │     Data-Server    │         │         │
-       │───────────────────────────────────────>│
-       │                    │         │         │
-       │                    │         │  8. Lambda will
-       │                    │         │     session_m
-       │                    │         │     .shared_lock()
-       │                    │         │         │
-       │                    │         │    [WARTET...]
-       │                    │         │         │
-       │                    │         │         │
-       │                    ▼         ▼         │
-       │               ╔═══════════════════╗    │
-       │               ║    DEADLOCK!      ║    │
-       │               ║                   ║    │
-       │               ║ Thread A wartet   ║    │
-       │               ║ auf established_m ║    │
-       │               ║ (hält session_m)  ║    │
-       │               ║                   ║    │
-       │               ║ Thread B wartet   ║    │
-       │               ║ auf session_m     ║    │
-       │               ║ (will established ║    │
-       │               ║  _m entsperren)   ║    │
-       │               ╚═══════════════════╝    │
-       ▼                                        ▼
+```mermaid
+sequenceDiagram
+    participant C as FTP Client
+    participant CS as Control-Server<br/>(Thread A)
+    participant DS as Data-Server<br/>(Thread B)
+
+    C->>CS: 1. PASV
+    CS->>DS: 2. established_m.try_lock()
+    Note over DS: Mutex gesperrt
+    CS-->>C: 3. 227 Entering Passive Mode
+
+    Note over C: Client sendet STOR<br/>BEVOR Datenverbindung steht!
+    C->>CS: 4. STOR file.txt (SCHNELL!)
+
+    CS->>CS: 5. session_m.shared_lock()
+    Note over CS: OK - session_m gehalten
+
+    CS->>CS: 6. established_m.lock()
+    Note over CS: WARTET...
+
+    C->>DS: 7. Verbinde zu Data-Server
+
+    DS->>DS: 8. Lambda: session_m.shared_lock()
+    Note over DS: WARTET auf session_m...
+
+    rect rgb(255, 200, 200)
+        Note over CS,DS: DEADLOCK!<br/>Thread A wartet auf established_m (hält session_m)<br/>Thread B wartet auf session_m (will established_m entsperren)
+    end
 ```
 
 ---
@@ -195,70 +156,89 @@ void FtpServer::on_msg_fileUpload(...) {
 
 ## Deadlock-Visualisierung
 
-```
-                    ┌─────────────────────┐
-                    │                     │
-          ┌─────────▼─────────┐           │
-          │                   │           │
-          │    session_m      │           │
-          │   (shared_mutex)  │           │
-          │                   │           │
-          └─────────┬─────────┘           │
-                    │                     │
-        ┌───────────┴───────────┐         │
-        │                       │         │
-        ▼                       ▼         │
-┌───────────────┐       ┌───────────────┐ │
-│   Thread A    │       │   Thread B    │ │
-│ (STOR-Handler)│       │ (Data-Conn)   │ │
-├───────────────┤       ├───────────────┤ │
-│ HÄLT:         │       │ WARTET AUF:   │ │
-│ session_m     │       │ session_m     │─┘
-│               │       │               │
-│ WARTET AUF:   │       │ WILL:         │
-│ established_m │◄──────│ established_m │
-│               │       │ entsperren    │
-└───────────────┘       └───────────────┘
+```mermaid
+flowchart TB
+    subgraph Ressourcen
+        SM[session_m<br/>shared_mutex]
+        EM[established_m<br/>mutex]
+    end
 
-        ══════════════════════════════
-        ║  Zirkuläre Abhängigkeit!   ║
-        ║                            ║
-        ║  A wartet auf B            ║
-        ║  B wartet auf A            ║
-        ══════════════════════════════
+    subgraph ThreadA[Thread A: STOR-Handler]
+        A1[Hält: session_m]
+        A2[Wartet auf: established_m]
+    end
+
+    subgraph ThreadB[Thread B: Data-Connection]
+        B1[Wartet auf: session_m]
+        B2[Will entsperren: established_m]
+    end
+
+    A1 -->|hält| SM
+    A2 -.->|wartet| EM
+    B1 -.->|wartet| SM
+    B2 -->|will entsperren| EM
+
+    style ThreadA fill:#ffcccc
+    style ThreadB fill:#ccccff
+    style SM fill:#ffffcc
+    style EM fill:#ffffcc
+```
+
+### Zirkuläre Abhängigkeit
+
+```mermaid
+flowchart LR
+    A[Thread A<br/>STOR-Handler] -->|wartet auf| EM[established_m]
+    EM -->|wird entsperrt von| B[Thread B<br/>Data-Connection]
+    B -->|wartet auf| SM[session_m]
+    SM -->|gehalten von| A
+
+    style A fill:#ff9999
+    style B fill:#9999ff
+    style EM fill:#ffff99
+    style SM fill:#ffff99
 ```
 
 ---
 
 ## Warum tritt das Problem nur bei parallelen Uploads auf?
 
+```mermaid
+gantt
+    title Timing-Vergleich
+    dateFormat X
+    axisFormat %s
+
+    section Einzelner Upload (OK)
+    PASV           :a1, 0, 1
+    Datenverbindung:a2, 1, 3
+    STOR           :a3, 3, 4
+    Übertragung    :a4, 4, 6
+
+    section Parallele Uploads (Deadlock)
+    PASV           :b1, 0, 1
+    STOR (zu früh!):crit, b2, 1, 2
+    Datenverbindung:b3, 2, 4
 ```
-Zeit ──────────────────────────────────────────────────────────►
 
-Einzelner Upload (funktioniert):
-┌─────┐ ┌─────────────────┐ ┌─────┐ ┌────────────────────────┐
-│PASV │ │ Datenverbindung │ │STOR │ │ Dateiübertragung       │
-└─────┘ └─────────────────┘ └─────┘ └────────────────────────┘
-         ▲                   ▲
-         │                   │
-         └───────────────────┴── Genug Zeit dazwischen
+### Erklärung
 
+```mermaid
+flowchart TD
+    subgraph Einzeln[Einzelner Upload - Funktioniert]
+        S1[PASV] --> S2[Datenverbindung etabliert]
+        S2 --> S3[STOR]
+        S3 --> S4[Übertragung]
+        style S2 fill:#90EE90
+    end
 
-Parallele Uploads (Deadlock-Risiko):
-Client 1: ┌─────┐┌─────┐
-          │PASV ││STOR │    ← Kein Warten!
-          └─────┘└─────┘
-
-Client 2: ┌─────┐┌─────┐
-          │PASV ││STOR │
-          └─────┘└─────┘
-
-Client 3: ┌─────┐┌─────┐
-          │PASV ││STOR │
-          └─────┘└─────┘
-              ▲
-              │
-              └── STOR kommt an, BEVOR Datenverbindung steht!
+    subgraph Parallel[Parallele Uploads - Deadlock-Risiko]
+        P1[PASV] --> P2[STOR kommt sofort]
+        P2 --> P3[Datenverbindung noch nicht da!]
+        P3 --> P4[DEADLOCK]
+        style P3 fill:#FFB6C1
+        style P4 fill:#FF6347
+    end
 ```
 
 ---
@@ -276,6 +256,21 @@ Client 3: ┌─────┐┌─────┐
 ---
 
 ## Mögliche Lösungsansätze
+
+```mermaid
+flowchart LR
+    subgraph Lösungen
+        L1[1. Mutex-Reihenfolge ändern]
+        L2[2. Condition Variable]
+        L3[3. Lock-free Design]
+        L4[4. Timeout mit Retry]
+    end
+
+    L1 --> D1[established_m VOR session_m sperren]
+    L2 --> D2[Mit CV auf established warten]
+    L3 --> D3[Atomare Operationen nutzen]
+    L4 --> D4[try_lock mit Timeout]
+```
 
 1. **Mutex-Reihenfolge ändern**: `established_m` vor `session_m` sperren
 2. **Condition Variable nutzen**: Statt direktem Lock auf `established_m` mit Condition Variable warten
