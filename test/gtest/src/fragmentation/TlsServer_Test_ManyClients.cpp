@@ -2,6 +2,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <algorithm>
 
 #include "fragmentation/TlsServer_Test_ManyClients.h"
 #include "HelperFunctions.h"
